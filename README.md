@@ -12,7 +12,7 @@ Pola dan toolchain sama dengan repo `zynergy` (situs marketing).
 
 ```
 src/
-├── app/(hub)/        # Dashboard tim (/) + API internal (ekspor CSV)
+├── app/(hub)/        # Layar tim (ringkasan, arus kas, klien, pesanan, tim) + API internal (ekspor CSV, Excel)
 ├── app/(payload)/    # Panel admin Payload (/admin) + REST (/api)
 ├── collections/      # Clients, Transactions, Receipts, Users (dengan peran)
 ├── lib/              # access (peran), session, finance (ringkasan), format
