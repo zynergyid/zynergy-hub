@@ -5,6 +5,7 @@ import { Loader2, Plus, X } from "lucide-react";
 import { ErrorText, fieldClass } from "@/components/hub/form";
 import { jobTitles, roles, units } from "@/lib/options";
 import { Select } from "@/components/hub/Select";
+import { MultiSelect } from "@/components/hub/MultiSelect";
 import { addMember, type MemberFormState } from "./actions";
 
 const initial: MemberFormState = { status: "idle" };
@@ -55,17 +56,10 @@ export function AddMember() {
           <label htmlFor="m-title" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Jabatan</label>
           <Select id="m-title" name="title" placeholder="Tanpa jabatan" options={jobTitles.map((t) => ({ label: t, value: t }))} />
         </div>
-        <fieldset>
-          <legend className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Unit (untuk finance dan anggota)</legend>
-          <div className="flex flex-wrap gap-2">
-            {units.map((u) => (
-              <label key={u.value} className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm has-checked:border-primary has-checked:bg-primary-soft">
-                <input type="checkbox" name="units" value={u.value} className="accent-primary" />
-                {u.label}
-              </label>
-            ))}
-          </div>
-        </fieldset>
+        <div>
+          <label htmlFor="m-units" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Unit (untuk finance dan anggota)</label>
+          <MultiSelect name="units" placeholder="Pilih unit" options={units} />
+        </div>
       </div>
       <div className="mt-3"><ErrorText>{state.status === "error" ? state.message : null}</ErrorText></div>
       <button type="submit" disabled={pending} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white hover:bg-primary-dark disabled:opacity-60">
