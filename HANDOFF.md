@@ -10,11 +10,15 @@
   dashboard di `/` (ringkasan bulan ini, saldo, grafik 12 bulan, jatuh tempo
   30 hari, pengeluaran per kategori, transaksi terbaru, ekspor CSV), data
   entry lewat `/admin`. Peran admin/finance/member diterapkan di access.
-- Belum ada repo GitHub, project Vercel, atau database Neon. Rencana:
-  repo privat `danish-deepskill/zynergy-hub`, Vercel project `zynergy-hub`
-  (scope `devdanzen-projects`), domain team.zynergy.co.id, database baru di
-  Neon lewat integrasi Vercel Storage (user yang klik, supaya tidak ada
-  connection string lewat chat). `vercel.json` menjalankan migrate saat build.
+- Repo privat `danish-deepskill/zynergy-hub` (push 2026-09-11), Vercel
+  project `zynergy-hub` (scope `devdanzen-projects`) dengan domain
+  team.zynergy.co.id terpasang dan PAYLOAD_SECRET production sudah diset.
+  BELUM ada database Neon: user harus klik Vercel > project zynergy-hub >
+  Storage > Connect Database > Neon > database baru `zynergy-hub` (mengisi
+  DATABASE_URL dan DATABASE_URL_UNPOOLED otomatis). Setelah itu deploy
+  pertama (`vercel deploy --prod`), lalu user membuat admin pertama di
+  team.zynergy.co.id/admin dengan admin@zynergy.co.id. `vercel.json`
+  menjalankan migrate saat build.
 - Lokal: Postgres docker `zynergy-pg` database `zynergy_hub`, dev admin
   dev@zynergy.local / zynergy-dev-only via `pnpm seed`. Port 3011.
 
