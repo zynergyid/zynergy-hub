@@ -17,6 +17,7 @@ if (users.totalDocs === 0) {
 }
 
 const existing = await payload.find({ collection: "clients", limit: 1 });
+const supplyTx = await payload.find({ collection: "transactions", where: { unit: { equals: "supply" } }, limit: 1 });
 if (existing.totalDocs === 0) {
   const today = new Date();
   const iso = (d: Date) => d.toISOString();
@@ -28,7 +29,7 @@ if (existing.totalDocs === 0) {
   ] as const;
   const ids: number[] = [];
   for (const c of clients) {
-    const doc = await payload.create({ collection: "clients", data: { ...c } });
+    const doc = await payload.create({ collection: "clients", data: { ...c, unit: "digital" } });
     ids.push(doc.id);
   }
   const tx = [
@@ -41,9 +42,22 @@ if (existing.totalDocs === 0) {
     { date: daysAgo(3), type: "keluar", category: "operasional", amount: 75000, reference: "Cetak kartu nama" },
   ] as const;
   for (const t of tx) {
-    await payload.create({ collection: "transactions", data: { ...t, date: iso(t.date) } });
+    await payload.create({ collection: "transactions", data: { ...t, unit: "digital", date: iso(t.date) } });
   }
   payload.logger.info("Seeded sample clients and transactions");
+}
+
+if (supplyTx.totalDocs === 0) {
+  const today = new Date();
+  const daysAgo = (n: number) => new Date(today.getTime() - n * 86400000).toISOString();
+  const rows = [
+    { date: daysAgo(40), type: "masuk", category: "penjualan-barang", amount: 18500000, method: "transfer", reference: "PO transceiver SFP 20 unit" },
+    { date: daysAgo(45), type: "keluar", category: "pembelian-barang", amount: 14200000, method: "transfer", reference: "Beli SFP dari supplier" },
+    { date: daysAgo(38), type: "keluar", category: "logistik", amount: 650000, method: "transfer", reference: "Ekspedisi ke site" },
+    { date: daysAgo(6), type: "masuk", category: "penjualan-barang", amount: 7400000, method: "transfer", reference: "PO kabel CAT6A 10 roll" },
+  ] as const;
+  for (const r of rows) await payload.create({ collection: "transactions", data: { ...r, unit: "supply" } });
+  payload.logger.info("Seeded sample supply transactions");
 }
 
 payload.logger.info("Seed complete");

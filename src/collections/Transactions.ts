@@ -1,17 +1,6 @@
 import type { CollectionConfig } from "payload";
 import { isFinance } from "@/lib/access";
-
-export const transactionCategories = [
-  { label: "Pembayaran klien", value: "pembayaran-klien" },
-  { label: "Perpanjangan klien", value: "perpanjangan" },
-  { label: "Hosting & domain", value: "hosting-domain" },
-  { label: "Tools & langganan", value: "tools" },
-  { label: "Iklan", value: "iklan" },
-  { label: "Gaji & honor", value: "gaji-honor" },
-  { label: "Operasional", value: "operasional" },
-  { label: "Pajak", value: "pajak" },
-  { label: "Lainnya", value: "lainnya" },
-] as const;
+import { paymentMethods, transactionCategories, units } from "@/lib/options";
 
 /** Cash in and out for Zynergy Digital. Finance and admin only. */
 export const Transactions: CollectionConfig = {
@@ -30,6 +19,15 @@ export const Transactions: CollectionConfig = {
   },
   defaultSort: "-date",
   fields: [
+    {
+      name: "unit",
+      type: "select",
+      required: true,
+      defaultValue: "digital",
+      label: "Unit bisnis",
+      options: [...units],
+      admin: { position: "sidebar" },
+    },
     {
       type: "row",
       fields: [
@@ -68,17 +66,13 @@ export const Transactions: CollectionConfig = {
           type: "select",
           required: true,
           label: "Kategori",
-          options: [...transactionCategories],
+          options: transactionCategories.map(({ label, value }) => ({ label, value })),
         },
         {
           name: "method",
           type: "select",
           label: "Metode",
-          options: [
-            { label: "Transfer", value: "transfer" },
-            { label: "QRIS", value: "qris" },
-            { label: "Tunai", value: "tunai" },
-          ],
+          options: [...paymentMethods],
         },
       ],
     },

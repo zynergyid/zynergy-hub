@@ -1,19 +1,6 @@
 import type { CollectionConfig } from "payload";
 import { isAdmin, isLoggedIn } from "@/lib/access";
-
-export const packages = [
-  { label: "Starter", value: "starter" },
-  { label: "Business", value: "business" },
-  { label: "Premium", value: "premium" },
-  { label: "Custom", value: "custom" },
-] as const;
-
-export const clientStatuses = [
-  { label: "Prospek", value: "prospek" },
-  { label: "Aktif", value: "aktif" },
-  { label: "Jatuh tempo", value: "jatuh-tempo" },
-  { label: "Berhenti", value: "berhenti" },
-] as const;
+import { businessTypes, clientStatuses, packages, units } from "@/lib/options";
 
 /** Paying clients of Zynergy Digital: who they are, what they pay, when it renews. */
 export const Clients: CollectionConfig = {
@@ -47,6 +34,15 @@ export const Clients: CollectionConfig = {
   },
   fields: [
     {
+      name: "unit",
+      type: "select",
+      required: true,
+      defaultValue: "digital",
+      label: "Unit bisnis",
+      options: [...units],
+      admin: { position: "sidebar" },
+    },
+    {
       type: "row",
       fields: [
         { name: "name", type: "text", required: true, label: "Nama usaha" },
@@ -65,15 +61,7 @@ export const Clients: CollectionConfig = {
       name: "businessType",
       type: "select",
       label: "Jenis usaha",
-      options: [
-        { label: "Kuliner / warung / catering", value: "kuliner" },
-        { label: "Klinik / kesehatan", value: "kesehatan" },
-        { label: "Laundry / jasa lokal", value: "jasa-lokal" },
-        { label: "Sekolah / lembaga", value: "sekolah" },
-        { label: "Toko / produk", value: "toko" },
-        { label: "Company profile / B2B", value: "b2b" },
-        { label: "Lainnya", value: "lainnya" },
-      ],
+      options: [...businessTypes],
     },
     {
       type: "row",

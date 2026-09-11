@@ -1,5 +1,110 @@
 import type { Client, Transaction } from "@/payload-types";
 import { getPayloadClient } from "@/lib/payload";
+import type { Unit } from "@/lib/options";
+
+export type UnitFilter = Unit | "semua";
+
+export interface LedgerRow {
+  tx: Transaction;
+  /** Running balance after this transaction (only meaningful without text/category filters). */
+  balance: number;
+}
+
+export interface Ledger {
+  rows: LedgerRow[];
+  opening: number;
+  closing: number;
+  masuk: number;
+  keluar: number;
+  filtered: boolean;
+}
+
+export interface UnitMonth {
+  masuk: number;
+  keluar: number;
+  balance: number;
+}
+
+const sameMonth = (a: Date, b: Date) =>
+  a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
+
+export function parseMonth(value?: string): Date {
+  const m = value && /^\d{4}-\d{2}$/.test(value) ? value : null;
+  if (m) return new Date(Number(m.slice(0, 4)), Number(m.slice(5, 7)) - 1, 1);
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), 1);
+}
+
+export const monthKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+
+async function allTransactions(unit: UnitFilter): Promise<Transaction[]> {
+  const payload = await getPayloadClient();
+  const { docs } = await payload.find({
+    collection: "transactions",
+    where: unit === "semua" ? {} : { unit: { equals: unit } },
+    sort: "date",
+    limit: 10000,
+    depth: 1,
+  });
+  return docs;
+}
+
+export async function getLedger(opts: {
+  unit: UnitFilter;
+  month: Date;
+  q?: string;
+  category?: string;
+}): Promise<Ledger> {
+  const docs = await allTransactions(opts.unit);
+  const q = opts.q?.trim().toLowerCase();
+  const filtered = Boolean(q || opts.category);
+
+  let running = 0;
+  let opening = 0;
+  let masuk = 0;
+  let keluar = 0;
+  const rows: LedgerRow[] = [];
+
+  for (const tx of docs) {
+    const d = new Date(tx.date);
+    const before = d < opts.month;
+    const inMonth = sameMonth(d, opts.month);
+    running += tx.type === "masuk" ? tx.amount : -tx.amount;
+    if (before) opening = running;
+    if (!inMonth) continue;
+    if (tx.type === "masuk") masuk += tx.amount;
+    else keluar += tx.amount;
+    const clientName = typeof tx.client === "object" && tx.client ? tx.client.name : "";
+    const hay = `${tx.reference ?? ""} ${tx.notes ?? ""} ${clientName} ${tx.category}`.toLowerCase();
+    if (q && !hay.includes(q)) continue;
+    if (opts.category && tx.category !== opts.category) continue;
+    rows.push({ tx, balance: running });
+  }
+
+  return {
+    rows: rows.reverse(),
+    opening,
+    closing: opening + masuk - keluar,
+    masuk,
+    keluar,
+    filtered,
+  };
+}
+
+export async function getUnitMonth(unit: Unit, month = new Date()): Promise<UnitMonth> {
+  const docs = await allTransactions(unit);
+  let masuk = 0;
+  let keluar = 0;
+  let balance = 0;
+  for (const tx of docs) {
+    balance += tx.type === "masuk" ? tx.amount : -tx.amount;
+    if (sameMonth(new Date(tx.date), month)) {
+      if (tx.type === "masuk") masuk += tx.amount;
+      else keluar += tx.amount;
+    }
+  }
+  return { masuk, keluar, balance };
+}
 
 export interface MonthPoint {
   label: Date;
@@ -7,66 +112,21 @@ export interface MonthPoint {
   keluar: number;
 }
 
-export interface FinanceSummary {
-  monthIn: number;
-  monthOut: number;
-  balance: number;
-  byCategory: { category: string; amount: number }[];
-  last12: MonthPoint[];
-  recent: Transaction[];
-}
-
-const sameMonth = (a: Date, b: Date) =>
-  a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
-
-export async function getFinanceSummary(): Promise<FinanceSummary> {
-  const payload = await getPayloadClient();
-  const { docs } = await payload.find({
-    collection: "transactions",
-    limit: 5000,
-    sort: "-date",
-    depth: 1,
-  });
-
+export async function getLast12(unit: UnitFilter): Promise<MonthPoint[]> {
+  const docs = await allTransactions(unit);
   const now = new Date();
-  let monthIn = 0;
-  let monthOut = 0;
-  let balance = 0;
-  const cat = new Map<string, number>();
-  const last12: MonthPoint[] = Array.from({ length: 12 }, (_, i) => ({
+  const points: MonthPoint[] = Array.from({ length: 12 }, (_, i) => ({
     label: new Date(now.getFullYear(), now.getMonth() - (11 - i), 1),
     masuk: 0,
     keluar: 0,
   }));
-
-  for (const t of docs) {
-    const d = new Date(t.date);
-    const signed = t.type === "masuk" ? t.amount : -t.amount;
-    balance += signed;
-    if (sameMonth(d, now)) {
-      if (t.type === "masuk") monthIn += t.amount;
-      else {
-        monthOut += t.amount;
-        cat.set(t.category, (cat.get(t.category) ?? 0) + t.amount);
-      }
-    }
-    const point = last12.find((p) => sameMonth(p.label, d));
-    if (point) {
-      if (t.type === "masuk") point.masuk += t.amount;
-      else point.keluar += t.amount;
-    }
+  for (const tx of docs) {
+    const p = points.find((pt) => sameMonth(pt.label, new Date(tx.date)));
+    if (!p) continue;
+    if (tx.type === "masuk") p.masuk += tx.amount;
+    else p.keluar += tx.amount;
   }
-
-  return {
-    monthIn,
-    monthOut,
-    balance,
-    byCategory: [...cat.entries()]
-      .map(([category, amount]) => ({ category, amount }))
-      .sort((a, b) => b.amount - a.amount),
-    last12,
-    recent: docs.slice(0, 8),
-  };
+  return points;
 }
 
 export async function getRenewals(days = 30): Promise<Client[]> {

@@ -1,41 +1,48 @@
 import type { Metadata, Viewport } from "next";
-import Link from "next/link";
+import { getSessionUser } from "@/lib/session";
+import { Sidebar } from "@/components/hub/Sidebar";
+import { MobileTabs } from "@/components/hub/MobileTabs";
 import { BrandMark } from "@/components/ui/BrandMark";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "Zynergy Hub", template: "%s | Zynergy Hub" },
-  description: "Aplikasi internal tim Zynergy: klien, keuangan, operasional.",
+  title: { default: "Zynergy Team", template: "%s | Zynergy Team" },
+  description: "Aplikasi internal tim Zynergy: klien, arus kas, alat kerja.",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "Zynergy Hub", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "Zynergy Team", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {
   themeColor: "#0B1B3F",
   width: "device-width",
   initialScale: 1,
+  viewportFit: "cover",
 };
 
-export default function HubLayout({ children }: LayoutProps<"/">) {
+export default async function HubLayout({ children }: LayoutProps<"/">) {
+  const user = await getSessionUser();
   return (
     <html lang="id">
       <body className="min-h-screen bg-surface text-ink antialiased">
-        <header className="sticky top-0 z-40 border-b border-line bg-white/90 backdrop-blur">
-          <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
-            <Link href="/" className="flex items-center gap-2" aria-label="Zynergy Hub">
-              <BrandMark className="size-7 text-navy" />
-              <span className="whitespace-nowrap text-base font-extrabold tracking-tight">
-                Zynergy <span className="text-muted">Hub</span>
-              </span>
-            </Link>
-            <nav className="flex items-center gap-3 text-xs font-medium text-muted sm:gap-4 sm:text-sm">
-              <Link href="/admin/collections/clients" className="hover:text-primary">Klien</Link>
-              <Link href="/admin/collections/transactions" className="hover:text-primary">Transaksi</Link>
-              <Link href="/admin" className="hover:text-primary">Admin</Link>
-            </nav>
+        {user ? (
+          <div className="flex min-h-screen">
+            <Sidebar role={user.role} userName={user.name} />
+            <div className="flex min-w-0 flex-1 flex-col">
+              <header className="flex h-14 items-center gap-2.5 border-b border-line bg-white px-4 md:hidden">
+                <BrandMark className="size-7 text-navy" />
+                <span className="text-base font-extrabold tracking-tight">
+                  Zynergy <span className="text-muted">Team</span>
+                </span>
+              </header>
+              <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-24 pt-5 sm:px-6 md:pb-10 md:pt-8">
+                {children}
+              </main>
+            </div>
+            <MobileTabs role={user.role} />
           </div>
-        </header>
-        <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">{children}</main>
+        ) : (
+          children
+        )}
       </body>
     </html>
   );

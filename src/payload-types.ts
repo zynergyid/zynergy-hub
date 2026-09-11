@@ -127,12 +127,13 @@ export interface UserAuthOperations {
  */
 export interface Client {
   id: number;
+  unit: 'digital' | 'supply';
   name: string;
   owner?: string | null;
   whatsapp: string;
   email?: string | null;
   city?: string | null;
-  businessType?: ('kuliner' | 'kesehatan' | 'jasa-lokal' | 'sekolah' | 'toko' | 'b2b' | 'lainnya') | null;
+  businessType?: ('kuliner' | 'kesehatan' | 'jasa-lokal' | 'sekolah' | 'toko' | 'b2b' | 'industri' | 'lainnya') | null;
   package?: ('starter' | 'business' | 'premium' | 'custom') | null;
   annualFee?: number | null;
   startDate?: string | null;
@@ -156,12 +157,17 @@ export interface Client {
  */
 export interface Transaction {
   id: number;
+  unit: 'digital' | 'supply';
   date: string;
   type: 'masuk' | 'keluar';
   amount: number;
   category:
     | 'pembayaran-klien'
     | 'perpanjangan'
+    | 'penjualan-barang'
+    | 'pemasukan-lain'
+    | 'pembelian-barang'
+    | 'logistik'
     | 'hosting-domain'
     | 'tools'
     | 'iklan'
@@ -312,6 +318,7 @@ export interface PayloadMigration {
  * via the `definition` "clients_select".
  */
 export interface ClientsSelect<T extends boolean = true> {
+  unit?: T;
   name?: T;
   owner?: T;
   whatsapp?: T;
@@ -339,6 +346,7 @@ export interface ClientsSelect<T extends boolean = true> {
  * via the `definition` "transactions_select".
  */
 export interface TransactionsSelect<T extends boolean = true> {
+  unit?: T;
   date?: T;
   type?: T;
   amount?: T;

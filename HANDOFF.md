@@ -4,12 +4,25 @@
 > yang sama dengan repo `zynergy` (tanpa em dash, jangan deploy tanpa perintah
 > "deploy", commit dan push biasa).
 
-## State 2026-09-11
+## State 2026-09-11 (sore)
 
-- Modul 1 (Klien) dan 2 (Keuangan) dibangun dan diverifikasi lokal:
-  dashboard di `/` (ringkasan bulan ini, saldo, grafik 12 bulan, jatuh tempo
-  30 hari, pengeluaran per kategori, transaksi terbaru, ekspor CSV), data
-  entry lewat `/admin`. Peran admin/finance/member diterapkan di access.
+- Modul 1 (Klien) dan 2 (Keuangan) dibangun dan diverifikasi lokal, dengan
+  UI custom (bukan admin Payload) untuk pemakaian harian:
+  app shell (sidebar 256px desktop, bottom tab HP; urutan alat dari
+  sederhana ke kompleks di `src/components/hub/nav.ts`), `/` ringkasan per
+  unit (Digital dan Supply), `/arus-kas` (segmented Digital/Supply/Semua,
+  navigasi bulan, kartu masuk/keluar/selisih/saldo, daftar terkelompok per
+  hari dengan saldo berjalan, filter kategori, cari, CSV per unit dan bulan,
+  form cepat "Catat" sebagai bottom sheet dengan server action), `/klien`
+  (kartu klien, status, hitung mundur perpanjangan, tombol WA), `/alat`
+  (peta alat yang akan datang). Panel `/admin` (berlabel Zynergy Team)
+  tetap ada untuk edit/hapus dan data jarang. Transaksi dan Klien punya
+  field `unit` (digital|supply). Peran admin/finance/member diterapkan di
+  access; member tidak melihat uang.
+- Jebakan: `payload migrate` bertanya interaktif kalau dev server (mode push)
+  sedang jalan; matikan dev server dulu atau jawab dengan `echo y |`. Untuk
+  lokal, reset database lebih cepat: drop + create `zynergy_hub`, migrate,
+  seed.
 - Repo privat `danish-deepskill/zynergy-hub` (push 2026-09-11), Vercel
   project `zynergy-hub` (scope `devdanzen-projects`) dengan domain
   team.zynergy.co.id terpasang dan PAYLOAD_SECRET production sudah diset.
