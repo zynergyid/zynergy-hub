@@ -125,6 +125,41 @@ export async function getOrderPayments(orderId: number): Promise<{ rows: Transac
   return { rows: docs, paid, cost };
 }
 
+export interface OrderBookEntry {
+  order: Order;
+  total: number;
+  paid: number;
+  remaining: number;
+}
+
+/** Receivables: shipped or invoiced POs not yet paid. Pipeline: accepted POs not yet shipped. */
+export async function getOrderBook(allowed: Unit[]): Promise<{ receivables: OrderBookEntry[]; pipeline: OrderBookEntry[] }> {
+  const open = await getOrders({ unit: "semua", allowed, filter: "berjalan" });
+  const paidBy = new Map<number, number>();
+  if (open.length) {
+    const payload = await getPayloadClient();
+    const { docs } = await payload.find({
+      collection: "transactions",
+      where: { and: [{ order: { in: open.map((o) => o.id) } }, { type: { equals: "masuk" } }] },
+      limit: 5000,
+      depth: 0,
+    });
+    for (const t of docs) {
+      const id = typeof t.order === "number" ? t.order : typeof t.order === "object" && t.order ? t.order.id : null;
+      if (id) paidBy.set(id, (paidBy.get(id) ?? 0) + t.amount);
+    }
+  }
+  const entries = open.map((order) => {
+    const total = orderTotal(order);
+    const paid = paidBy.get(order.id) ?? 0;
+    return { order, total, paid, remaining: Math.max(total - paid, 0) };
+  });
+  return {
+    receivables: entries.filter((e) => e.order.status === "dikirim" || e.order.status === "ditagih"),
+    pipeline: entries.filter((e) => e.order.status === "diterima" || e.order.status === "sourcing"),
+  };
+}
+
 export async function getClientOptions(allowed: Unit[]): Promise<ClientOption[]> {
   if (allowed.length === 0) return [];
   const payload = await getPayloadClient();

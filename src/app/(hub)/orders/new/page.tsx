@@ -7,6 +7,8 @@ import { PageHeader } from "@/components/hub/PageHeader";
 import { OrderForm } from "../OrderForm";
 
 export const metadata: Metadata = { title: "PO baru" };
+// The PDF import server action runs in this route; give it room for slow reads.
+export const maxDuration = 60;
 
 export default async function NewOrderPage({ searchParams }: { searchParams: Promise<Search> }) {
   const user = await getSessionUser();

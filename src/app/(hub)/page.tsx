@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowDownLeft, ArrowUpRight, CalendarClock, Users, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, CalendarClock, Download, Users, Wallet } from "lucide-react";
 import type { Client } from "@/payload-types";
 import { canSeeMoney, getSessionUser } from "@/lib/session";
 import {
@@ -11,6 +11,7 @@ import {
   getRenewals,
   fundingHint,
   getUnitMonth,
+  monthKey,
   pctChange,
   resolveUnit,
 } from "@/lib/finance";
@@ -28,6 +29,7 @@ import { OrdersCard } from "@/components/hub/OrdersCard";
 import { PageHeader } from "@/components/hub/PageHeader";
 import { UnitTabs } from "@/components/hub/UnitTabs";
 import { deadlinePill, deadlineTone } from "@/components/hub/deadline";
+import { buttonOutline } from "@/components/hub/form";
 
 export const dynamic = "force-dynamic";
 
@@ -82,6 +84,12 @@ export default async function HubHome({ searchParams }: { searchParams: Promise<
     <div className="space-y-6">
       <PageHeader title={`Halo, ${user.name.split(" ")[0]}`} subtitle={`Ringkasan ${formatMonthLong(now)}.`}>
         {money && <UnitTabs path="/" unit={unit} allowed={allowed} />}
+        {money && (
+          <a href={`/api/export/financial-report?unit=${unit}&month=${monthKey(now)}`} className={buttonOutline} title="Laporan keuangan ringkas bulan ini (Excel): laba rugi basis kas, posisi kas, piutang PO, arus kas">
+            <Download className="size-4" />
+            Laporan Excel
+          </a>
+        )}
       </PageHeader>
 
       {money ? (

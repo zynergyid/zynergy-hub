@@ -75,6 +75,16 @@ export default async function OrderDetailPage({ params, searchParams }: { params
             · PO tanggal {formatDate(order.orderDate)}
             {order.incoterm ? ` · ${order.incoterm}` : ""}
           </p>
+          {(order.buyerName || order.buyerEmail) && (
+            <p className="text-sm text-muted">
+              Buyer: <span className="font-semibold">{order.buyerName ?? "-"}</span>
+              {order.buyerEmail && (
+                <>
+                  {" "}· <a href={`mailto:${order.buyerEmail}`} className="hover:text-primary">{order.buyerEmail}</a>
+                </>
+              )}
+            </p>
+          )}
         </div>
         {canPay && (
           <Link href={addPaymentHref} className="inline-flex items-center gap-1.5 rounded-xl bg-secondary px-4 py-2.5 text-sm font-bold text-white hover:bg-secondary-dark">

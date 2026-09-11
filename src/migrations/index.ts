@@ -5,6 +5,8 @@ import * as migration_20260911_124322_supply_orders from './20260911_124322_supp
 import * as migration_20260911_125832_rename_unit_products_to_apps from './20260911_125832_rename_unit_products_to_apps';
 import * as migration_20260911_131101_funding_categories from './20260911_131101_funding_categories';
 import * as migration_20260911_132812_staff_role_documents from './20260911_132812_staff_role_documents';
+import * as migration_20260911_152205_order_buyer from './20260911_152205_order_buyer';
+import * as migration_20260911_153950_ai_usage from './20260911_153950_ai_usage';
 
 export const migrations = [
   {
@@ -40,6 +42,16 @@ export const migrations = [
   {
     up: migration_20260911_132812_staff_role_documents.up,
     down: migration_20260911_132812_staff_role_documents.down,
-    name: '20260911_132812_staff_role_documents'
+    name: '20260911_132812_staff_role_documents',
+  },
+  {
+    up: migration_20260911_152205_order_buyer.up,
+    down: migration_20260911_152205_order_buyer.down,
+    name: '20260911_152205_order_buyer',
+  },
+  {
+    up: migration_20260911_153950_ai_usage.up,
+    down: migration_20260911_153950_ai_usage.down,
+    name: '20260911_153950_ai_usage'
   },
 ];

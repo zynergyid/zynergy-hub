@@ -10,6 +10,7 @@ import { categoryLabel, transactionCategories, unitLabel, type Unit } from "@/li
 import { cn } from "@/lib/cn";
 import { buildHref, first, type Search } from "@/lib/search";
 import { EmptyState } from "@/components/hub/EmptyState";
+import { buttonOutline } from "@/components/hub/form";
 import { UnitTabs } from "@/components/hub/UnitTabs";
 import { KpiCard } from "@/components/hub/KpiCard";
 import { PageHeader } from "@/components/hub/PageHeader";
@@ -110,11 +111,11 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
   return (
     <div className="space-y-5">
       <PageHeader title="Arus Kas" subtitle="Uang masuk dan keluar per unit bisnis.">
-        <a
-          href={`/api/export/transactions?unit=${unit}&month=${monthKey(month)}`}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm font-semibold hover:border-primary/40"
-        >
+        <a href={`/api/export/cash-flow?unit=${unit}&month=${monthKey(month)}`} className={buttonOutline} title="Laporan Excel bulan ini, siap cetak">
           <Download className="size-4" />
+          Excel
+        </a>
+        <a href={`/api/export/transactions?unit=${unit}&month=${monthKey(month)}`} className="text-xs font-semibold text-muted hover:text-primary" title="Data mentah untuk impor ke software akuntansi">
           CSV
         </a>
         {editable && (

@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { Order } from "@/payload-types";
 import { getPayloadClient } from "@/lib/payload";
+import { extractPurchaseOrder, type AiCallUsage } from "@/lib/ai/openai";
+import { getClientOptions } from "@/lib/orders";
+import { matchClient, type OrderDraft } from "@/lib/order-draft";
+import { formatIDR } from "@/lib/format";
 import { canEditMoney, getSessionUser } from "@/lib/session";
 import { canTouchOrder, canWriteUnit } from "@/lib/access";
 import { dateOrNull, digits, pick, text } from "@/lib/form-data";
@@ -59,6 +63,8 @@ export async function saveOrder(_prev: OrderFormState, formData: FormData): Prom
   if (!clientId) return err("Pilih klien.");
   const orderDate = dateOrNull(text(formData, "orderDate"));
   if (!orderDate) return err("Tanggal PO wajib diisi.");
+  const buyerEmail = text(formData, "buyerEmail");
+  if (buyerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail)) return err("Format email buyer tidak valid.");
 
   let raw: unknown;
   try {
@@ -111,6 +117,8 @@ export async function saveOrder(_prev: OrderFormState, formData: FormData): Prom
       client: clientId,
       orderDate,
       deliveryDate: dateOrNull(text(formData, "deliveryDate")),
+      buyerName: text(formData, "buyerName") || null,
+      buyerEmail: buyerEmail || null,
       shipTo: text(formData, "shipTo") || null,
       incoterm: text(formData, "incoterm") || null,
       paymentTermsDays: terms === "" ? 30 : Math.max(0, Number(terms) || 0),
@@ -132,6 +140,86 @@ export async function saveOrder(_prev: OrderFormState, formData: FormData): Prom
   } catch (error) {
     console.error("saveOrder failed:", error);
     return err("Gagal menyimpan. Coba lagi.");
+  }
+}
+
+export type ImportResult =
+  | { status: "ok"; draft: OrderDraft; warnings: string[]; usage: AiCallUsage; buyerCompany: string | null }
+  | { status: "error"; message: string };
+
+const isoDay = (v: string | null) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : undefined);
+
+/** Read a buyer's PO PDF and return a form draft. Nothing is saved until the person presses Simpan. */
+export async function importOrderPdf(formData: FormData): Promise<ImportResult> {
+  const user = await getSessionUser();
+  if (!user || !canEditMoney(user)) return { status: "error", message: "Hanya admin, finance, dan staf yang bisa mengimpor PO." };
+  const unit = pick(units, text(formData, "unit")) ?? "supply";
+  if (!canWriteUnit(user, unit, true)) return { status: "error", message: "Anda tidak punya akses ke unit ini." };
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) return { status: "error", message: "Pilih PDF PO dulu." };
+  if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) return { status: "error", message: "Impor hanya menerima PDF." };
+  if (file.size > MAX_UPLOAD_BYTES) return { status: "error", message: "Berkas maksimal 8MB." };
+
+  try {
+    const { data, usage } = await extractPurchaseOrder(file);
+    const clients = await getClientOptions([unit]);
+    const client = matchClient(data.buyer_company, clients);
+    const items = data.items
+      .filter((i) => str(i.description))
+      .map((i) => ({
+        material: str(i.material),
+        partNumber: str(i.part_number),
+        description: str(i.description).slice(0, 200),
+        qty: Number(i.qty) || 0,
+        uom: str(i.uom) || "each",
+        unitPrice: i.unit_price === null ? null : Number(i.unit_price) || 0,
+      }));
+
+    const warnings: string[] = [];
+    if (!data.po_number) warnings.push("Nomor PO tidak terbaca, isi manual.");
+    if (!isoDay(data.order_date)) warnings.push("Tanggal PO tidak terbaca, isi manual.");
+    if (!client) {
+      warnings.push(
+        data.buyer_company
+          ? `Klien "${data.buyer_company}" belum ada di unit ini. Pilih klien yang ada atau buat dulu.`
+          : "Nama pembeli tidak terbaca, pilih klien manual.",
+      );
+    }
+    if (items.length === 0) warnings.push("Tidak ada item yang terbaca.");
+    if (items.some((i) => i.unitPrice === null)) warnings.push("Ada item tanpa harga satuan, lengkapi manual.");
+    const sum = items.reduce((s, i) => s + i.qty * (i.unitPrice ?? 0), 0);
+    if (data.total_excl_tax && Math.abs(sum - data.total_excl_tax) > 1) {
+      warnings.push(`Jumlah item ${formatIDR(sum)} berbeda dari total di PO ${formatIDR(data.total_excl_tax)}. Periksa qty dan harga.`);
+    }
+    if (data.currency && data.currency.toUpperCase() !== "IDR") warnings.push(`Mata uang di PO ${data.currency}; Hub mencatat dalam Rupiah.`);
+
+    if (usage.model !== "mock") {
+      const payload = await getPayloadClient();
+      await payload.create({
+        collection: "ai-usage",
+        data: { feature: "po-import", model: usage.model, unit, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens, costUsd: usage.costUsd, user: user.id, note: file.name },
+      });
+    }
+
+    const draft: OrderDraft = {
+      number: data.po_number ?? undefined,
+      revision: data.revision ?? 0,
+      clientId: client?.id,
+      buyerName: data.buyer_name ?? undefined,
+      buyerEmail: data.buyer_email ?? undefined,
+      orderDate: isoDay(data.order_date),
+      deliveryDate: isoDay(data.delivery_date),
+      shipTo: data.ship_to ?? undefined,
+      incoterm: data.incoterm ?? undefined,
+      paymentTermsDays: data.payment_terms_days ?? 30,
+      items,
+      subtotal: items.length ? null : (data.total_excl_tax ?? null),
+      notes: data.notes ?? undefined,
+    };
+    return { status: "ok", draft, warnings, usage, buyerCompany: data.buyer_company };
+  } catch (error) {
+    console.error("importOrderPdf failed:", error);
+    return { status: "error", message: error instanceof Error ? error.message : "Gagal membaca PDF." };
   }
 }
 

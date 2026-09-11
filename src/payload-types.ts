@@ -72,6 +72,7 @@ export interface Config {
     documents: Document;
     transactions: Transaction;
     receipts: Receipt;
+    'ai-usage': AiUsage;
     users: User;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -85,6 +86,7 @@ export interface Config {
     documents: DocumentsSelect<false> | DocumentsSelect<true>;
     transactions: TransactionsSelect<false> | TransactionsSelect<true>;
     receipts: ReceiptsSelect<false> | ReceiptsSelect<true>;
+    'ai-usage': AiUsageSelect<false> | AiUsageSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -172,6 +174,8 @@ export interface Order {
   number: string;
   revision?: number | null;
   client: number | Client;
+  buyerName?: string | null;
+  buyerEmail?: string | null;
   orderDate: string;
   deliveryDate?: string | null;
   shipTo?: string | null;
@@ -289,6 +293,23 @@ export interface Receipt {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ai-usage".
+ */
+export interface AiUsage {
+  id: number;
+  feature: 'po-import';
+  model: string;
+  unit: 'digital' | 'apps' | 'supply';
+  inputTokens: number;
+  outputTokens: number;
+  costUsd: number;
+  user?: (number | null) | User;
+  note?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
@@ -364,6 +385,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'receipts';
         value: number | Receipt;
+      } | null)
+    | ({
+        relationTo: 'ai-usage';
+        value: number | AiUsage;
       } | null)
     | ({
         relationTo: 'users';
@@ -457,6 +482,8 @@ export interface OrdersSelect<T extends boolean = true> {
   number?: T;
   revision?: T;
   client?: T;
+  buyerName?: T;
+  buyerEmail?: T;
   orderDate?: T;
   deliveryDate?: T;
   shipTo?: T;
@@ -544,6 +571,22 @@ export interface ReceiptsSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ai-usage_select".
+ */
+export interface AiUsageSelect<T extends boolean = true> {
+  feature?: T;
+  model?: T;
+  unit?: T;
+  inputTokens?: T;
+  outputTokens?: T;
+  costUsd?: T;
+  user?: T;
+  note?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

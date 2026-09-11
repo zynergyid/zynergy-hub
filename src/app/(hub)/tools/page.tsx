@@ -1,8 +1,29 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getSessionUser } from "@/lib/session";
+import { Sparkles } from "lucide-react";
+import { canSeeMoney, getSessionUser } from "@/lib/session";
+import { getPayloadClient } from "@/lib/payload";
+import { formatIDR, formatMonthLong } from "@/lib/format";
+import { usdToIdrApprox } from "@/lib/options";
+import { KpiCard } from "@/components/hub/KpiCard";
 import { NavIcon } from "@/components/hub/NavIcon";
 import type { IconName } from "@/components/hub/nav";
+
+export const dynamic = "force-dynamic";
+
+/** What the PDF importer cost this month, from the rows each call writes. */
+async function getAiSpend(allowed: string[]) {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const payload = await getPayloadClient();
+  const { docs } = await payload.find({
+    collection: "ai-usage",
+    where: { and: [{ createdAt: { greater_than_equal: monthStart } }, { unit: { in: allowed.length ? allowed : ["none"] } }] },
+    limit: 1000,
+    depth: 0,
+  });
+  return { calls: docs.length, costUsd: docs.reduce((s, d) => s + d.costUsd, 0) };
+}
 
 export const metadata: Metadata = { title: "Alat" };
 
@@ -40,12 +61,24 @@ const tools: { id: string; icon: IconName; title: string; level: string; text: s
 export default async function AlatPage() {
   const user = await getSessionUser();
   if (!user) redirect("/login");
+  const spend = canSeeMoney(user) ? await getAiSpend(user.units) : null;
   return (
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">Alat</h1>
-        <p className="text-sm text-muted">Urut dari yang paling sederhana. Semua masih dalam rencana; klien dan arus kas dulu.</p>
+        <p className="text-sm text-muted">Impor PDF PO sudah jalan di halaman PO baru. Yang lain urut dari yang paling sederhana, masih dalam rencana.</p>
       </div>
+      {spend && (
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <KpiCard
+            icon={Sparkles}
+            label={`Biaya AI ${formatMonthLong(new Date())}`}
+            value={`$${spend.costUsd.toFixed(3)}`}
+            hint={`sekitar ${formatIDR(spend.costUsd * usdToIdrApprox)} · ${spend.calls} impor PDF · angka resmi di dashboard OpenAI`}
+            tone="primary"
+          />
+        </div>
+      )}
       <ul className="grid gap-3 sm:grid-cols-2">
         {tools.map((t) => (
           <li key={t.id} id={t.id} className="rounded-2xl border border-line bg-white p-5">

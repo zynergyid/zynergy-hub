@@ -4,6 +4,7 @@ import { buildConfig } from "payload";
 import { postgresAdapter } from "@payloadcms/db-postgres";
 import { vercelBlobStorage } from "@payloadcms/storage-vercel-blob";
 import sharp from "sharp";
+import { AiUsage } from "@/collections/AiUsage";
 import { Clients } from "@/collections/Clients";
 import { Documents } from "@/collections/Documents";
 import { Orders } from "@/collections/Orders";
@@ -19,7 +20,7 @@ export default buildConfig({
     // The team uses the custom screens; the Payload panel is not served at all.
     disable: true,
   },
-  collections: [Clients, Orders, Documents, Transactions, Receipts, Users],
+  collections: [Clients, Orders, Documents, Transactions, Receipts, AiUsage, Users],
   secret: process.env.PAYLOAD_SECRET || "",
   db: postgresAdapter({
     pool: {

@@ -33,6 +33,7 @@ export const transactionCategories = [
   { label: "Prive / dividen", value: "prive-dividen", type: "keluar", kind: "pendanaan" },
 ] as const;
 export type TransactionCategory = (typeof transactionCategories)[number]["value"];
+export const categoryType = new Map<string, "masuk" | "keluar">(transactionCategories.map((c) => [c.value, c.type]));
 const financingCategories = new Set<string>(transactionCategories.filter((c) => c.kind === "pendanaan").map((c) => c.value));
 export const isFinancing = (category: string) => financingCategories.has(category);
 
@@ -90,6 +91,15 @@ export const documentKinds = [
   { label: "Lainnya", value: "lainnya" },
 ] as const;
 export const documentKindLabel = new Map<string, string>(documentKinds.map((d) => [d.value, d.label]));
+
+/** USD per million tokens (input, output) for the models the Hub calls. Update when OpenAI changes prices. */
+export const aiModels: Record<string, { input: number; output: number }> = {
+  "gpt-5-mini": { input: 0.25, output: 2 },
+};
+/** Rough rate for showing AI cost in Rupiah; the exact bill is on the provider's dashboard. */
+export const usdToIdrApprox = 16500;
+
+export const aiFeatures = [{ label: "Impor PDF PO", value: "po-import" }] as const;
 
 export const categoryLabel = new Map<string, string>(
   transactionCategories.map((c) => [c.value, c.label]),

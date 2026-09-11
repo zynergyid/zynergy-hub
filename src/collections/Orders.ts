@@ -59,6 +59,14 @@ export const Orders: CollectionConfig = {
     },
     { name: "client", type: "relationship", relationTo: "clients", required: true, label: "Klien", ...moneyOnly },
     {
+      // Big buyers have many purchasers; the person on this PO lives here, not on the client.
+      type: "row",
+      fields: [
+        { name: "buyerName", type: "text", label: "Nama buyer", ...moneyOnly },
+        { name: "buyerEmail", type: "email", label: "Email buyer", ...moneyOnly },
+      ],
+    },
+    {
       type: "row",
       fields: [
         { name: "orderDate", type: "date", required: true, label: "Tanggal PO", ...moneyOnly },

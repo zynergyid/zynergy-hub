@@ -169,6 +169,39 @@ export async function getCategoryBreakdown(unit: UnitFilter, allowed: Unit[], mo
     .sort((a, b) => b.amount - a.amount);
 }
 
+/** Amounts per category and unit inside [from, to), split into business cash and financing. */
+export interface Pnl {
+  units: Unit[];
+  operating: Map<string, Partial<Record<Unit, number>>>;
+  financing: Map<string, Partial<Record<Unit, number>>>;
+}
+
+export async function getPnl(allowed: Unit[], from: Date, to: Date): Promise<Pnl> {
+  const docs = await allTransactions("semua", allowed);
+  const operating = new Map<string, Partial<Record<Unit, number>>>();
+  const financing = new Map<string, Partial<Record<Unit, number>>>();
+  for (const tx of docs) {
+    const d = new Date(tx.date);
+    if (d < from || d >= to) continue;
+    const target = isFinancing(tx.category) ? financing : operating;
+    const row = target.get(tx.category) ?? {};
+    row[tx.unit] = (row[tx.unit] ?? 0) + tx.amount;
+    target.set(tx.category, row);
+  }
+  return { units: allowed, operating, financing };
+}
+
+/** Cash balance per unit from all transactions dated before `end`. */
+export async function getBalancesAt(allowed: Unit[], end: Date): Promise<Partial<Record<Unit, number>>> {
+  const docs = await allTransactions("semua", allowed);
+  const out: Partial<Record<Unit, number>> = {};
+  for (const tx of docs) {
+    if (new Date(tx.date) >= end) continue;
+    out[tx.unit] = (out[tx.unit] ?? 0) + (tx.type === "masuk" ? tx.amount : -tx.amount);
+  }
+  return out;
+}
+
 /** Percentage change, null when there is no baseline. */
 export function pctChange(now: number, prev: number): number | null {
   if (!prev) return null;

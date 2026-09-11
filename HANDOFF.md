@@ -39,6 +39,9 @@
   koleksi. Mode push langsung menerapkan skema baru ke database lokal, lalu
   `migrate` gagal dengan "already exists". Obatnya reset database seperti di
   atas; berkas migrasinya sendiri tetap benar dan itulah yang dipakai prod.
+  Jebakan ketiga: `next build` bisa panic (Turbopack "generate_source_map
+  was canceled") kalau dijalankan saat dev server hidup dengan cache lama;
+  obatnya matikan dev server, `rm -rf .next`, build lagi.
 - LIVE di https://hub.zynergy.co.id (dan zynergy-hub.vercel.app) sejak
   2026-09-11 malam, deploy pertama dari commit 3e5c90c atas perintah
   "deploy". Repo privat `danish-deepskill/zynergy-hub`, Vercel project
@@ -77,6 +80,67 @@
   peran, jabatan, unit, atur ulang password, hapus. `/profile`: tiap orang
   mengubah nama, email, dan password sendiri (wajib setelah login pertama
   dengan password sementara).
+
+## Laporan Keuangan Ringkas untuk komisaris (2026-09-11 malam)
+
+- Tombol "Laporan Excel" di Ringkasan (peran uang, termasuk Pengawas)
+  mengunduh `/api/export/financial-report?unit=&month=`
+  (`src/lib/export/financial-report-xlsx.ts`): lembar "Ringkasan" berisi
+  laba rugi basis kas bulan ini dan tahun berjalan per unit + total
+  (pendapatan per kategori, beban per kategori, surplus), pendanaan bersih,
+  posisi kas akhir bulan per unit, ringkasan piutang PO dan PO berjalan,
+  blok tanda tangan Disiapkan/Diperiksa; lembar "Piutang & PO" (rincian PO
+  dikirim/ditagih belum lunas dengan jatuh tempo dan keterlambatan, dan PO
+  diterima belum dikirim); lalu lampiran "Arus Kas" dan "Per Kategori"
+  (dipakai ulang dari `addCashFlowSheets`). Gaya bersama di
+  `src/lib/export/style.ts`. Data: `getPnl`, `getBalancesAt` (finance.ts),
+  `getOrderBook` (orders.ts).
+- Diberi label "basis kas" secara eksplisit: laporan keuangan resmi sesuai
+  SAK (neraca, laba rugi akrual, catatan) tetap disusun akuntan PT; Hub
+  tidak akan menjadi software akuntansi (keputusan 2026-09-11).
+
+## Laporan Excel Arus Kas (2026-09-11 malam)
+
+- Tombol "Excel" di Arus Kas mengunduh `/api/export/cash-flow?unit=&month=`:
+  workbook bergaya (exceljs, `src/lib/export/cash-flow-xlsx.ts`) dengan logo
+  (PNG di-inline base64 di `export/logo.ts` karena serverless tidak bisa
+  membaca `public/` lewat fs), judul, unit dan periode, blok ringkasan
+  (saldo awal, masuk/keluar operasional, pendanaan bila ada, saldo akhir),
+  tabel transaksi dengan saldo berjalan, format Rupiah, total berformula,
+  freeze header, autofilter, zebra, siap cetak landscape A4 dengan footer
+  halaman; lembar kedua "Per Kategori". Angka dari `getLedger`, sama dengan
+  layar. CSV mentah tetap ada sebagai tautan kecil untuk impor ke software
+  akuntansi.
+
+## Impor PDF PO dengan OpenAI (2026-09-11 malam)
+
+- Tombol "Baca PDF dan isi form" di `/orders/new` (bagian atas OrderForm).
+  Alur: pilih PDF di kolom "PDF PO pembeli", tekan Baca, server action
+  `importOrderPdf` mengirim PDF (base64) ke OpenAI Responses API model
+  `gpt-5-mini` dengan JSON schema strict (`src/lib/ai/openai.ts`), hasilnya
+  jadi `OrderDraft` yang mengisi ulang form (blok field diberi `key` agar
+  defaultValue ter-render ulang; input file di luar blok itu supaya PDF-nya
+  tetap terpilih dan ikut tersimpan sebagai dokumen PO saat Simpan).
+- Klien dicocokkan dari nama pembeli di PDF ke klien unit itu
+  (`matchClient` di lib/orders: persis, lalu mengandung, lalu kata pertama).
+  Peringatan ditampilkan untuk: nomor/tanggal tidak terbaca, klien tidak
+  ketemu, item tanpa harga, jumlah item beda dari total PO, mata uang bukan
+  IDR. Tidak ada yang tersimpan sebelum Simpan ditekan.
+- Kunci: env `OPENAI_API_KEY` di Vercel (Production, Sensitive), dipasang
+  Danish sendiri, batas belanja diatur di dashboard OpenAI. Di lokal tanpa
+  kunci, `extractPurchaseOrder` mengembalikan contoh berlabel "mock"
+  (hanya di NODE_ENV development) agar layar bisa diuji gratis. Untuk uji
+  nyata lokal, Danish menaruh kunci di `.env.local` (di-ignore git), Claude
+  tidak pernah membaca atau menampilkan nilainya.
+- Pemakaian dicatat di koleksi `ai-usage` (feature, model, unit, token
+  masuk/keluar, biaya USD dari tabel `aiModels` di options.ts, user, nama
+  berkas). Halaman Alat menampilkan "Biaya AI bulan ini" untuk peran uang,
+  dengan konversi kasar `usdToIdrApprox`. Angka resmi tetap di dashboard
+  OpenAI (Usage per project dan per kunci).
+- Keputusan penyedia: Danish memilih OpenAI (GPT-5 mini, $0,25/$2 per juta
+  token) setelah membandingkan harga; sekitar Rp50 per PO dua halaman.
+  Kode dibuat tanpa SDK (fetch langsung), jadi ganti penyedia hanya
+  menyentuh `src/lib/ai/openai.ts`.
 
 ## Kategori pendanaan (2026-09-11 malam)
 
@@ -151,7 +215,9 @@ tidak pernah ke skrip seed; data nyata diisi lewat UI di prod.
 
 - Koleksi `orders` (`src/collections/Orders.ts`): `unit`, `number`,
   `revision`, `client` (relasi), `orderDate`, `deliveryDate`, `shipTo`,
-  `incoterm`, `paymentTermsDays` (default 30), `currency`, `items[]`
+  `incoterm`, `paymentTermsDays` (default 30), `buyerName`, `buyerEmail` (buyer per PO,
+  ditambah 2026-09-11 malam karena satu perusahaan punya banyak buyer; kontak
+  di data klien hanya default), `currency`, `items[]`
   (material, partNumber, description, qty, uom, unitPrice), `subtotal`,
   `status` (diterima, sourcing, dikirim, ditagih, dibayar, batal),
   `invoiceNumber`, `invoiceDate`, `dueDate`, `documents[]` (kind + upload ke
