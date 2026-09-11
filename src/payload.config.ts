@@ -15,7 +15,13 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
 export default buildConfig({
   admin: {
     user: Users.slug,
-    meta: { titleSuffix: " | Zynergy Hub" },
+    components: {
+      graphics: {
+        Logo: "@/components/admin/Branding#Logo",
+        Icon: "@/components/admin/Branding#Icon",
+      },
+    },
+    meta: { titleSuffix: " | Zynergy Team" },
   },
   collections: [Clients, Transactions, Receipts, Users],
   editor: lexicalEditor(),
