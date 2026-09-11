@@ -1,0 +1,133 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Zynergy "Synergy Blue" design tokens */
+@theme {
+  --color-primary: #2563eb;
+  --color-primary-dark: #1d4ed8;
+  --color-primary-soft: #eff4ff;
+  --color-secondary: #10b981;
+  --color-secondary-dark: #0e9f6e;
+  --color-secondary-soft: #e7f8f1;
+  --color-ink: #0f1b33;
+  --color-muted: #55617a;
+  --color-surface: #fbfcfe;
+  --color-surface-soft: #f4f7fb;
+  --color-line: #e6eaf2;
+  /* Deep Navy: premium dark treatment for group-level "brand moments" only */
+  --color-navy: #0b1b3f;
+  --color-navy-light: #12275c;
+  --color-navy-ink: #b7c4de;
+  --color-navy-accent: #7ea6f8;
+  /* Steel + amber: industrial identity, dipakai khusus halaman Supply */
+  --color-steel: #1c2530;
+  --color-steel-light: #2b3644;
+  --color-steel-ink: #aeb9c9;
+  --color-amber: #f59e0b;
+  --color-amber-dark: #b45309;
+  --color-amber-soft: #fef3c7;
+
+  /* Marquee klien: strip logo berjalan (dipakai halaman Supply) */
+  --animate-marquee: marquee 45s linear infinite;
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+/* Blog article body (rendered from Payload lexical rich text) */
+.article {
+  color: var(--color-ink);
+  font-size: 1.0625rem;
+  line-height: 1.8;
+}
+
+.article :is(h2, h3, h4) {
+  margin-top: 2em;
+  margin-bottom: 0.6em;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.article h2 {
+  font-size: 1.5rem;
+}
+
+.article h3 {
+  font-size: 1.25rem;
+}
+
+.article h4 {
+  font-size: 1.0625rem;
+}
+
+.article p {
+  margin-bottom: 1.25em;
+}
+
+.article :is(ul, ol) {
+  margin-bottom: 1.25em;
+  padding-left: 1.5em;
+}
+
+.article ul {
+  list-style: disc;
+}
+
+.article ol {
+  list-style: decimal;
+}
+
+.article li {
+  margin-bottom: 0.4em;
+}
+
+.article a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.article blockquote {
+  margin: 1.5em 0;
+  border-left: 3px solid var(--color-primary);
+  padding-left: 1.25em;
+  color: var(--color-muted);
+  font-style: italic;
+}
+
+.article img {
+  margin: 1.5em 0;
+  border-radius: 1rem;
+  max-width: 100%;
+}
+
+.article :is(pre, code) {
+  border-radius: 0.5rem;
+  background: var(--color-surface-soft);
+  font-size: 0.9em;
+}
+
+.article code {
+  padding: 0.15em 0.4em;
+}
+
+.article pre {
+  margin-bottom: 1.25em;
+  overflow-x: auto;
+  padding: 1em;
+}

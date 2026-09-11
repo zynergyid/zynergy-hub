@@ -1,0 +1,4 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "DATABASE_URI=$DATABASE_URL_UNPOOLED pnpm payload migrate && pnpm build"
+}
