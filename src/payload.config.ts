@@ -36,6 +36,9 @@ export default buildConfig({
     vercelBlobStorage({
       enabled: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
       collections: { receipts: true, documents: true },
+      // Files are served through Payload's access-checked route, never by the
+      // blob URL; the random suffix keeps that URL unguessable anyway.
+      addRandomSuffix: true,
       token: process.env.BLOB_READ_WRITE_TOKEN || "",
     }),
   ],
