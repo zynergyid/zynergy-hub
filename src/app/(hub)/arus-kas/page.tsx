@@ -8,6 +8,7 @@ import { getLedger, getUnitMonth, monthKey, parseMonth, pctChange, type UnitFilt
 import { dateKey, dayLabel, formatDate, formatIDR, formatMonthLong } from "@/lib/format";
 import { categoryLabel, transactionCategories, units, type Unit } from "@/lib/options";
 import { cn } from "@/lib/cn";
+import { buildHref, first, type Search } from "@/lib/search";
 import { SegmentedLinks } from "@/components/hub/SegmentedLinks";
 import { KpiCard } from "@/components/hub/KpiCard";
 import { PageHeader } from "@/components/hub/PageHeader";
@@ -17,23 +18,11 @@ import { QuickAdd, type EditingTx } from "./QuickAdd";
 export const metadata: Metadata = { title: "Arus Kas" };
 export const dynamic = "force-dynamic";
 
-type Search = Record<string, string | string[] | undefined>;
-const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
-
-function buildHref(base: Search, patch: Record<string, string | undefined>) {
-  const params = new URLSearchParams();
-  const merged = { ...base, ...patch };
-  for (const [k, v] of Object.entries(merged)) {
-    const val = first(v as string | string[] | undefined);
-    if (val) params.set(k, val);
-  }
-  const qs = params.toString();
-  return qs ? `/arus-kas?${qs}` : "/arus-kas";
-}
+const href = (base: Search, patch: Record<string, string | undefined> = {}) => buildHref("/arus-kas", base, patch);
 
 export default async function ArusKasPage({ searchParams }: { searchParams: Promise<Search> }) {
   const user = await getSessionUser();
-  if (!user) redirect("/admin/login");
+  if (!user) redirect("/masuk");
   if (user.role !== "admin" && user.role !== "finance") redirect("/");
 
   const sp = await searchParams;
@@ -79,7 +68,7 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
       };
     }
   }
-  const closeHref = buildHref(base, { edit: undefined });
+  const closeHref = href(base, { edit: undefined });
 
   const groups = new Map<string, typeof ledger.rows>();
   for (const row of ledger.rows) {
@@ -105,16 +94,16 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
         <SegmentedLinks
           ariaLabel="Unit bisnis"
           segments={[
-            ...units.map((u) => ({ label: u.label, href: buildHref(base, { unit: u.value }), active: unit === u.value })),
-            { label: "Semua", href: buildHref(base, { unit: "semua" }), active: unit === "semua" },
+            ...units.map((u) => ({ label: u.label, href: href(base, { unit: u.value }), active: unit === u.value })),
+            { label: "Semua", href: href(base, { unit: "semua" }), active: unit === "semua" },
           ]}
         />
         <div className="inline-flex items-center rounded-xl border border-line bg-white">
-          <Link href={buildHref(base, { bulan: monthKey(prev) })} aria-label="Bulan sebelumnya" className="p-2 text-muted hover:text-ink">
+          <Link href={href(base, { bulan: monthKey(prev) })} aria-label="Bulan sebelumnya" className="p-2 text-muted hover:text-ink">
             <ChevronLeft className="size-4" />
           </Link>
           <span className="min-w-36 text-center text-sm font-semibold">{formatMonthLong(month)}</span>
-          <Link href={buildHref(base, { bulan: monthKey(next) })} aria-label="Bulan berikutnya" className="p-2 text-muted hover:text-ink">
+          <Link href={href(base, { bulan: monthKey(next) })} aria-label="Bulan berikutnya" className="p-2 text-muted hover:text-ink">
             <ChevronRight className="size-4" />
           </Link>
         </div>
@@ -142,11 +131,11 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
 
       {usedCategories.size > 0 && (
         <div className="flex flex-wrap gap-1.5">
-          <Link href={buildHref(base, { kategori: undefined })} className={cn("rounded-full border px-3 py-1 text-xs font-semibold", !category ? "border-ink bg-ink text-white" : "border-line bg-white text-muted hover:text-ink")}>
+          <Link href={href(base, { kategori: undefined })} className={cn("rounded-full border px-3 py-1 text-xs font-semibold", !category ? "border-ink bg-ink text-white" : "border-line bg-white text-muted hover:text-ink")}>
             Semua kategori
           </Link>
           {transactionCategories.filter((c) => usedCategories.has(c.value) || c.value === category).map((c) => (
-            <Link key={c.value} href={buildHref(base, { kategori: c.value })} className={cn("rounded-full border px-3 py-1 text-xs font-semibold", category === c.value ? "border-ink bg-ink text-white" : "border-line bg-white text-muted hover:text-ink")}>
+            <Link key={c.value} href={href(base, { kategori: c.value })} className={cn("rounded-full border px-3 py-1 text-xs font-semibold", category === c.value ? "border-ink bg-ink text-white" : "border-line bg-white text-muted hover:text-ink")}>
               {c.label}
             </Link>
           ))}
@@ -181,7 +170,7 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
                   return (
                     <tr key={tx.id} className="hover:bg-surface-soft/60">
                       <td className="px-4 py-3">
-                        <Link href={buildHref(base, { edit: String(tx.id) })} className="flex items-center gap-3">
+                        <Link href={href(base, { edit: String(tx.id) })} className="flex items-center gap-3">
                           <span className={cn("grid size-8 shrink-0 place-items-center rounded-full text-sm font-extrabold", tx.type === "masuk" ? "bg-secondary-soft text-secondary-dark" : "bg-red-50 text-red-600")}>
                             {tx.type === "masuk" ? "+" : "-"}
                           </span>
@@ -228,7 +217,7 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
                     const clientName = typeof tx.client === "object" && tx.client ? tx.client.name : null;
                     return (
                       <li key={tx.id}>
-                        <Link href={buildHref(base, { edit: String(tx.id) })} className="flex items-center gap-3 px-4 py-3 active:bg-surface-soft">
+                        <Link href={href(base, { edit: String(tx.id) })} className="flex items-center gap-3 px-4 py-3 active:bg-surface-soft">
                           <span className={cn("grid size-9 shrink-0 place-items-center rounded-full text-sm font-extrabold", tx.type === "masuk" ? "bg-secondary-soft text-secondary-dark" : "bg-red-50 text-red-600")}>
                             {tx.type === "masuk" ? "+" : "-"}
                           </span>

@@ -3,6 +3,7 @@ import { getSessionUser } from "@/lib/session";
 import { Sidebar } from "@/components/hub/Sidebar";
 import { MobileTabs } from "@/components/hub/MobileTabs";
 import { BrandMark } from "@/components/ui/BrandMark";
+import { LogoutButton } from "@/components/hub/LogoutButton";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -30,9 +31,10 @@ export default async function HubLayout({ children }: LayoutProps<"/">) {
             <div className="flex min-w-0 flex-1 flex-col">
               <header className="flex h-14 items-center gap-2.5 border-b border-line bg-white px-4 md:hidden">
                 <BrandMark className="size-7 text-navy" />
-                <span className="text-base font-extrabold tracking-tight">
+                <span className="flex-1 text-base font-extrabold tracking-tight">
                   Zynergy <span className="text-muted">Team</span>
                 </span>
+                <LogoutButton />
               </header>
               <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-24 pt-5 sm:px-6 md:pb-10 md:pt-8">
                 {children}

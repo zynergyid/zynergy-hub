@@ -13,7 +13,8 @@ import {
   pctChange,
   type UnitFilter,
 } from "@/lib/finance";
-import { formatDate, formatIDR, formatMonthLong } from "@/lib/format";
+import { daysUntil, formatDate, formatIDR, formatMonthLong } from "@/lib/format";
+import { first, type Search } from "@/lib/search";
 import { categoryLabel, units } from "@/lib/options";
 import { cn } from "@/lib/cn";
 import { Avatar } from "@/components/hub/Avatar";
@@ -26,9 +27,6 @@ import { SegmentedLinks } from "@/components/hub/SegmentedLinks";
 
 export const dynamic = "force-dynamic";
 
-type Search = Record<string, string | string[] | undefined>;
-const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
-const daysUntil = (iso: string) => Math.ceil((new Date(iso).getTime() - Date.now()) / 86400000);
 
 function RenewalRow({ c }: { c: Client }) {
   const d = c.renewalDate ? daysUntil(c.renewalDate) : null;
@@ -58,7 +56,7 @@ function RenewalRow({ c }: { c: Client }) {
 
 export default async function HubHome({ searchParams }: { searchParams: Promise<Search> }) {
   const user = await getSessionUser();
-  if (!user) redirect("/admin/login");
+  if (!user) redirect("/masuk");
   const canSeeMoney = user.role === "admin" || user.role === "finance";
   const sp = await searchParams;
   const unitParam = first(sp.unit);

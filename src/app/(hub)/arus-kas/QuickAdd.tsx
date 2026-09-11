@@ -4,6 +4,8 @@ import { useActionState, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Plus, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { todayLocal } from "@/lib/format";
+import { ErrorText, fieldClass, groupDigits } from "@/components/hub/form";
 import { paymentMethods, transactionCategories, units, type Unit } from "@/lib/options";
 import { deleteTransaction, saveTransaction, type QuickAddState } from "./actions";
 
@@ -29,16 +31,6 @@ export interface EditingTx {
 }
 
 const initial: QuickAddState = { status: "idle" };
-const field =
-  "w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm text-ink focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
-const label = "mb-1 block text-xs font-bold uppercase tracking-wider text-muted";
-
-function todayLocal() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
-const groupDigits = (digits: string) => digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
 export function QuickAdd({
   unit,
@@ -124,7 +116,7 @@ export function QuickAdd({
               </div>
 
               <div>
-                <label htmlFor="qa-amount" className={label}>Nominal</label>
+                <label htmlFor="qa-amount" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Nominal</label>
                 <div className="flex items-center rounded-xl border border-line bg-white focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
                   <span className="pl-3.5 text-sm font-semibold text-muted">Rp</span>
                   <input
@@ -143,12 +135,12 @@ export function QuickAdd({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="qa-date" className={label}>Tanggal</label>
-                  <input id="qa-date" name="date" type="date" required defaultValue={editing ? editing.date.slice(0, 10) : todayLocal()} className={field} />
+                  <label htmlFor="qa-date" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Tanggal</label>
+                  <input id="qa-date" name="date" type="date" required defaultValue={editing ? editing.date.slice(0, 10) : todayLocal()} className={fieldClass} />
                 </div>
                 <div>
-                  <label htmlFor="qa-unit" className={label}>Unit</label>
-                  <select id="qa-unit" name="unit" defaultValue={editing?.unit ?? unit} className={field}>
+                  <label htmlFor="qa-unit" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Unit</label>
+                  <select id="qa-unit" name="unit" defaultValue={editing?.unit ?? unit} className={fieldClass}>
                     {units.map((u) => (
                       <option key={u.value} value={u.value}>{u.label}</option>
                     ))}
@@ -157,8 +149,8 @@ export function QuickAdd({
               </div>
 
               <div>
-                <label htmlFor="qa-category" className={label}>Kategori</label>
-                <select id="qa-category" name="category" required className={field} key={type} defaultValue={editing?.category}>
+                <label htmlFor="qa-category" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Kategori</label>
+                <select id="qa-category" name="category" required className={fieldClass} key={type} defaultValue={editing?.category}>
                   {categories.map((c) => (
                     <option key={c.value} value={c.value}>{c.label}</option>
                   ))}
@@ -167,8 +159,8 @@ export function QuickAdd({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="qa-client" className={label}>Klien</label>
-                  <select id="qa-client" name="client" defaultValue={editing?.client ? String(editing.client) : ""} className={field}>
+                  <label htmlFor="qa-client" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Klien</label>
+                  <select id="qa-client" name="client" defaultValue={editing?.client ? String(editing.client) : ""} className={fieldClass}>
                     <option value="">Tanpa klien</option>
                     {clients.map((c) => (
                       <option key={c.id} value={c.id}>{c.name}</option>
@@ -176,8 +168,8 @@ export function QuickAdd({
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="qa-method" className={label}>Metode</label>
-                  <select id="qa-method" name="method" defaultValue={editing?.method ?? "transfer"} className={field}>
+                  <label htmlFor="qa-method" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Metode</label>
+                  <select id="qa-method" name="method" defaultValue={editing?.method ?? "transfer"} className={fieldClass}>
                     {paymentMethods.map((m) => (
                       <option key={m.value} value={m.value}>{m.label}</option>
                     ))}
@@ -186,18 +178,18 @@ export function QuickAdd({
               </div>
 
               <div>
-                <label htmlFor="qa-reference" className={label}>Keterangan / nomor invoice</label>
-                <input id="qa-reference" name="reference" defaultValue={editing?.reference ?? ""} className={field} placeholder="Contoh: INV-2026-004 atau Domain klien" />
+                <label htmlFor="qa-reference" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Keterangan / nomor invoice</label>
+                <input id="qa-reference" name="reference" defaultValue={editing?.reference ?? ""} className={fieldClass} placeholder="Contoh: INV-2026-004 atau Domain klien" />
               </div>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <label htmlFor="qa-receipt" className={label}>Bukti (opsional)</label>
+                  <label htmlFor="qa-receipt" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Bukti (opsional)</label>
                   <input id="qa-receipt" name="receipt" type="file" accept="image/*,application/pdf" className="block w-full text-xs text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-primary-soft file:px-3 file:py-2 file:text-xs file:font-semibold file:text-primary-dark" />
                 </div>
                 <div>
-                  <label htmlFor="qa-notes" className={label}>Catatan</label>
-                  <input id="qa-notes" name="notes" defaultValue={editing?.notes ?? ""} className={field} placeholder="Opsional" />
+                  <label htmlFor="qa-notes" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Catatan</label>
+                  <input id="qa-notes" name="notes" defaultValue={editing?.notes ?? ""} className={fieldClass} placeholder="Opsional" />
                 </div>
               </div>
 
@@ -209,9 +201,7 @@ export function QuickAdd({
                 </p>
               )}
 
-              {state.status === "error" && (
-                <p role="alert" className="text-sm font-medium text-red-600">{state.message}</p>
-              )}
+              <ErrorText>{state.status === "error" ? state.message : null}</ErrorText>
 
               <button
                 type="submit"

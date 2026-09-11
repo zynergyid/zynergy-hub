@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BrandMark } from "@/components/ui/BrandMark";
 import { Avatar } from "./Avatar";
+import { LogoutButton } from "./LogoutButton";
 import { cn } from "@/lib/cn";
 import type { Role } from "@/lib/access";
 import { navSections, type NavItem } from "./nav";
@@ -72,10 +73,11 @@ export function Sidebar({ role, userName }: { role: Role; userName: string }) {
       </nav>
       <div className="flex items-center gap-3 border-t border-line px-4 py-3">
         <Avatar name={userName} className="size-8 text-[10px]" />
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold">{userName}</p>
           <p className="text-xs capitalize text-muted">{role}</p>
         </div>
+        <LogoutButton />
       </div>
     </aside>
   );

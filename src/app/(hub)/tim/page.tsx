@@ -15,7 +15,7 @@ const roleLabel: Record<string, string> = { admin: "Admin", finance: "Finance", 
 
 export default async function TimPage() {
   const user = await getSessionUser();
-  if (!user) redirect("/admin/login");
+  if (!user) redirect("/masuk");
   if (user.role !== "admin") redirect("/");
   const payload = await getPayloadClient();
   const { docs } = await payload.find({ collection: "users", limit: 100, sort: "name" });

@@ -8,8 +8,7 @@ export type IconName =
   | "report"
   | "rfq"
   | "portal"
-  | "team"
-  | "database";
+  | "team";
 
 export interface NavItem {
   href: string;

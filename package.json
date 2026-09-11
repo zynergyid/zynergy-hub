@@ -16,7 +16,6 @@
   "dependencies": {
     "@payloadcms/db-postgres": "3.88.0",
     "@payloadcms/next": "3.88.0",
-    "@payloadcms/richtext-lexical": "3.88.0",
     "@payloadcms/storage-vercel-blob": "3.88.0",
     "clsx": "^2.1.1",
     "graphql": "^17.0.2",

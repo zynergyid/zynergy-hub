@@ -1,6 +1,5 @@
 import {
   ArrowLeftRight,
-  Database,
   FileSearch,
   LayoutDashboard,
   MessageSquareText,
@@ -20,7 +19,6 @@ const icons: Record<IconName, LucideIcon> = {
   rfq: FileSearch,
   portal: UserRound,
   team: Users,
-  database: Database,
 };
 
 export function NavIcon({ name, className }: { name: IconName; className?: string }) {

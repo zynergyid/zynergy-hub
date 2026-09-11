@@ -2,7 +2,6 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { buildConfig } from "payload";
 import { postgresAdapter } from "@payloadcms/db-postgres";
-import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import { vercelBlobStorage } from "@payloadcms/storage-vercel-blob";
 import sharp from "sharp";
 import { Clients } from "@/collections/Clients";
@@ -25,7 +24,6 @@ export default buildConfig({
     meta: { titleSuffix: " | Zynergy Team" },
   },
   collections: [Clients, Transactions, Receipts, Users],
-  editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || "",
   db: postgresAdapter({
     pool: {

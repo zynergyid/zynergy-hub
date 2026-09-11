@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 
 export default async function KlienDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await getSessionUser();
-  if (!user) redirect("/admin/login");
+  if (!user) redirect("/masuk");
   const { id } = await params;
   const clientId = Number(id);
   if (!clientId) notFound();

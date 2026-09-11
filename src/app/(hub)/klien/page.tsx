@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { MessageCircle, Plus } from "lucide-react";
 import { getSessionUser } from "@/lib/session";
 import { getPayloadClient } from "@/lib/payload";
-import { formatIDR } from "@/lib/format";
+import { daysUntil, formatIDR } from "@/lib/format";
+import { first, type Search } from "@/lib/search";
 import { clientStatuses, unitLabel } from "@/lib/options";
 import { cn } from "@/lib/cn";
 import { SegmentedLinks } from "@/components/hub/SegmentedLinks";
@@ -12,8 +13,6 @@ import { SegmentedLinks } from "@/components/hub/SegmentedLinks";
 export const metadata: Metadata = { title: "Klien" };
 export const dynamic = "force-dynamic";
 
-type Search = Record<string, string | string[] | undefined>;
-const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 
 const statusTone: Record<string, string> = {
   prospek: "bg-primary-soft text-primary-dark",
@@ -22,13 +21,10 @@ const statusTone: Record<string, string> = {
   berhenti: "bg-surface-soft text-muted",
 };
 
-function daysUntil(iso: string) {
-  return Math.ceil((new Date(iso).getTime() - Date.now()) / 86400000);
-}
 
 export default async function KlienPage({ searchParams }: { searchParams: Promise<Search> }) {
   const user = await getSessionUser();
-  if (!user) redirect("/admin/login");
+  if (!user) redirect("/masuk");
   const sp = await searchParams;
   const status = first(sp.status) ?? "";
   const q = (first(sp.q) ?? "").trim();

@@ -39,7 +39,7 @@ const tools: { id: string; icon: IconName; title: string; level: string; text: s
 
 export default async function AlatPage() {
   const user = await getSessionUser();
-  if (!user) redirect("/admin/login");
+  if (!user) redirect("/masuk");
   return (
     <div className="space-y-5">
       <div>

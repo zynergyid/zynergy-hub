@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Klien baru" };
 
 export default async function KlienBaruPage() {
   const user = await getSessionUser();
-  if (!user) redirect("/admin/login");
+  if (!user) redirect("/masuk");
   return (
     <div className="mx-auto max-w-3xl space-y-5">
       <PageHeader title="Klien baru" subtitle="Isi yang diketahui dulu, sisanya bisa dilengkapi nanti." />
