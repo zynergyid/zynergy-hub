@@ -7,6 +7,7 @@ import { Avatar } from "./Avatar";
 import { LogoutButton } from "./LogoutButton";
 import { cn } from "@/lib/cn";
 import type { Role } from "@/lib/access";
+import { roleLabel } from "@/lib/options";
 import { navSections, type NavItem } from "./nav";
 import { NavIcon } from "./NavIcon";
 
@@ -76,7 +77,7 @@ export function Sidebar({ role, userName }: { role: Role; userName: string }) {
           <Avatar name={userName} className="size-8 text-[10px]" />
           <span className="min-w-0">
             <span className="block truncate text-sm font-semibold">{userName}</span>
-            <span className="block text-xs capitalize text-muted">{role}</span>
+            <span className="block text-xs text-muted">{roleLabel.get(role) ?? role}</span>
           </span>
         </Link>
         <LogoutButton />

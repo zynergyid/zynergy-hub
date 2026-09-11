@@ -5,16 +5,12 @@ import { useRouter } from "next/navigation";
 import { Loader2, Plus, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { todayLocal } from "@/lib/format";
-import { ErrorText, fieldClass, groupDigits } from "@/components/hub/form";
+import { ErrorText, Label, buttonPrimary, fieldClass, fileInputClass, groupDigits } from "@/components/hub/form";
+import { ConfirmButton } from "@/components/hub/ConfirmButton";
 import { Select } from "@/components/hub/Select";
 import { paymentMethods, transactionCategories, units, type Unit } from "@/lib/options";
+import type { ClientOption, OrderOption } from "@/lib/orders";
 import { deleteTransaction, saveTransaction, type QuickAddState } from "./actions";
-
-export interface ClientOption {
-  id: number;
-  name: string;
-  unit: Unit;
-}
 
 /** Plain, serializable subset of a transaction for the edit sheet. */
 export interface EditingTx {
@@ -26,10 +22,14 @@ export interface EditingTx {
   category: string;
   method: string | null;
   client: number | null;
+  order: number | null;
   reference: string | null;
   notes: string | null;
   receiptUrl: string | null;
 }
+
+/** Values to open the sheet with, for example a payment against a PO. */
+export type TxPreset = Partial<Omit<EditingTx, "id" | "receiptUrl">>;
 
 const initial: QuickAddState = { status: "idle" };
 
@@ -37,24 +37,29 @@ export function QuickAdd({
   unit,
   units: allowedUnits,
   clients,
+  orders = [],
   editing = null,
+  prefill = null,
   closeHref = "/cash-flow",
 }: {
   unit: Unit;
   units: Unit[];
   clients: ClientOption[];
+  orders?: OrderOption[];
   editing?: EditingTx | null;
+  prefill?: TxPreset | null;
   closeHref?: string;
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(Boolean(editing));
-  const [type, setType] = useState<"masuk" | "keluar">(editing?.type ?? "keluar");
-  const [amount, setAmount] = useState(editing ? groupDigits(String(editing.amount)) : "");
+  const seed: TxPreset | null = editing ?? prefill;
+  const [open, setOpen] = useState(Boolean(seed));
+  const [type, setType] = useState<"masuk" | "keluar">(seed?.type ?? "keluar");
+  const [amount, setAmount] = useState(seed?.amount ? groupDigits(String(seed.amount)) : "");
   const formRef = useRef<HTMLFormElement>(null);
 
   const close = () => {
     setOpen(false);
-    if (editing) router.replace(closeHref);
+    if (seed) router.replace(closeHref);
   };
 
   const [state, formAction, pending] = useActionState(
@@ -64,7 +69,7 @@ export function QuickAdd({
         setOpen(false);
         setAmount("");
         formRef.current?.reset();
-        if (editing) router.replace(closeHref);
+        if (seed) router.replace(closeHref);
         router.refresh();
       }
       return result;
@@ -73,14 +78,11 @@ export function QuickAdd({
   );
 
   const categories = transactionCategories.filter((c) => c.type === type);
+  const title = editing ? "Ubah transaksi" : prefill ? "Catat pembayaran PO" : "Catat transaksi";
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary/25 hover:bg-primary-dark"
-      >
+      <button type="button" onClick={() => setOpen(true)} className={buttonPrimary}>
         <Plus className="size-4" />
         Catat
       </button>
@@ -89,7 +91,7 @@ export function QuickAdd({
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 sm:items-center" role="dialog" aria-modal="true">
           <div className="max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-white p-5 shadow-2xl sm:max-w-lg sm:rounded-3xl sm:p-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-extrabold">{editing ? "Ubah transaksi" : "Catat transaksi"}</h2>
+              <h2 className="text-lg font-extrabold">{title}</h2>
               <button type="button" onClick={close} aria-label="Tutup" className="rounded-lg p-1.5 text-muted hover:bg-surface-soft">
                 <X className="size-5" />
               </button>
@@ -119,7 +121,7 @@ export function QuickAdd({
               </div>
 
               <div>
-                <label htmlFor="qa-amount" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Nominal</label>
+                <Label htmlFor="qa-amount">Nominal</Label>
                 <div className="flex items-center rounded-xl border border-line bg-white focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
                   <span className="pl-3.5 text-sm font-semibold text-muted">Rp</span>
                   <input
@@ -138,44 +140,51 @@ export function QuickAdd({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="qa-date" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Tanggal</label>
+                  <Label htmlFor="qa-date">Tanggal</Label>
                   <input id="qa-date" name="date" type="date" required defaultValue={editing ? editing.date.slice(0, 10) : todayLocal()} className={fieldClass} />
                 </div>
                 <div>
-                  <label htmlFor="qa-unit" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Unit</label>
-                  <Select id="qa-unit" name="unit" defaultValue={editing?.unit ?? unit} options={units.filter((u) => allowedUnits.includes(u.value))} />
+                  <Label htmlFor="qa-unit">Unit</Label>
+                  <Select id="qa-unit" name="unit" defaultValue={seed?.unit ?? unit} options={units.filter((u) => allowedUnits.includes(u.value))} />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="qa-category" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Kategori</label>
-                <Select id="qa-category" name="category" required key={type} defaultValue={editing?.category ?? categories[0]?.value} options={categories} />
+                <Label htmlFor="qa-category">Kategori</Label>
+                <Select id="qa-category" name="category" required key={type} defaultValue={seed?.category ?? categories[0]?.value} options={categories} />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="qa-client" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Klien</label>
-                  <Select id="qa-client" name="client" defaultValue={editing?.client ? String(editing.client) : undefined} placeholder="Tanpa klien" options={clients.map((c) => ({ label: c.name, value: String(c.id) }))} />
+                  <Label htmlFor="qa-client">Klien</Label>
+                  <Select id="qa-client" name="client" defaultValue={seed?.client ? String(seed.client) : undefined} placeholder="Tanpa klien" options={clients.map((c) => ({ label: c.name, value: String(c.id) }))} />
                 </div>
                 <div>
-                  <label htmlFor="qa-method" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Metode</label>
-                  <Select id="qa-method" name="method" defaultValue={editing?.method ?? "transfer"} options={paymentMethods} />
+                  <Label htmlFor="qa-method">Metode</Label>
+                  <Select id="qa-method" name="method" defaultValue={seed?.method ?? "transfer"} options={paymentMethods} />
                 </div>
               </div>
 
+              {orders.length > 0 && (
+                <div>
+                  <Label htmlFor="qa-order">PO terkait</Label>
+                  <Select id="qa-order" name="order" defaultValue={seed?.order ? String(seed.order) : undefined} placeholder="Tanpa PO" options={orders.map((o) => ({ label: o.label, value: String(o.id) }))} />
+                </div>
+              )}
+
               <div>
-                <label htmlFor="qa-reference" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Keterangan / nomor invoice</label>
-                <input id="qa-reference" name="reference" defaultValue={editing?.reference ?? ""} className={fieldClass} placeholder="Contoh: INV-2026-004 atau Domain klien" />
+                <Label htmlFor="qa-reference">Keterangan / nomor invoice</Label>
+                <input id="qa-reference" name="reference" defaultValue={seed?.reference ?? ""} className={fieldClass} placeholder="Contoh: INV-2026-004 atau Domain klien" />
               </div>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <label htmlFor="qa-receipt" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Bukti (opsional)</label>
-                  <input id="qa-receipt" name="receipt" type="file" accept="image/*,application/pdf" className="block w-full text-xs text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-primary-soft file:px-3 file:py-2 file:text-xs file:font-semibold file:text-primary-dark" />
+                  <Label htmlFor="qa-receipt">Bukti (opsional)</Label>
+                  <input id="qa-receipt" name="receipt" type="file" accept="image/*,application/pdf" className={fileInputClass} />
                 </div>
                 <div>
-                  <label htmlFor="qa-notes" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Catatan</label>
-                  <input id="qa-notes" name="notes" defaultValue={editing?.notes ?? ""} className={fieldClass} placeholder="Opsional" />
+                  <Label htmlFor="qa-notes">Catatan</Label>
+                  <input id="qa-notes" name="notes" defaultValue={seed?.notes ?? ""} className={fieldClass} placeholder="Opsional" />
                 </div>
               </div>
 
@@ -201,16 +210,15 @@ export function QuickAdd({
                 {pending ? "Menyimpan..." : editing ? "Simpan perubahan" : type === "masuk" ? "Simpan uang masuk" : "Simpan uang keluar"}
               </button>
               {editing && (
-                <button
-                  type="submit"
+                <ConfirmButton
+                  message="Hapus transaksi ini?"
                   formAction={deleteTransaction}
                   formNoValidate
-                  onClick={(e) => { if (!confirm("Hapus transaksi ini?")) e.preventDefault(); }}
                   className="flex w-full items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50"
                 >
                   <Trash2 className="size-4" />
                   Hapus transaksi
-                </button>
+                </ConfirmButton>
               )}
               <input type="hidden" name="closeHref" value={closeHref} />
             </form>

@@ -1,5 +1,6 @@
 import {
   ArrowLeftRight,
+  ClipboardList,
   FileSearch,
   LayoutDashboard,
   MessageSquareText,
@@ -14,6 +15,7 @@ const icons: Record<IconName, LucideIcon> = {
   dashboard: LayoutDashboard,
   cashflow: ArrowLeftRight,
   clients: Users,
+  orders: ClipboardList,
   search: Search,
   report: MessageSquareText,
   rfq: FileSearch,

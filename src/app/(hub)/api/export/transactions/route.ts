@@ -1,19 +1,20 @@
 import type { NextRequest } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { getPayloadClient } from "@/lib/payload";
-import { parseMonth, scopeUnits } from "@/lib/finance";
+import { parseMonth, resolveUnit, scopeUnits } from "@/lib/finance";
 import { canSeeMoney } from "@/lib/session";
+import { isFinancing } from "@/lib/options";
 
 const csvCell = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
 
-/** CSV of transactions for the accountant. Optional ?unit=digital|supply|semua and ?month=YYYY-MM. */
+/** CSV of transactions for the accountant. Optional ?unit=digital|apps|supply|semua and ?month=YYYY-MM. */
 export async function GET(req: NextRequest) {
   const user = await getSessionUser();
   if (!user || !canSeeMoney(user)) {
     return new Response("Unauthorized", { status: 401 });
   }
-  const unitParam = req.nextUrl.searchParams.get("unit") ?? "semua";
-  const scoped = scopeUnits(unitParam as "semua" | "digital" | "products" | "supply", user.units);
+  const unit = resolveUnit(req.nextUrl.searchParams.get("unit") ?? undefined, user.units);
+  const scoped = scopeUnits(unit, user.units);
   const month_ = req.nextUrl.searchParams.get("month");
   const month = month_ ? parseMonth(month_) : null;
   const end = month ? new Date(month.getFullYear(), month.getMonth() + 1, 1) : null;
@@ -34,12 +35,13 @@ export async function GET(req: NextRequest) {
     },
   });
   const rows = [
-    ["tanggal", "unit", "jenis", "kategori", "nominal", "klien", "metode", "referensi", "catatan"],
+    ["tanggal", "unit", "jenis", "kategori", "kelompok", "nominal", "klien", "metode", "referensi", "catatan"],
     ...docs.map((t) => [
       t.date.slice(0, 10),
       t.unit,
       t.type,
       t.category,
+      isFinancing(t.category) ? "pendanaan" : "operasional",
       t.amount,
       typeof t.client === "object" && t.client ? t.client.name : "",
       t.method ?? "",
@@ -48,7 +50,7 @@ export async function GET(req: NextRequest) {
     ]),
   ];
   const body = rows.map((r) => r.map(csvCell).join(",")).join("\r\n");
-  const name = `zynergy-${unitParam}-${month_ ?? "semua"}.csv`;
+  const name = `zynergy-${unit}-${month_ ?? "semua"}.csv`;
   return new Response("﻿" + body, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",

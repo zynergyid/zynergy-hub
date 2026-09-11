@@ -9,27 +9,31 @@ import {
   getLast12,
   getLedger,
   getRenewals,
+  fundingHint,
   getUnitMonth,
   pctChange,
-  type UnitFilter,
+  resolveUnit,
 } from "@/lib/finance";
-import { daysUntil, formatDate, formatIDR, formatMonthLong } from "@/lib/format";
+import { daysLabel, formatDate, formatIDR, formatMonthLong } from "@/lib/format";
+import { getOrderSummary } from "@/lib/orders";
 import { first, type Search } from "@/lib/search";
-import { categoryLabel, units, type Unit } from "@/lib/options";
+import { categoryLabel, unitLabel } from "@/lib/options";
 import { cn } from "@/lib/cn";
 import { Avatar } from "@/components/hub/Avatar";
 import { BarChart } from "@/components/hub/BarChart";
 import { Card } from "@/components/hub/Card";
 import { CategoryBars } from "@/components/hub/CategoryBars";
 import { KpiCard } from "@/components/hub/KpiCard";
+import { OrdersCard } from "@/components/hub/OrdersCard";
 import { PageHeader } from "@/components/hub/PageHeader";
-import { SegmentedLinks } from "@/components/hub/SegmentedLinks";
+import { UnitTabs } from "@/components/hub/UnitTabs";
+import { deadlinePill, deadlineTone } from "@/components/hub/deadline";
 
 export const dynamic = "force-dynamic";
 
 
 function RenewalRow({ c }: { c: Client }) {
-  const d = c.renewalDate ? daysUntil(c.renewalDate) : null;
+  const tone = c.renewalDate ? deadlineTone(c.renewalDate, 7) : "ok";
   return (
     <li className="flex items-center gap-3 py-3">
       <Avatar name={c.name} />
@@ -42,13 +46,8 @@ function RenewalRow({ c }: { c: Client }) {
           {c.annualFee ? ` · ${formatIDR(c.annualFee)}/tahun` : ""}
         </p>
       </div>
-      <span
-        className={cn(
-          "shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold",
-          d !== null && d < 0 ? "bg-red-50 text-red-700" : d !== null && d <= 7 ? "bg-amber-50 text-amber-700" : "bg-primary-soft text-primary-dark",
-        )}
-      >
-        {d === null ? "tanpa tanggal" : d < 0 ? `lewat ${-d} hari` : d === 0 ? "hari ini" : `${d} hari`}
+      <span className={cn("shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold", deadlinePill[tone])}>
+        {c.renewalDate ? daysLabel(c.renewalDate) : "tanpa tanggal"}
       </span>
     </li>
   );
@@ -59,12 +58,16 @@ export default async function HubHome({ searchParams }: { searchParams: Promise<
   if (!user) redirect("/login");
   const allowed = user.units;
   const sp = await searchParams;
-  const unitParam = first(sp.unit) as Unit | undefined;
-  const unit: UnitFilter =
-    unitParam && allowed.includes(unitParam) ? unitParam : allowed.length === 1 ? allowed[0] : "semua";
+  const unit = resolveUnit(first(sp.unit), allowed);
   const now = new Date();
+  const hasSupply = unit === "supply" || (unit === "semua" && allowed.includes("supply"));
 
-  const [counts, renewals] = await Promise.all([getClientCounts(allowed), getRenewals(allowed, 30)]);
+  const [counts, renewals, orderSummary] = await Promise.all([
+    getClientCounts(allowed),
+    getRenewals(allowed, 30),
+    hasSupply ? getOrderSummary(unit, allowed) : null,
+  ]);
+  const ordersHref = unit === "semua" ? "/orders" : `/orders?unit=${unit}`;
   const money = canSeeMoney(user)
     ? await Promise.all([
         getUnitMonth(unit, allowed, now),
@@ -78,36 +81,27 @@ export default async function HubHome({ searchParams }: { searchParams: Promise<
   return (
     <div className="space-y-6">
       <PageHeader title={`Halo, ${user.name.split(" ")[0]}`} subtitle={`Ringkasan ${formatMonthLong(now)}.`}>
-        {money && allowed.length > 1 && (
-          <SegmentedLinks
-            ariaLabel="Unit bisnis"
-            segments={[
-              { label: "Semua", href: "/", active: unit === "semua" },
-              ...units
-                .filter((u) => allowed.includes(u.value))
-                .map((u) => ({ label: u.label, href: `/?unit=${u.value}`, active: unit === u.value })),
-            ]}
-          />
-        )}
+        {money && <UnitTabs path="/" unit={unit} allowed={allowed} />}
       </PageHeader>
 
       {money ? (
         (() => {
           const [m, last12, categories, ledger, perUnit] = money;
-          const dueSoon = renewals.filter((c) => c.renewalDate && daysUntil(c.renewalDate) <= 30).length;
-          const unitLabelOf = (u: Unit) => units.find((x) => x.value === u)?.label ?? u;
+          const dueSoon = renewals.filter((c) => c.renewalDate && deadlineTone(c.renewalDate, 30) !== "ok").length;
           const saldoHint =
             unit === "semua" && perUnit.length > 1
-              ? perUnit.map((p) => `${unitLabelOf(p.unit)} ${formatIDR(p.balance)}`).join(" · ")
+              ? perUnit.map((p) => `${unitLabel.get(p.unit)} ${formatIDR(p.balance)}`).join(" · ")
               : "semua waktu";
           return (
             <>
               <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                 <KpiCard icon={Wallet} label="Saldo" value={formatIDR(m.balance)} hint={saldoHint} tone="primary" />
-                <KpiCard icon={ArrowDownLeft} label="Masuk bulan ini" value={formatIDR(m.masuk)} delta={pctChange(m.masuk, m.masukPrev)} tone="in" hint="vs bulan lalu" />
-                <KpiCard icon={ArrowUpRight} label="Keluar bulan ini" value={formatIDR(m.keluar)} delta={pctChange(m.keluar, m.keluarPrev)} upIsGood={false} tone="out" hint="vs bulan lalu" />
+                <KpiCard icon={ArrowDownLeft} label="Masuk bulan ini" value={formatIDR(m.masuk)} delta={pctChange(m.masuk, m.masukPrev)} tone="in" hint={fundingHint(m.fundingMasuk)} />
+                <KpiCard icon={ArrowUpRight} label="Keluar bulan ini" value={formatIDR(m.keluar)} delta={pctChange(m.keluar, m.keluarPrev)} upIsGood={false} tone="out" hint={fundingHint(m.fundingKeluar)} />
                 <KpiCard icon={Users} label="Klien aktif" value={String(counts.aktif)} hint={dueSoon ? `${dueSoon} jatuh tempo 30 hari` : `${counts.prospek} prospek`} />
               </div>
+
+              {orderSummary && <OrdersCard summary={orderSummary} href={ordersHref} />}
 
               <div className="grid gap-4 lg:grid-cols-5">
                 <Card title="Arus kas 12 bulan" action={{ label: "Buka arus kas", href: `/cash-flow?unit=${unit}` }} className="lg:col-span-3">
@@ -183,6 +177,7 @@ export default async function HubHome({ searchParams }: { searchParams: Promise<
             <KpiCard icon={CalendarClock} label="Jatuh tempo 30 hari" value={String(renewals.length)} tone={renewals.length ? "out" : "neutral"} />
             <KpiCard icon={Users} label="Prospek" value={String(counts.prospek)} />
           </div>
+          {orderSummary && <OrdersCard summary={orderSummary} href={ordersHref} showMoney={false} />}
           <Card title="Perpanjangan terdekat" action={{ label: "Semua klien", href: "/clients" }}>
             {renewals.length === 0 ? <p className="text-sm text-muted">Tidak ada perpanjangan dalam 30 hari.</p> : (
               <ul className="divide-y divide-line">{renewals.map((c) => <RenewalRow key={c.id} c={c} />)}</ul>

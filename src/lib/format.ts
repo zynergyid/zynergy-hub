@@ -29,6 +29,12 @@ export const dateKey = (iso: string) => iso.slice(0, 10);
 /** Whole days from today to the given date; negative when overdue. */
 export const daysUntil = (iso: string) => Math.ceil((new Date(iso).getTime() - Date.now()) / 86400000);
 
+/** "3 hari lagi", "hari ini", or "lewat 2 hari". */
+export function daysLabel(iso: string): string {
+  const d = daysUntil(iso);
+  return d < 0 ? `lewat ${-d} hari` : d === 0 ? "hari ini" : `${d} hari lagi`;
+}
+
 /** Today as YYYY-MM-DD in local time, for date inputs. */
 export function todayLocal(): string {
   const d = new Date();

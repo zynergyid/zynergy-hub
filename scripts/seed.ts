@@ -1,5 +1,5 @@
 /**
- * Dev seed: admin user + sample clients and transactions. Idempotent.
+ * Dev seed: admin user + sample clients, transactions, and one Supply PO. Idempotent.
  * Login: dev@zynergy.local / zynergy-dev-only (LOCAL ONLY).
  */
 import { getPayload } from "payload";
@@ -60,9 +60,49 @@ if (supplyTx.totalDocs === 0) {
   payload.logger.info("Seeded sample supply transactions");
 }
 
+const orders = await payload.find({ collection: "orders", limit: 1 });
+if (orders.totalDocs === 0) {
+  const today = new Date();
+  const shift = (n: number) => new Date(today.getTime() + n * 86400000).toISOString();
+  const buyer = await payload.create({
+    collection: "clients",
+    data: {
+      unit: "supply",
+      name: "PT Tambang Nusantara (contoh)",
+      owner: "Bagian Pengadaan",
+      email: "procurement@contoh.local",
+      city: "Jakarta Selatan",
+      businessType: "industri",
+      status: "aktif",
+      supply: { legalName: "PT Tambang Nusantara", npwp: "00.000.000.0-000.000", vendorNumber: "V-000123", paymentTermsDays: 30, billingAddress: "Jl. Contoh No. 1, Jakarta Selatan" },
+    },
+  });
+  await payload.create({
+    collection: "orders",
+    data: {
+      unit: "supply",
+      number: "PO-2026-000123",
+      revision: 1,
+      client: buyer.id,
+      orderDate: shift(-31),
+      deliveryDate: shift(4),
+      shipTo: "Gudang Cakung Cilincing, Jakarta Utara",
+      incoterm: "DDP",
+      paymentTermsDays: 30,
+      status: "sourcing",
+      items: [{ material: "40400001", partNumber: "SGX5150202ES", description: "Device server 1 Ethernet, 2 serial, 1 USB", qty: 12, uom: "each", unitPrice: 13719000 }],
+      notes: "Contoh PO dari seed lokal.",
+    },
+  });
+  payload.logger.info("Seeded sample supply buyer and PO");
+}
+
 for (const u of [
   { email: "finance.digital@zynergy.local", name: "Finance Digital", role: "finance", units: ["digital"], title: "Finance" },
   { email: "pengawas@zynergy.local", name: "Pengawas Test", role: "viewer", units: [], title: "Komisaris" },
+  { email: "member@zynergy.local", name: "Anggota Digital", role: "member", units: ["digital"], title: "Marketing" },
+  { email: "member.supply@zynergy.local", name: "Anggota Supply", role: "member", units: ["supply"], title: "Business" },
+  { email: "staf.supply@zynergy.local", name: "Staf Supply", role: "staff", units: ["supply"], title: "Staf" },
 ] as const) {
   const found = await payload.find({ collection: "users", where: { email: { equals: u.email } }, limit: 1 });
   if (found.totalDocs === 0) {

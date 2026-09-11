@@ -5,6 +5,15 @@ import { cn } from "@/lib/cn";
 export const fieldClass =
   "w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm text-ink focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
 
+export const buttonPrimary =
+  "inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary/25 hover:bg-primary-dark disabled:opacity-60";
+
+export const buttonOutline =
+  "inline-flex items-center gap-1.5 rounded-xl border border-line bg-white px-3.5 py-2 text-sm font-semibold hover:border-primary/40";
+
+export const fileInputClass =
+  "block w-full text-xs text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-primary-soft file:px-3 file:py-2 file:text-xs file:font-semibold file:text-primary-dark";
+
 export function Label({ htmlFor, children }: { htmlFor: string; children: React.ReactNode }) {
   return (
     <label htmlFor={htmlFor} className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">

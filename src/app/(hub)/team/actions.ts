@@ -34,8 +34,8 @@ export async function saveMember(_prev: MemberFormState, formData: FormData): Pr
   const memberUnits = pickUnits(formData);
   if (!name || !validEmail(email)) return { status: "error", message: "Nama dan email yang valid wajib diisi." };
   if (!isRole(role)) return { status: "error", message: "Peran tidak valid." };
-  if ((role === "finance" || role === "member") && memberUnits.length === 0) {
-    return { status: "error", message: "Pilih minimal satu unit untuk finance atau anggota." };
+  if (role !== "admin" && role !== "viewer" && memberUnits.length === 0) {
+    return { status: "error", message: "Pilih minimal satu unit untuk finance, staf, atau anggota." };
   }
 
   try {

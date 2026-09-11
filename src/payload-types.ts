@@ -68,6 +68,8 @@ export interface Config {
   blocks: {};
   collections: {
     clients: Client;
+    orders: Order;
+    documents: Document;
     transactions: Transaction;
     receipts: Receipt;
     users: User;
@@ -79,6 +81,8 @@ export interface Config {
   collectionsJoins: {};
   collectionsSelect: {
     clients: ClientsSelect<false> | ClientsSelect<true>;
+    orders: OrdersSelect<false> | OrdersSelect<true>;
+    documents: DocumentsSelect<false> | DocumentsSelect<true>;
     transactions: TransactionsSelect<false> | TransactionsSelect<true>;
     receipts: ReceiptsSelect<false> | ReceiptsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
@@ -127,10 +131,10 @@ export interface UserAuthOperations {
  */
 export interface Client {
   id: number;
-  unit: 'digital' | 'products' | 'supply';
+  unit: 'digital' | 'apps' | 'supply';
   name: string;
   owner?: string | null;
-  whatsapp: string;
+  whatsapp?: string | null;
   email?: string | null;
   city?: string | null;
   businessType?: ('kuliner' | 'kesehatan' | 'jasa-lokal' | 'sekolah' | 'toko' | 'b2b' | 'industri' | 'lainnya') | null;
@@ -147,9 +151,81 @@ export interface Client {
     googleProfile?: string | null;
     instagram?: string | null;
   };
+  supply?: {
+    legalName?: string | null;
+    npwp?: string | null;
+    vendorNumber?: string | null;
+    paymentTermsDays?: number | null;
+    billingAddress?: string | null;
+  };
   notes?: string | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders".
+ */
+export interface Order {
+  id: number;
+  unit: 'digital' | 'apps' | 'supply';
+  number: string;
+  revision?: number | null;
+  client: number | Client;
+  orderDate: string;
+  deliveryDate?: string | null;
+  shipTo?: string | null;
+  incoterm?: string | null;
+  paymentTermsDays?: number | null;
+  items?:
+    | {
+        material?: string | null;
+        partNumber?: string | null;
+        description: string;
+        qty: number;
+        uom?: string | null;
+        unitPrice: number;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Dihitung dari item kalau ada item.
+   */
+  subtotal?: number | null;
+  status: 'diterima' | 'sourcing' | 'dikirim' | 'ditagih' | 'dibayar' | 'batal';
+  invoiceNumber?: string | null;
+  invoiceDate?: string | null;
+  dueDate?: string | null;
+  documents?:
+    | {
+        kind: 'po' | 'invoice' | 'surat-jalan' | 'faktur-pajak' | 'bukti-bayar' | 'lainnya';
+        file: number | Document;
+        note?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "documents".
+ */
+export interface Document {
+  id: number;
+  unit: 'digital' | 'apps' | 'supply';
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -157,7 +233,7 @@ export interface Client {
  */
 export interface Transaction {
   id: number;
-  unit: 'digital' | 'products' | 'supply';
+  unit: 'digital' | 'apps' | 'supply';
   date: string;
   type: 'masuk' | 'keluar';
   amount: number;
@@ -166,17 +242,23 @@ export interface Transaction {
     | 'perpanjangan'
     | 'penjualan-barang'
     | 'pemasukan-lain'
+    | 'setoran-modal'
+    | 'pinjaman-diterima'
     | 'pembelian-barang'
     | 'logistik'
+    | 'transportasi'
     | 'hosting-domain'
     | 'tools'
     | 'iklan'
     | 'gaji-honor'
     | 'operasional'
     | 'pajak'
-    | 'lainnya';
+    | 'lainnya'
+    | 'pengembalian-pinjaman'
+    | 'prive-dividen';
   method?: ('transfer' | 'qris' | 'tunai') | null;
   client?: (number | null) | Client;
+  order?: (number | null) | Order;
   /**
    * Nomor invoice, nomor referensi transfer, atau keterangan singkat.
    */
@@ -192,7 +274,7 @@ export interface Transaction {
  */
 export interface Receipt {
   id: number;
-  unit: 'digital' | 'products' | 'supply';
+  unit: 'digital' | 'apps' | 'supply';
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -212,12 +294,14 @@ export interface Receipt {
 export interface User {
   id: number;
   name: string;
-  role: 'admin' | 'finance' | 'member' | 'viewer';
+  role: 'admin' | 'finance' | 'staff' | 'member' | 'viewer';
   /**
    * Ruang lingkup finance dan anggota. Admin dan pengawas otomatis semua unit.
    */
-  units?: ('digital' | 'products' | 'supply')[] | null;
-  title?: ('Lead' | 'Developer' | 'Designer' | 'Marketing' | 'Business' | 'Finance' | 'Komisaris' | 'Lainnya') | null;
+  units?: ('digital' | 'apps' | 'supply')[] | null;
+  title?:
+    | ('Lead' | 'Developer' | 'Designer' | 'Marketing' | 'Business' | 'Staf' | 'Finance' | 'Komisaris' | 'Lainnya')
+    | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -264,6 +348,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'clients';
         value: number | Client;
+      } | null)
+    | ({
+        relationTo: 'orders';
+        value: number | Order;
+      } | null)
+    | ({
+        relationTo: 'documents';
+        value: number | Document;
       } | null)
     | ({
         relationTo: 'transactions';
@@ -343,9 +435,78 @@ export interface ClientsSelect<T extends boolean = true> {
         googleProfile?: T;
         instagram?: T;
       };
+  supply?:
+    | T
+    | {
+        legalName?: T;
+        npwp?: T;
+        vendorNumber?: T;
+        paymentTermsDays?: T;
+        billingAddress?: T;
+      };
   notes?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders_select".
+ */
+export interface OrdersSelect<T extends boolean = true> {
+  unit?: T;
+  number?: T;
+  revision?: T;
+  client?: T;
+  orderDate?: T;
+  deliveryDate?: T;
+  shipTo?: T;
+  incoterm?: T;
+  paymentTermsDays?: T;
+  items?:
+    | T
+    | {
+        material?: T;
+        partNumber?: T;
+        description?: T;
+        qty?: T;
+        uom?: T;
+        unitPrice?: T;
+        id?: T;
+      };
+  subtotal?: T;
+  status?: T;
+  invoiceNumber?: T;
+  invoiceDate?: T;
+  dueDate?: T;
+  documents?:
+    | T
+    | {
+        kind?: T;
+        file?: T;
+        note?: T;
+        id?: T;
+      };
+  notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "documents_select".
+ */
+export interface DocumentsSelect<T extends boolean = true> {
+  unit?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -359,6 +520,7 @@ export interface TransactionsSelect<T extends boolean = true> {
   category?: T;
   method?: T;
   client?: T;
+  order?: T;
   reference?: T;
   receipt?: T;
   notes?: T;

@@ -1,33 +1,42 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, MessageCircle } from "lucide-react";
-import { canEditClients, canSeeMoney, getSessionUser } from "@/lib/session";
+import { ArrowLeft, MessageCircle, Plus } from "lucide-react";
+import { canEditClients, canEditMoney, canSeeMoney, getSessionUser } from "@/lib/session";
 import { getPayloadClient } from "@/lib/payload";
-import { formatDate, formatIDR } from "@/lib/format";
-import { categoryLabel, clientStatuses } from "@/lib/options";
-import { cn } from "@/lib/cn";
+import { getOrders, nextDate, orderTotal } from "@/lib/orders";
+import { daysLabel, formatDate, formatIDR } from "@/lib/format";
+import { clientStatuses } from "@/lib/options";
+import { first, type Search } from "@/lib/search";
 import { Avatar } from "@/components/hub/Avatar";
 import { Card } from "@/components/hub/Card";
+import { ErrorText } from "@/components/hub/form";
+import { OrderStatusPill } from "@/components/hub/OrderStatusPill";
+import { TxList } from "@/components/hub/TxList";
 import { ClientForm } from "../ClientForm";
 
 export const metadata: Metadata = { title: "Detail klien" };
 export const dynamic = "force-dynamic";
 
-export default async function KlienDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function KlienDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<Search> }) {
   const user = await getSessionUser();
   if (!user) redirect("/login");
   const { id } = await params;
   const clientId = Number(id);
   if (!clientId) notFound();
+  const sp = await searchParams;
 
   const payload = await getPayloadClient();
   const client = await payload.findByID({ collection: "clients", id: clientId, disableErrors: true });
   if (!client || !user.units.includes(client.unit)) notFound();
-  const tx = canSeeMoney(user)
-    ? await payload.find({ collection: "transactions", where: { client: { equals: clientId } }, sort: "-date", limit: 8 })
-    : null;
+  const money = canSeeMoney(user);
+  const isSupply = client.unit === "supply";
+  const [tx, orders] = await Promise.all([
+    money ? payload.find({ collection: "transactions", where: { client: { equals: clientId } }, sort: "-date", limit: 8 }) : null,
+    money && isSupply ? getOrders({ unit: client.unit, allowed: user.units, filter: "semua", clientId }) : null,
+  ]);
   const statusLabel = clientStatuses.find((s) => s.value === client.status)?.label;
+  const blocked = Number(first(sp.blocked) || 0);
 
   return (
     <div className="space-y-5">
@@ -46,37 +55,63 @@ export default async function KlienDetailPage({ params }: { params: Promise<{ id
             </p>
           </div>
         </div>
-        <a href={`https://wa.me/${client.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-xl bg-secondary px-4 py-2.5 text-sm font-bold text-white hover:bg-secondary-dark">
-          <MessageCircle className="size-4" />
-          WhatsApp
-        </a>
+        <div className="flex flex-wrap gap-2">
+          {isSupply && canEditMoney(user) && (
+            <Link href={`/orders/new?client=${client.id}`} className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white hover:bg-primary-dark">
+              <Plus className="size-4" />
+              PO baru
+            </Link>
+          )}
+          {client.whatsapp && (
+            <a href={`https://wa.me/${client.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-xl bg-secondary px-4 py-2.5 text-sm font-bold text-white hover:bg-secondary-dark">
+              <MessageCircle className="size-4" />
+              WhatsApp
+            </a>
+          )}
+        </div>
       </div>
+
+      <ErrorText>{blocked ? `Klien ini punya ${blocked} PO, jadi tidak bisa dihapus. Hapus atau pindahkan PO-nya dulu.` : null}</ErrorText>
 
       <div className="grid gap-5 lg:grid-cols-5">
         <div className="lg:col-span-3">
           <ClientForm client={client} canDelete={user.role === "admin"} readOnly={!canEditClients(user)} units={user.units} />
         </div>
-        {tx && (
-          <Card title="Transaksi klien ini" action={{ label: "Arus kas", href: `/cash-flow?unit=${client.unit}&q=${encodeURIComponent(client.name)}` }} className="lg:col-span-2">
-            {tx.docs.length === 0 ? (
-              <p className="text-sm text-muted">Belum ada transaksi.</p>
-            ) : (
-              <ul className="divide-y divide-line">
-                {tx.docs.map((t) => (
-                  <li key={t.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
-                    <div className="min-w-0">
-                      <p className="truncate font-semibold">{t.reference || categoryLabel.get(t.category)}</p>
-                      <p className="text-xs text-muted">{formatDate(t.date)} · {categoryLabel.get(t.category)}</p>
-                    </div>
-                    <span className={cn("shrink-0 font-extrabold", t.type === "masuk" ? "text-secondary-dark" : "text-red-600")}>
-                      {t.type === "masuk" ? "+" : "-"}{formatIDR(t.amount)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-        )}
+        <div className="space-y-5 lg:col-span-2">
+          {orders && (
+            <Card title="PO klien ini" action={{ label: "Semua pesanan", href: `/orders?unit=${client.unit}&filter=semua&q=${encodeURIComponent(client.name)}` }}>
+              {orders.length === 0 ? (
+                <p className="text-sm text-muted">Belum ada PO.</p>
+              ) : (
+                <ul className="divide-y divide-line">
+                  {orders.slice(0, 6).map((o) => {
+                    const next = nextDate(o);
+                    return (
+                      <li key={o.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+                        <div className="min-w-0">
+                          <Link href={`/orders/${o.id}`} className="block truncate font-semibold hover:text-primary">{o.number}</Link>
+                          <p className="truncate text-xs text-muted">
+                            {formatDate(o.orderDate)}
+                            {next ? ` · ${next.label} ${daysLabel(next.iso)}` : ""}
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-2">
+                          <span className="font-extrabold">{formatIDR(orderTotal(o))}</span>
+                          <OrderStatusPill status={o.status} />
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </Card>
+          )}
+          {tx && (
+            <Card title="Transaksi klien ini" action={{ label: "Arus kas", href: `/cash-flow?unit=${client.unit}&q=${encodeURIComponent(client.name)}` }}>
+              <TxList rows={tx.docs} editable={canEditMoney(user)} empty="Belum ada transaksi." />
+            </Card>
+          )}
+        </div>
       </div>
     </div>
   );

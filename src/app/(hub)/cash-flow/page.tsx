@@ -4,16 +4,18 @@ import { redirect } from "next/navigation";
 import { ArrowDownLeft, ArrowUpRight, ChevronLeft, ChevronRight, Download, Scale, Wallet } from "lucide-react";
 import { canEditMoney, canSeeMoney, getSessionUser } from "@/lib/session";
 import { getPayloadClient } from "@/lib/payload";
-import { getLedger, getUnitMonth, monthKey, parseMonth, pctChange, type UnitFilter } from "@/lib/finance";
+import { fundingHint, getLedger, getUnitMonth, monthKey, parseMonth, pctChange, resolveUnit } from "@/lib/finance";
 import { dateKey, dayLabel, formatDate, formatIDR, formatMonthLong } from "@/lib/format";
-import { categoryLabel, transactionCategories, units, type Unit } from "@/lib/options";
+import { categoryLabel, transactionCategories, unitLabel, type Unit } from "@/lib/options";
 import { cn } from "@/lib/cn";
 import { buildHref, first, type Search } from "@/lib/search";
-import { SegmentedLinks } from "@/components/hub/SegmentedLinks";
+import { EmptyState } from "@/components/hub/EmptyState";
+import { UnitTabs } from "@/components/hub/UnitTabs";
 import { KpiCard } from "@/components/hub/KpiCard";
 import { PageHeader } from "@/components/hub/PageHeader";
 import { Avatar } from "@/components/hub/Avatar";
-import { QuickAdd, type EditingTx } from "./QuickAdd";
+import { clientOf, getOrderPayments, getOrders, orderTotal, toOrderOption } from "@/lib/orders";
+import { QuickAdd, type EditingTx, type TxPreset } from "./QuickAdd";
 
 export const metadata: Metadata = { title: "Arus Kas" };
 export const dynamic = "force-dynamic";
@@ -23,18 +25,12 @@ const href = (base: Search, patch: Record<string, string | undefined> = {}) => b
 export default async function ArusKasPage({ searchParams }: { searchParams: Promise<Search> }) {
   const user = await getSessionUser();
   if (!user) redirect("/login");
-  if (!canSeeMoney(user)) redirect("/");
   const allowed = user.units;
+  if (!canSeeMoney(user) || allowed.length === 0) redirect("/");
   const editable = canEditMoney(user);
 
   const sp = await searchParams;
-  const unitParam = first(sp.unit) as Unit | "semua" | undefined;
-  const unit: UnitFilter =
-    unitParam === "semua" && allowed.length > 1
-      ? "semua"
-      : unitParam && allowed.includes(unitParam as Unit)
-        ? (unitParam as Unit)
-        : allowed[0] ?? "digital";
+  const unit = resolveUnit(first(sp.unit), allowed);
   const month = parseMonth(first(sp.month));
   const q = first(sp.q) ?? "";
   const category = first(sp.category) ?? "";
@@ -44,16 +40,18 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
   const base: Search = { unit, month: monthKey(month), q: q || undefined, category: category || undefined };
 
   const payload = await getPayloadClient();
-  const [ledger, clientsRes, um] = await Promise.all([
+  const [ledger, clientsRes, um, openOrders] = await Promise.all([
     getLedger({ unit, allowed, month, q, category }),
     payload.find({ collection: "clients", limit: 500, sort: "name", select: { name: true, unit: true } }),
     getUnitMonth(unit, allowed, month),
+    getOrders({ unit, allowed, filter: "berjalan" }),
   ]);
   const editId = editable ? Number(first(sp.edit) || 0) : 0;
   const clientOptions = clientsRes.docs
     .filter((c) => allowed.includes(c.unit) && (unit === "semua" || c.unit === unit || Boolean(editId)))
     .map((c) => ({ id: c.id, name: c.name, unit: c.unit as Unit }));
   const quickAddUnit: Unit = unit === "semua" ? allowed[0] : unit;
+  const orderOptions = openOrders.map(toOrderOption);
 
   let editing: EditingTx | null = null;
   if (editId) {
@@ -68,10 +66,36 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
         category: t.category,
         method: t.method ?? null,
         client: typeof t.client === "object" && t.client ? t.client.id : (t.client ?? null),
+        order: typeof t.order === "object" && t.order ? t.order.id : (t.order ?? null),
         reference: t.reference ?? null,
         notes: t.notes ?? null,
         receiptUrl: typeof t.receipt === "object" && t.receipt ? (t.receipt.url ?? null) : null,
       };
+      // A closed PO is not in the open list; keep its option so editing does not drop the link.
+      const linked = t.order;
+      if (typeof linked === "object" && linked && !orderOptions.some((o) => o.id === linked.id)) orderOptions.push(toOrderOption(linked));
+    }
+  }
+
+  // "Catat pembayaran" from a PO page: open the sheet with the remaining amount filled in.
+  let prefill: TxPreset | null = null;
+  const addOrderId = editable && !editing && first(sp.add) ? Number(first(sp.order) || 0) : 0;
+  if (addOrderId) {
+    const o = await payload.findByID({ collection: "orders", id: addOrderId, depth: 1, disableErrors: true });
+    if (o && allowed.includes(o.unit)) {
+      const { paid } = await getOrderPayments(o.id);
+      const c = clientOf(o);
+      prefill = {
+        unit: o.unit,
+        type: "masuk",
+        category: "penjualan-barang",
+        client: c?.id ?? null,
+        order: o.id,
+        amount: Math.max(orderTotal(o) - paid, 0),
+        reference: o.invoiceNumber || o.number,
+      };
+      if (!orderOptions.some((x) => x.id === o.id)) orderOptions.push(toOrderOption(o));
+      if (c && !clientOptions.some((x) => x.id === c.id)) clientOptions.push({ id: c.id, name: c.name, unit: c.unit });
     }
   }
   const closeHref = href(base, { edit: undefined });
@@ -94,22 +118,12 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
           CSV
         </a>
         {editable && (
-          <QuickAdd key={editing?.id ?? "new"} unit={quickAddUnit} units={allowed} clients={clientOptions} editing={editing} closeHref={closeHref} />
+          <QuickAdd key={editing?.id ?? (prefill ? `po-${prefill.order}` : "new")} unit={quickAddUnit} units={allowed} clients={clientOptions} orders={orderOptions} editing={editing} prefill={prefill} closeHref={closeHref} />
         )}
       </PageHeader>
 
       <div className="flex flex-wrap items-center gap-3">
-        {allowed.length > 1 && (
-          <SegmentedLinks
-            ariaLabel="Unit bisnis"
-            segments={[
-              ...units
-                .filter((u) => allowed.includes(u.value))
-                .map((u) => ({ label: u.label, href: href(base, { unit: u.value }), active: unit === u.value })),
-              { label: "Semua", href: href(base, { unit: "semua" }), active: unit === "semua" },
-            ]}
-          />
-        )}
+        <UnitTabs path="/cash-flow" base={base} unit={unit} allowed={allowed} />
         <div className="inline-flex items-center rounded-xl border border-line bg-white">
           <Link href={href(base, { month: monthKey(prev) })} aria-label="Bulan sebelumnya" className="p-2 text-muted hover:text-ink">
             <ChevronLeft className="size-4" />
@@ -122,9 +136,9 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KpiCard icon={ArrowDownLeft} label="Masuk" value={formatIDR(ledger.masuk)} delta={pctChange(um.masuk, um.masukPrev)} tone="in" hint="vs bulan lalu" />
-        <KpiCard icon={ArrowUpRight} label="Keluar" value={formatIDR(ledger.keluar)} delta={pctChange(um.keluar, um.keluarPrev)} upIsGood={false} tone="out" hint="vs bulan lalu" />
-        <KpiCard icon={Scale} label="Selisih" value={formatIDR(ledger.masuk - ledger.keluar)} tone={ledger.masuk - ledger.keluar >= 0 ? "in" : "out"} hint="bulan ini" />
+        <KpiCard icon={ArrowDownLeft} label="Masuk" value={formatIDR(ledger.masuk)} delta={pctChange(um.masuk, um.masukPrev)} tone="in" hint={fundingHint(ledger.fundingMasuk)} />
+        <KpiCard icon={ArrowUpRight} label="Keluar" value={formatIDR(ledger.keluar)} delta={pctChange(um.keluar, um.keluarPrev)} upIsGood={false} tone="out" hint={fundingHint(ledger.fundingKeluar)} />
+        <KpiCard icon={Scale} label="Selisih" value={formatIDR(ledger.masuk - ledger.keluar)} tone={ledger.masuk - ledger.keluar >= 0 ? "in" : "out"} hint="operasional bulan ini" />
         <KpiCard icon={Wallet} label="Saldo akhir bulan" value={formatIDR(ledger.closing)} hint={`Awal bulan ${formatIDR(ledger.opening)}`} tone="primary" />
       </div>
 
@@ -155,10 +169,10 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
       )}
 
       {ledger.rows.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-line bg-white p-10 text-center">
-          <p className="font-semibold">Belum ada transaksi {formatMonthLong(month)} untuk {unit === "semua" ? "semua unit" : `Zynergy ${units.find((u) => u.value === unit)?.label ?? unit}`}.</p>
-          <p className="mt-1 text-sm text-muted">{editable ? "Tekan \"Catat\" untuk menambah, atau pindah bulan." : "Pindah bulan untuk melihat periode lain."}</p>
-        </div>
+        <EmptyState
+          title={`Belum ada transaksi ${formatMonthLong(month)} untuk ${unit === "semua" ? "semua unit" : `Zynergy ${unitLabel.get(unit)}`}.`}
+          hint={editable ? 'Tekan "Catat" untuk menambah, atau pindah bulan.' : "Pindah bulan untuk melihat periode lain."}
+        />
       ) : (
         <>
           {/* Desktop: table with running balance */}

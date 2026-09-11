@@ -13,6 +13,10 @@ interface SessionLike {
 const asUser = (u: unknown) => (u ?? null) as SessionLike | null;
 export const allUnits: Unit[] = units.map((u) => u.value);
 
+/** Money visibility by role. Staff is Finance under another name for now. */
+export const seesMoney = (role?: Role) => role === "admin" || role === "finance" || role === "staff" || role === "viewer";
+export const editsMoney = (role?: Role) => role === "admin" || role === "finance" || role === "staff";
+
 /** Units a user may see: admin and viewer see everything, others only their assigned units. */
 export function unitsOf(user: unknown): Unit[] {
   const u = asUser(user);
@@ -29,7 +33,7 @@ export const moneyRead: Access = ({ req }) => {
   const u = asUser(req.user);
   if (!u?.role) return false;
   if (u.role === "admin" || u.role === "viewer") return true;
-  if (u.role === "finance") return { unit: { in: unitsOf(u) } };
+  if (editsMoney(u.role)) return { unit: { in: unitsOf(u) } };
   return false;
 };
 
@@ -38,13 +42,10 @@ export const moneyWrite: Access = ({ req }) => {
   const u = asUser(req.user);
   if (!u?.role) return false;
   if (u.role === "admin") return true;
-  if (u.role === "finance") return { unit: { in: unitsOf(u) } };
+  if (editsMoney(u.role)) return { unit: { in: unitsOf(u) } };
   return false;
 };
-export const moneyCreate: Access = ({ req }) => {
-  const role = asUser(req.user)?.role;
-  return role === "admin" || role === "finance";
-};
+export const moneyCreate: Access = ({ req }) => editsMoney(asUser(req.user)?.role);
 
 /** Clients: everyone logged in, scoped to their units (admin and viewer see all). */
 export const clientRead: Access = ({ req }) => {
@@ -61,8 +62,18 @@ export const clientWrite: Access = ({ req }) => {
 };
 export const clientCreate: Access = ({ req }) => {
   const role = asUser(req.user)?.role;
-  return role === "admin" || role === "finance" || role === "member";
+  return Boolean(role) && role !== "viewer";
 };
+
+/**
+ * Orders: everyone in the unit may read them (members handle sourcing and
+ * shipping), but price fields are money and use the field-level rules below.
+ * Creating and deleting stay with the money roles.
+ */
+export const orderRead: Access = clientRead;
+export const orderWrite: Access = clientWrite;
+export const orderCreate: Access = moneyCreate;
+export const orderDelete: Access = moneyWrite;
 
 export const hasRoleField =
   (...allowed: Role[]): FieldAccess =>
@@ -70,6 +81,10 @@ export const hasRoleField =
     const role = asUser(req.user)?.role;
     return Boolean(role && allowed.includes(role));
   };
+
+/** Field-level rules for prices and billing on orders. */
+export const moneyFieldRead = hasRoleField("admin", "finance", "staff", "viewer");
+export const moneyFieldWrite = hasRoleField("admin", "finance", "staff");
 
 /**
  * REST safety net: a non-admin may only write documents in their own units.
@@ -89,6 +104,9 @@ export const enforceUnit: CollectionBeforeChangeHook = ({ data, req }) => {
 export const canWriteUnit = (user: SessionLike | null, unit: Unit, money: boolean) => {
   if (!user?.role || user.role === "viewer") return false;
   if (user.role === "admin") return true;
-  if (money && user.role !== "finance") return false;
+  if (money && !editsMoney(user.role)) return false;
   return unitsOf(user).includes(unit);
 };
+
+/** Status changes and documents on an order: anyone working in that unit. */
+export const canTouchOrder = (user: SessionLike | null, unit: Unit) => canWriteUnit(user, unit, false);

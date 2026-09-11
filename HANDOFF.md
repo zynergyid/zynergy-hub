@@ -4,7 +4,7 @@
 > yang sama dengan repo `zynergy` (tanpa em dash, jangan deploy tanpa perintah
 > "deploy", commit dan push biasa).
 
-## State 2026-09-11 (sore)
+## State 2026-09-11 (malam)
 
 - Modul 1 (Klien) dan 2 (Keuangan) dibangun dan diverifikasi lokal, dengan
   UI custom (bukan admin Payload) untuk pemakaian harian:
@@ -35,7 +35,10 @@
 - Jebakan: `payload migrate` bertanya interaktif kalau dev server (mode push)
   sedang jalan; matikan dev server dulu atau jawab dengan `echo y |`. Untuk
   lokal, reset database lebih cepat: drop + create `zynergy_hub`, migrate,
-  seed.
+  seed. Jebakan kedua (2026-09-11 malam): MATIKAN dev server SEBELUM mengubah
+  koleksi. Mode push langsung menerapkan skema baru ke database lokal, lalu
+  `migrate` gagal dengan "already exists". Obatnya reset database seperti di
+  atas; berkas migrasinya sendiri tetap benar dan itulah yang dipakai prod.
 - Repo privat `danish-deepskill/zynergy-hub` (push 2026-09-11), Vercel
   project `zynergy-hub` (scope `devdanzen-projects`) dengan domain
   hub.zynergy.co.id terpasang dan PAYLOAD_SECRET production sudah diset.
@@ -71,26 +74,128 @@
   mengubah nama, email, dan password sendiri (wajib setelah login pertama
   dengan password sementara).
 
+## Kategori pendanaan (2026-09-11 malam)
+
+- Kategori transaksi punya `kind`: `operasional` atau `pendanaan`
+  (`src/lib/options.ts`, helper `isFinancing`). Pendanaan: Setoran modal,
+  Pinjaman diterima (masuk), Pengembalian pinjaman, Prive / dividen
+  (keluar). Uang investor dicatat sebagai Setoran modal (saham) atau
+  Pinjaman diterima, di unit yang akan memakai uangnya.
+- Saldo menghitung semuanya. "Masuk/Keluar bulan ini", delta vs bulan lalu,
+  grafik 12 bulan, dan pengeluaran per kategori hanya operasional; kartu KPI
+  memberi catatan "belum termasuk Rp X pendanaan" saat ada. CSV punya kolom
+  `kelompok` untuk akuntan.
+- Kategori keluar baru `Transportasi` (ojek, bensin, parkir) untuk perjalanan
+  umum; ongkos jalan demi PO tertentu tetap Pengiriman & logistik dan
+  ditautkan ke PO-nya agar masuk margin PO.
+- Pembukuan resmi PT (RUPS, notaris, AHU untuk perubahan modal) tetap di
+  luar Hub.
+
 ## Peran dan unit (diputuskan 2026-09-11)
 
-- Tiga unit: `digital`, `products`, `supply` (field `unit` di Clients,
+- Tiga unit: `digital`, `apps`, `supply` (field `unit` di Clients,
   Transactions, Receipts). Design berada di dalam Digital untuk urusan uang.
 - Peran = tingkat akses, unit = ruang lingkup, jabatan = label saja.
   - `admin`: semua unit, kelola tim.
-  - `finance`: klien dan arus kas hanya di unit yang ditugaskan (`users.units`).
-  - `member` (Anggota): klien dan alat di unitnya, tanpa uang. Designer,
-    marketing, business, developer masuk sini; jabatan diisi di `title`.
+  - `finance`: klien, arus kas, dan pesanan penuh hanya di unit yang
+    ditugaskan (`users.units`).
+  - `staff` (Staf, ditambah 2026-09-11 malam atas permintaan Danish): untuk
+    SEMENTARA haknya sama persis dengan finance (`seesMoney`/`editsMoney` di
+    access.ts). Dibuat karena orang yang menjalankan Supply sehari-hari
+    (Pak Rizal) butuh akses uang tanpa disebut "Finance". Dibedakan nanti
+    kalau kebutuhannya berbeda.
+  - `member` (Anggota): klien dan alat di unitnya, tanpa uang. Sejak
+    2026-09-11 malam juga bisa membuka Pesanan di unitnya TANPA harga
+    (daftar, detail, item tanpa harga satuan, dokumen), mengubah status dan
+    catatan (kartu "Ubah status"), dan mengunggah/menghapus dokumen. Tidak
+    bisa membuat atau menghapus PO, tidak melihat nilai PO, pembayaran,
+    penagihan. Designer, marketing, business, developer masuk sini.
   - `viewer` (Pengawas, untuk komisaris): melihat semua unit, ringkasan, arus
-    kas, klien; tidak bisa mengubah apa pun.
+    kas, klien, pesanan; tidak bisa mengubah apa pun.
+- Harga di PO dilindungi di lapisan data: field `items.unitPrice` dan
+  `subtotal` punya `access.read` untuk peran uang saja (`moneyFieldRead`),
+  dan semua field data PO punya `access.update` untuk peran uang saja
+  (`moneyFieldWrite`); anggota lewat REST hanya bisa mengubah `status`,
+  `documents`, `notes`. Halaman server memakai Local API (overrideAccess),
+  jadi UI menyembunyikan harga lewat prop `showMoney`; server action
+  `updateOrderStatus`, `addDocument`, `removeDocument` memakai
+  `canTouchOrder` (siapa pun di unit itu kecuali pengawas).
+- Berkas dipisah dua koleksi: `receipts` (bukti transfer, akses uang) dan
+  `documents` (PDF PO, invoice, surat jalan; akses seperti klien, jadi
+  anggota bisa membukanya). Keduanya ke Vercel Blob di prod.
 - Pembatasan dipaksa di lapisan data (`src/lib/access.ts`: moneyRead,
   moneyWrite, clientRead, clientWrite mengembalikan query `unit in units`),
   di hook `enforceUnit` untuk REST, dan di server action (`canWriteUnit`).
   UI hanya menyembunyikan; keamanannya di query.
-- Klien: satu unit per klien. Kalau nanti Supply butuh field khusus (NPWP,
-  nomor vendor, PIC pengadaan), tambahkan sebagai field bersyarat per unit.
+- Klien: satu unit per klien. Klien Supply punya grup `supply` (nama badan
+  hukum, NPWP, nomor vendor, termin, alamat penagihan) dan WhatsApp opsional;
+  form klien menampilkan bagian itu saat unit = supply dan menyembunyikan
+  paket/perpanjangan (lihat bagian Pesanan).
 - Seed lokal: dev@zynergy.local (admin), finance.digital@zynergy.local
-  (finance, unit digital), pengawas@zynergy.local (viewer), semua password
-  zynergy-dev-only.
+  (finance, unit digital), pengawas@zynergy.local (viewer),
+  member@zynergy.local (anggota, digital), member.supply@zynergy.local
+  (anggota, supply), staf.supply@zynergy.local (staf, supply), semua
+  password zynergy-dev-only.
+
+## Pesanan (PO Supply), 2026-09-11 malam
+
+Pemicu: PO nyata dari pembeli industri untuk PT (Supply). Prinsipnya: satu
+PO = satu berkas, berisi data terstruktur (untuk dashboard, piutang, dan
+nanti invoice) plus semua dokumen aslinya. PDF PO asli hanya masuk ke Hub
+(repo privat, Blob privat), tidak pernah ke repo situs yang publik, dan
+tidak pernah ke skrip seed; data nyata diisi lewat UI di prod.
+
+- Koleksi `orders` (`src/collections/Orders.ts`): `unit`, `number`,
+  `revision`, `client` (relasi), `orderDate`, `deliveryDate`, `shipTo`,
+  `incoterm`, `paymentTermsDays` (default 30), `currency`, `items[]`
+  (material, partNumber, description, qty, uom, unitPrice), `subtotal`,
+  `status` (diterima, sourcing, dikirim, ditagih, dibayar, batal),
+  `invoiceNumber`, `invoiceDate`, `dueDate`, `documents[]` (kind + upload ke
+  `receipts` + note), `notes`. Hook: subtotal dihitung dari item kalau ada
+  item; dueDate = invoiceDate + termin kalau kosong. Akses mengikuti aturan
+  uang (admin, finance di unitnya, pengawas lihat saja) karena PO berisi harga.
+- `transactions.order`: relasi ke PO. Saat uang masuk ditautkan ke PO dan
+  total yang diterima >= nilai PO, status PO otomatis jadi `dibayar`
+  (`settleOrder` di `cash-flow/actions.ts`).
+- Layar: `/orders` (filter unit, Berjalan/Dibayar/Semua, cari nomor PO,
+  invoice, nama klien; urut PO berjalan berdasarkan tenggat terdekat),
+  `/orders/new` (`?client=ID` memilih klien), `/orders/[id]` (KPI nilai,
+  dibayar, sisa, tenggat; OrderForm; kartu Dokumen dengan unggah dan hapus;
+  kartu Transaksi PO). Tombol "Catat pembayaran" membuka Arus Kas dengan
+  sheet terisi (`/cash-flow?unit=supply&add=1&order=ID`, nominal = sisa).
+  Ringkasan punya kartu "Pesanan berjalan" saat unit Supply tercakup.
+  Detail klien Supply menampilkan PO-nya dan tombol PO baru.
+- Logika di `src/lib/orders.ts` (orderTotal, nextDate, getOrders,
+  getOrderSummary, getOrderPayments, getClientOptions). Helper bersama baru:
+  `src/lib/form-data.ts` (text, digits, pick, dateOrNull) dan
+  `src/lib/uploads.ts` (uploadReceipt, MAX_UPLOAD_BYTES), dipakai semua
+  server action. `daysLabel` di `format.ts` untuk semua hitung mundur.
+- Aturan hapus: klien yang punya PO tidak bisa dihapus (redirect
+  `?blocked=N`); menghapus PO ikut menghapus berkas dokumennya; transaksi
+  yang tertaut tetap ada (relasi jadi null).
+- Tab HP: Pesanan tampil untuk semua peran; Alat hanya tampil di tab HP
+  untuk anggota (semua isinya masih "Segera").
+- Migrasi `20260911_120916_supply_orders` (orders, kolom supply_* di
+  clients, whatsapp nullable, transactions.order_id). Seed menambah klien
+  Supply contoh "PT Tambang Nusantara (contoh)" dengan satu PO, dan akun
+  member@zynergy.local.
+- `/clients` (2026-09-11 malam, permintaan Danish): pemilah unit
+  Semua/Digital/Apps/Supply seperti Arus Kas dan Pesanan; "Semua"
+  menampilkan satu bagian per unit dengan judul dan jumlah, bukan satu
+  daftar campur. `/clients/new?unit=supply` memulai form di unit itu.
+- Perapian (audit DRY/YAGNI/KISS, 2026-09-11 malam, permintaan Danish):
+  `resolveUnit` (lib/finance) dan `UnitTabs` dipakai Ringkasan, Arus Kas,
+  Klien, Pesanan; "Semua" selalu paling kiri dan jadi default untuk yang
+  punya lebih dari satu unit (Arus Kas dulu default Digital). Komponen
+  bersama baru: EmptyState, SearchForm, TxList, OrdersCard, deadline.ts
+  (deadlineTone/deadlinePill/deadlineText), kelas buttonPrimary,
+  buttonOutline, fileInputClass di form.tsx; ConfirmButton dipakai semua
+  tombol hapus. Field mata uang PO dihapus (tidak pernah dipakai, semua
+  nominal Rupiah). `allTransactions` dibungkus React `cache` agar dashboard
+  memuat transaksi sekali per request. Dua migrasi malam ini digabung jadi
+  satu (`supply_orders`) karena belum pernah dideploy.
+- Belum dibuat: halaman invoice cetak, PO keluar ke supplier, margin, ekspor
+  CSV pesanan.
 
 ## Peta subdomain (diputuskan 2026-09-11)
 
@@ -98,7 +203,11 @@
 - hub.zynergy.co.id: Zynergy Hub, satu aplikasi untuk tim DAN klien (klien
   = peran tersendiri nanti, bukan subdomain terpisah). Diputuskan 2026-09-11
   menggantikan rencana team. + portal.
-- app.zynergy.co.id: Zynergy Products, project terpisah per produk.
+- app.zynergy.co.id: Zynergy Apps (bernama Products sampai 2026-09-11;
+  diganti karena pelanggan bilang "aplikasi" dan "Products" bentrok dengan
+  barang di Supply), project terpisah per aplikasi. Nilai unit di database
+  ikut diganti lewat migrasi `rename_unit_products_to_apps` (RENAME VALUE
+  pada lima enum unit).
 
 ## Roadmap modul
 
@@ -110,9 +219,12 @@
    (nomor kedua, biaya per pesan, minta persetujuan dulu).
 4. Portal klien (portal.zynergy.co.id): laporan, langganan, edit isi website
    (platform template, project terpisah).
-5. RFQ Supply: inbox sales@ jadi kartu RFQ, tenggat, template penawaran,
-   tindak lanjut. Dibangun setelah sesi 30 menit dengan Pak Rizal.
-   Email masuk via Zoho Mail API, forwarding ke webhook, atau IMAP (Mail Lite).
+5. Supply: PO masuk dan piutang SELESAI (modul Pesanan, 2026-09-11 malam).
+   Berikutnya: halaman invoice cetak dari PO (menunggu contoh invoice lama
+   yang diterima pembeli sebagai spesifikasi), lalu PO keluar ke distributor
+   dan margin per PO. RFQ dari inbox sales@ (kartu RFQ, tenggat, template
+   penawaran) dibangun setelah sesi 30 menit dengan Pak Rizal; email masuk
+   via Zoho Mail API, forwarding ke webhook, atau IMAP (Mail Lite).
 6. Claude API untuk ringkasan/draf/laporan: akun console dengan admin@,
    batas pengeluaran bulanan, minta persetujuan sebelum aktif.
 

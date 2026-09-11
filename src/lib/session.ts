@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { getPayloadClient } from "@/lib/payload";
-import { unitsOf } from "@/lib/access";
+import { editsMoney, seesMoney, unitsOf } from "@/lib/access";
 import type { Role, Unit } from "@/lib/options";
 
 export interface SessionUser {
@@ -28,6 +28,6 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   };
 }
 
-export const canSeeMoney = (u: SessionUser) => u.role === "admin" || u.role === "finance" || u.role === "viewer";
-export const canEditMoney = (u: SessionUser) => u.role === "admin" || u.role === "finance";
+export const canSeeMoney = (u: SessionUser) => seesMoney(u.role);
+export const canEditMoney = (u: SessionUser) => editsMoney(u.role);
 export const canEditClients = (u: SessionUser) => u.role !== "viewer";

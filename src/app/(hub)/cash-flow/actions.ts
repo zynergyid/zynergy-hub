@@ -2,35 +2,56 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import type { Payload } from "payload";
 import { getPayloadClient } from "@/lib/payload";
-import { getSessionUser } from "@/lib/session";
+import { canEditMoney, getSessionUser } from "@/lib/session";
 import { paymentMethods, transactionCategories, units } from "@/lib/options";
 import { canWriteUnit } from "@/lib/access";
+import { digits, pick, text } from "@/lib/form-data";
+import { MAX_UPLOAD_BYTES, uploadFile } from "@/lib/uploads";
+import { getOrderPayments, orderTotal } from "@/lib/orders";
 
 export interface QuickAddState {
   status: "idle" | "success" | "error";
   message?: string;
 }
 
-const pick = <T extends readonly { value: string }[]>(opts: T, v: string) =>
-  opts.some((o) => o.value === v) ? (v as T[number]["value"]) : undefined;
+function revalidate(orderId?: number | null) {
+  revalidatePath("/cash-flow");
+  revalidatePath("/");
+  if (orderId) {
+    revalidatePath("/orders");
+    revalidatePath(`/orders/${orderId}`);
+  }
+}
+
+/** Flip a PO to paid once the money received covers its value. */
+async function settleOrder(payload: Payload, orderId: number) {
+  const order = await payload.findByID({ collection: "orders", id: orderId, depth: 0, disableErrors: true });
+  if (!order || order.status === "dibayar" || order.status === "batal") return;
+  const { paid } = await getOrderPayments(orderId);
+  if (paid > 0 && paid >= orderTotal(order)) {
+    await payload.update({ collection: "orders", id: orderId, data: { status: "dibayar" } });
+  }
+}
 
 export async function saveTransaction(_prev: QuickAddState, formData: FormData): Promise<QuickAddState> {
   const user = await getSessionUser();
-  if (!user || (user.role !== "admin" && user.role !== "finance")) {
-    return { status: "error", message: "Hanya admin dan finance yang bisa mencatat transaksi." };
+  if (!user || !canEditMoney(user)) {
+    return { status: "error", message: "Hanya admin, finance, dan staf yang bisa mencatat transaksi." };
   }
 
   const id = Number(formData.get("id") || 0) || null;
-  const type = String(formData.get("type") ?? "");
-  const amount = Number(String(formData.get("amount") ?? "").replace(/\D/g, ""));
-  const dateStr = String(formData.get("date") ?? "");
-  const category = pick(transactionCategories, String(formData.get("category") ?? ""));
-  const unit = pick(units, String(formData.get("unit") ?? ""));
-  const method = pick(paymentMethods, String(formData.get("method") ?? ""));
-  const clientId = String(formData.get("client") ?? "");
-  const reference = String(formData.get("reference") ?? "").trim();
-  const notes = String(formData.get("notes") ?? "").trim();
+  const type = text(formData, "type");
+  const amount = Number(digits(text(formData, "amount")));
+  const dateStr = text(formData, "date");
+  const category = pick(transactionCategories, text(formData, "category"));
+  const unit = pick(units, text(formData, "unit"));
+  const method = pick(paymentMethods, text(formData, "method"));
+  const clientId = Number(text(formData, "client")) || null;
+  const orderId = Number(text(formData, "order")) || null;
+  const reference = text(formData, "reference");
+  const notes = text(formData, "notes");
   const receipt = formData.get("receipt");
 
   if (type !== "masuk" && type !== "keluar") return { status: "error", message: "Pilih masuk atau keluar." };
@@ -39,23 +60,17 @@ export async function saveTransaction(_prev: QuickAddState, formData: FormData):
   if (!category) return { status: "error", message: "Pilih kategori." };
   if (!unit) return { status: "error", message: "Pilih unit bisnis." };
   if (!canWriteUnit(user, unit, true)) return { status: "error", message: "Anda tidak punya akses ke unit ini." };
+  if (receipt instanceof File && receipt.size > MAX_UPLOAD_BYTES) return { status: "error", message: "Bukti maksimal 8MB." };
 
   try {
     const payload = await getPayloadClient();
+    if (orderId) {
+      const order = await payload.findByID({ collection: "orders", id: orderId, depth: 0, disableErrors: true });
+      if (!order || order.unit !== unit) return { status: "error", message: "PO tidak ditemukan atau bukan dari unit ini." };
+    }
     let receiptId: number | undefined;
     if (receipt instanceof File && receipt.size > 0) {
-      if (receipt.size > 8 * 1024 * 1024) return { status: "error", message: "Bukti maksimal 8MB." };
-      const uploaded = await payload.create({
-        collection: "receipts",
-        data: { unit },
-        file: {
-          data: Buffer.from(await receipt.arrayBuffer()),
-          name: receipt.name,
-          mimetype: receipt.type,
-          size: receipt.size,
-        },
-      });
-      receiptId = uploaded.id;
+      receiptId = (await uploadFile(payload, "receipts", unit, receipt)).id;
     }
     const data = {
       unit,
@@ -64,7 +79,8 @@ export async function saveTransaction(_prev: QuickAddState, formData: FormData):
       date: new Date(`${dateStr}T12:00:00`).toISOString(),
       category,
       method: method ?? null,
-      client: clientId ? Number(clientId) : null,
+      client: clientId,
+      order: orderId,
       reference: reference || null,
       notes: notes || null,
       ...(receiptId ? { receipt: receiptId } : {}),
@@ -78,27 +94,26 @@ export async function saveTransaction(_prev: QuickAddState, formData: FormData):
     } else {
       await payload.create({ collection: "transactions", data });
     }
+    if (orderId && type === "masuk") await settleOrder(payload, orderId);
   } catch (error) {
-    console.error("createTransaction failed:", error);
+    console.error("saveTransaction failed:", error);
     return { status: "error", message: "Gagal menyimpan. Coba lagi." };
   }
 
-  revalidatePath("/cash-flow");
-  revalidatePath("/");
+  revalidate(orderId);
   return { status: "success" };
 }
 
 export async function deleteTransaction(formData: FormData) {
   const user = await getSessionUser();
-  if (!user || (user.role !== "admin" && user.role !== "finance")) return;
+  if (!user || !canEditMoney(user)) return;
   const id = Number(formData.get("id") || 0);
   if (!id) return;
   const payload = await getPayloadClient();
-  const existing = await payload.findByID({ collection: "transactions", id, disableErrors: true });
+  const existing = await payload.findByID({ collection: "transactions", id, depth: 0, disableErrors: true });
   if (!existing || !canWriteUnit(user, existing.unit, true)) return;
   await payload.delete({ collection: "transactions", id });
-  revalidatePath("/cash-flow");
-  revalidatePath("/");
+  revalidate(typeof existing.order === "number" ? existing.order : null);
   const back = String(formData.get("closeHref") || "/cash-flow");
   redirect(back);
 }

@@ -1,8 +1,15 @@
-import type { CollectionConfig } from "payload";
+import type { CollectionConfig, Validate } from "payload";
 import { clientCreate, clientRead, clientWrite, enforceUnit, isAdmin } from "@/lib/access";
 import { businessTypes, clientStatuses, packages, units } from "@/lib/options";
 
-/** Paying clients of Zynergy Digital: who they are, what they pay, when it renews. */
+/** Supply buyers are companies reached by email; everyone else needs a WhatsApp number. */
+const whatsappRequiredOutsideSupply: Validate<string> = (value, { siblingData }) => {
+  const unit = (siblingData as { unit?: string } | undefined)?.unit;
+  if (unit === "supply" || (typeof value === "string" && value.trim())) return true;
+  return "WhatsApp wajib diisi.";
+};
+
+/** Clients of every unit. Digital: package and renewal. Supply: legal data for POs and invoices. */
 export const Clients: CollectionConfig = {
   slug: "clients",
   labels: { singular: "Klien", plural: "Klien" },
@@ -53,7 +60,12 @@ export const Clients: CollectionConfig = {
     {
       type: "row",
       fields: [
-        { name: "whatsapp", type: "text", required: true, label: "WhatsApp" },
+        {
+          name: "whatsapp",
+          type: "text",
+          label: "WhatsApp",
+          validate: whatsappRequiredOutsideSupply,
+        },
         { name: "email", type: "email" },
         { name: "city", type: "text", label: "Kota / area" },
       ],
@@ -112,6 +124,28 @@ export const Clients: CollectionConfig = {
         { name: "website", type: "text", label: "Website" },
         { name: "googleProfile", type: "text", label: "Profil Google Bisnis" },
         { name: "instagram", type: "text", label: "Instagram" },
+      ],
+    },
+    {
+      name: "supply",
+      type: "group",
+      label: "Data resmi (Supply)",
+      fields: [
+        {
+          type: "row",
+          fields: [
+            { name: "legalName", type: "text", label: "Nama badan hukum" },
+            { name: "npwp", type: "text", label: "NPWP" },
+          ],
+        },
+        {
+          type: "row",
+          fields: [
+            { name: "vendorNumber", type: "text", label: "Nomor vendor" },
+            { name: "paymentTermsDays", type: "number", min: 0, label: "Termin (hari)" },
+          ],
+        },
+        { name: "billingAddress", type: "textarea", label: "Alamat penagihan" },
       ],
     },
     { name: "notes", type: "textarea", label: "Catatan" },

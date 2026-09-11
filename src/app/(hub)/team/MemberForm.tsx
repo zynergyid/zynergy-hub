@@ -46,7 +46,7 @@ export function MemberForm({ member, isSelf }: { member?: User; isSelf: boolean 
             <Select id="mf-title" name="title" defaultValue={member?.title ?? undefined} placeholder="Tanpa jabatan" options={jobTitles.map((t) => ({ label: t, value: t }))} />
           </div>
           <div className="sm:col-span-2">
-            <Label htmlFor="mf-units">Unit (untuk finance dan anggota)</Label>
+            <Label htmlFor="mf-units">Unit (untuk finance, staf, dan anggota)</Label>
             {isSelf ? (
               <p className="text-sm text-muted">Admin melihat semua unit.</p>
             ) : (

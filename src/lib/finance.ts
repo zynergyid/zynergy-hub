@@ -1,6 +1,8 @@
+import { cache } from "react";
 import type { Client, Transaction } from "@/payload-types";
 import { getPayloadClient } from "@/lib/payload";
-import type { Unit } from "@/lib/options";
+import { formatIDR } from "@/lib/format";
+import { isFinancing, type Unit } from "@/lib/options";
 
 export type UnitFilter = Unit | "semua";
 
@@ -10,12 +12,15 @@ export interface LedgerRow {
   balance: number;
 }
 
+/** masuk/keluar are business cash only; funding* holds capital, loans, and draws for the same month. */
 export interface Ledger {
   rows: LedgerRow[];
   opening: number;
   closing: number;
   masuk: number;
   keluar: number;
+  fundingMasuk: number;
+  fundingKeluar: number;
   filtered: boolean;
 }
 
@@ -25,7 +30,12 @@ export interface UnitMonth {
   balance: number;
   masukPrev: number;
   keluarPrev: number;
+  fundingMasuk: number;
+  fundingKeluar: number;
 }
+
+/** KPI hint: warn when financing moved cash this month but is not in the number shown. */
+export const fundingHint = (amount: number) => (amount ? `belum termasuk ${formatIDR(amount)} pendanaan` : "vs bulan lalu");
 
 export interface CategoryShare {
   category: string;
@@ -51,7 +61,14 @@ export function scopeUnits(unit: UnitFilter, allowed: Unit[]): Unit[] {
   return allowed.includes(unit) ? [unit] : [];
 }
 
-async function allTransactions(unit: UnitFilter, allowed: Unit[]): Promise<Transaction[]> {
+/** Unit from the URL, limited to what the user may see; "semua" when they have several units. */
+export function resolveUnit(param: string | undefined, allowed: Unit[]): UnitFilter {
+  if (param && param !== "semua" && allowed.includes(param as Unit)) return param as Unit;
+  return allowed.length === 1 ? allowed[0] : "semua";
+}
+
+/** Loaded once per request even when several summaries need the same rows. */
+const allTransactions = cache(async (unit: UnitFilter, allowed: Unit[]): Promise<Transaction[]> => {
   const scoped = scopeUnits(unit, allowed);
   if (scoped.length === 0) return [];
   const payload = await getPayloadClient();
@@ -63,7 +80,7 @@ async function allTransactions(unit: UnitFilter, allowed: Unit[]): Promise<Trans
     depth: 1,
   });
   return docs;
-}
+});
 
 export async function getLedger(opts: {
   unit: UnitFilter;
@@ -80,6 +97,8 @@ export async function getLedger(opts: {
   let opening = 0;
   let masuk = 0;
   let keluar = 0;
+  let fundingMasuk = 0;
+  let fundingKeluar = 0;
   const rows: LedgerRow[] = [];
 
   for (const tx of docs) {
@@ -89,7 +108,10 @@ export async function getLedger(opts: {
     running += tx.type === "masuk" ? tx.amount : -tx.amount;
     if (before) opening = running;
     if (!inMonth) continue;
-    if (tx.type === "masuk") masuk += tx.amount;
+    if (isFinancing(tx.category)) {
+      if (tx.type === "masuk") fundingMasuk += tx.amount;
+      else fundingKeluar += tx.amount;
+    } else if (tx.type === "masuk") masuk += tx.amount;
     else keluar += tx.amount;
     const clientName = typeof tx.client === "object" && tx.client ? tx.client.name : "";
     const hay = `${tx.reference ?? ""} ${tx.notes ?? ""} ${clientName} ${tx.category}`.toLowerCase();
@@ -101,9 +123,11 @@ export async function getLedger(opts: {
   return {
     rows: rows.reverse(),
     opening,
-    closing: opening + masuk - keluar,
+    closing: opening + masuk - keluar + fundingMasuk - fundingKeluar,
     masuk,
     keluar,
+    fundingMasuk,
+    fundingKeluar,
     filtered,
   };
 }
@@ -111,14 +135,18 @@ export async function getLedger(opts: {
 export async function getUnitMonth(unit: UnitFilter, allowed: Unit[], month = new Date()): Promise<UnitMonth> {
   const docs = await allTransactions(unit, allowed);
   const prevMonth = new Date(month.getFullYear(), month.getMonth() - 1, 1);
-  const out: UnitMonth = { masuk: 0, keluar: 0, balance: 0, masukPrev: 0, keluarPrev: 0 };
+  const out: UnitMonth = { masuk: 0, keluar: 0, balance: 0, masukPrev: 0, keluarPrev: 0, fundingMasuk: 0, fundingKeluar: 0 };
   for (const tx of docs) {
     out.balance += tx.type === "masuk" ? tx.amount : -tx.amount;
     const d = new Date(tx.date);
+    const financing = isFinancing(tx.category);
     if (sameMonth(d, month)) {
-      if (tx.type === "masuk") out.masuk += tx.amount;
+      if (financing) {
+        if (tx.type === "masuk") out.fundingMasuk += tx.amount;
+        else out.fundingKeluar += tx.amount;
+      } else if (tx.type === "masuk") out.masuk += tx.amount;
       else out.keluar += tx.amount;
-    } else if (sameMonth(d, prevMonth)) {
+    } else if (sameMonth(d, prevMonth) && !financing) {
       if (tx.type === "masuk") out.masukPrev += tx.amount;
       else out.keluarPrev += tx.amount;
     }
@@ -132,7 +160,7 @@ export async function getCategoryBreakdown(unit: UnitFilter, allowed: Unit[], mo
   const totals = new Map<string, number>();
   let sum = 0;
   for (const tx of docs) {
-    if (tx.type !== "keluar" || !sameMonth(new Date(tx.date), month)) continue;
+    if (tx.type !== "keluar" || isFinancing(tx.category) || !sameMonth(new Date(tx.date), month)) continue;
     totals.set(tx.category, (totals.get(tx.category) ?? 0) + tx.amount);
     sum += tx.amount;
   }
@@ -163,7 +191,7 @@ export async function getLast12(unit: UnitFilter, allowed: Unit[]): Promise<Mont
   }));
   for (const tx of docs) {
     const p = points.find((pt) => sameMonth(pt.label, new Date(tx.date)));
-    if (!p) continue;
+    if (!p || isFinancing(tx.category)) continue;
     if (tx.type === "masuk") p.masuk += tx.amount;
     else p.keluar += tx.amount;
   }

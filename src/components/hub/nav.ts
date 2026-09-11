@@ -4,6 +4,7 @@ export type IconName =
   | "dashboard"
   | "cashflow"
   | "clients"
+  | "orders"
   | "search"
   | "report"
   | "rfq"
@@ -31,8 +32,9 @@ export const navSections: NavSection[] = [
     title: "Harian",
     items: [
       { href: "/", label: "Ringkasan", icon: "dashboard" },
-      { href: "/cash-flow", label: "Arus Kas", icon: "cashflow", roles: ["admin", "finance", "viewer"] },
+      { href: "/cash-flow", label: "Arus Kas", icon: "cashflow", roles: ["admin", "finance", "staff", "viewer"] },
       { href: "/clients", label: "Klien", icon: "clients" },
+      { href: "/orders", label: "Pesanan", icon: "orders" },
     ],
   },
   {
@@ -52,8 +54,9 @@ export const navSections: NavSection[] = [
 
 export const mobileTabs: NavItem[] = [
   { href: "/", label: "Ringkasan", icon: "dashboard" },
-  { href: "/cash-flow", label: "Arus Kas", icon: "cashflow", roles: ["admin", "finance", "viewer"] },
+  { href: "/cash-flow", label: "Arus Kas", icon: "cashflow", roles: ["admin", "finance", "staff", "viewer"] },
   { href: "/clients", label: "Klien", icon: "clients" },
-  { href: "/tools", label: "Alat", icon: "search" },
+  { href: "/orders", label: "Pesanan", icon: "orders" },
+  { href: "/tools", label: "Alat", icon: "search", roles: ["member"] },
   { href: "/team", label: "Tim", icon: "team", roles: ["admin"] },
 ];
