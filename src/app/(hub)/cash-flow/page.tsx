@@ -49,12 +49,12 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
     payload.find({ collection: "clients", limit: 500, sort: "name", select: { name: true, unit: true } }),
     getUnitMonth(unit, allowed, month),
   ]);
+  const editId = editable ? Number(first(sp.edit) || 0) : 0;
   const clientOptions = clientsRes.docs
     .filter((c) => allowed.includes(c.unit) && (unit === "semua" || c.unit === unit || Boolean(editId)))
     .map((c) => ({ id: c.id, name: c.name, unit: c.unit as Unit }));
   const quickAddUnit: Unit = unit === "semua" ? allowed[0] : unit;
 
-  const editId = editable ? Number(first(sp.edit) || 0) : 0;
   let editing: EditingTx | null = null;
   if (editId) {
     const t = await payload.findByID({ collection: "transactions", id: editId, depth: 1, disableErrors: true });
