@@ -6,6 +6,7 @@ import { getPayloadClient } from "@/lib/payload";
 import { Avatar } from "@/components/hub/Avatar";
 import { PageHeader } from "@/components/hub/PageHeader";
 import { AddMember } from "./AddMember";
+import { Select } from "@/components/hub/Select";
 import { jobTitles, roleLabel, roles, units } from "@/lib/options";
 import { removeMember, resetPassword, updateMember } from "./actions";
 
@@ -42,13 +43,8 @@ export default async function TimPage() {
                 ) : (
                   <form action={updateMember} className="flex flex-wrap items-center gap-2">
                     <input type="hidden" name="id" value={m.id} />
-                    <select name="role" defaultValue={m.role} className="rounded-lg border border-line bg-white px-2.5 py-1.5 text-xs font-semibold">
-                      {roles.map((r) => <option key={r.value} value={r.value}>{roleLabel.get(r.value)}</option>)}
-                    </select>
-                    <select name="title" defaultValue={m.title ?? ""} className="rounded-lg border border-line bg-white px-2.5 py-1.5 text-xs">
-                      <option value="">Jabatan</option>
-                      {jobTitles.map((t) => <option key={t} value={t}>{t}</option>)}
-                    </select>
+                    <Select name="role" size="compact" className="w-32" defaultValue={m.role} options={roles.map((r) => ({ label: roleLabel.get(r.value) ?? r.value, value: r.value }))} />
+                    <Select name="title" size="compact" className="w-32" defaultValue={m.title ?? undefined} placeholder="Jabatan" options={jobTitles.map((t) => ({ label: t, value: t }))} />
                     {units.map((u) => (
                       <label key={u.value} className="inline-flex items-center gap-1 rounded-lg border border-line px-2 py-1 text-xs has-checked:border-primary has-checked:bg-primary-soft">
                         <input type="checkbox" name="units" value={u.value} defaultChecked={(m.units ?? []).includes(u.value)} className="accent-primary" />

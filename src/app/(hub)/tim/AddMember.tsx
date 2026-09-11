@@ -4,6 +4,7 @@ import { useActionState, useRef, useState } from "react";
 import { Loader2, Plus, X } from "lucide-react";
 import { ErrorText, fieldClass } from "@/components/hub/form";
 import { jobTitles, roles, units } from "@/lib/options";
+import { Select } from "@/components/hub/Select";
 import { addMember, type MemberFormState } from "./actions";
 
 const initial: MemberFormState = { status: "idle" };
@@ -48,16 +49,11 @@ export function AddMember() {
         </div>
         <div>
           <label htmlFor="m-role" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Peran</label>
-          <select id="m-role" name="role" defaultValue="member" className={fieldClass}>
-            {roles.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
-          </select>
+          <Select id="m-role" name="role" defaultValue="member" options={roles} />
         </div>
         <div>
           <label htmlFor="m-title" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Jabatan</label>
-          <select id="m-title" name="title" defaultValue="" className={fieldClass}>
-            <option value="">Tanpa jabatan</option>
-            {jobTitles.map((t) => <option key={t} value={t}>{t}</option>)}
-          </select>
+          <Select id="m-title" name="title" placeholder="Tanpa jabatan" options={jobTitles.map((t) => ({ label: t, value: t }))} />
         </div>
         <fieldset>
           <legend className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Unit (untuk finance dan anggota)</legend>

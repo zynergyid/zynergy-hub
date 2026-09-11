@@ -6,6 +6,7 @@ import { Loader2, Trash2 } from "lucide-react";
 import type { Client } from "@/payload-types";
 import { businessTypes, clientStatuses, packages, units, type Unit } from "@/lib/options";
 import { ErrorText, RupiahInput, fieldClass, groupDigits } from "@/components/hub/form";
+import { Select } from "@/components/hub/Select";
 import { deleteClient, saveClient, type ClientFormState } from "./actions";
 
 const initial: ClientFormState = { status: "idle" };
@@ -61,23 +62,15 @@ export function ClientForm({
         </div>
         <div>
           <label htmlFor="cf-unit" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Unit bisnis</label>
-          <select id="cf-unit" name="unit" defaultValue={client?.unit ?? "digital"} className={fieldClass}>
-            {units.filter((u) => allowedUnits.includes(u.value) || client?.unit === u.value).map((u) => <option key={u.value} value={u.value}>{u.label}</option>)}
-          </select>
+          <Select id="cf-unit" name="unit" defaultValue={client?.unit ?? allowedUnits[0] ?? "digital"} options={units.filter((u) => allowedUnits.includes(u.value) || client?.unit === u.value)} />
         </div>
         <div>
           <label htmlFor="cf-type" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Jenis usaha</label>
-          <select id="cf-type" name="businessType" defaultValue={client?.businessType ?? ""} className={fieldClass}>
-            <option value="">Pilih</option>
-            {businessTypes.map((b) => <option key={b.value} value={b.value}>{b.label}</option>)}
-          </select>
+          <Select id="cf-type" name="businessType" defaultValue={client?.businessType ?? undefined} placeholder="Pilih jenis usaha" options={businessTypes} />
         </div>
         <div>
           <label htmlFor="cf-package" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Paket</label>
-          <select id="cf-package" name="package" defaultValue={client?.package ?? ""} className={fieldClass}>
-            <option value="">Belum ditentukan</option>
-            {packages.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
-          </select>
+          <Select id="cf-package" name="package" defaultValue={client?.package ?? undefined} placeholder="Belum ditentukan" options={packages} />
         </div>
         <div>
           <label htmlFor="cf-fee" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Biaya per tahun</label>
@@ -85,9 +78,7 @@ export function ClientForm({
         </div>
         <div>
           <label htmlFor="cf-status" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Status</label>
-          <select id="cf-status" name="status" defaultValue={client?.status ?? "aktif"} className={fieldClass}>
-            {clientStatuses.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-          </select>
+          <Select id="cf-status" name="status" defaultValue={client?.status ?? "aktif"} options={clientStatuses} />
         </div>
         <div>
           <label htmlFor="cf-start" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Mulai</label>

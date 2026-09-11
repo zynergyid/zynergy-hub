@@ -16,6 +16,7 @@
     "@payloadcms/db-postgres": "3.88.0",
     "@payloadcms/next": "3.88.0",
     "@payloadcms/storage-vercel-blob": "3.88.0",
+    "@radix-ui/react-select": "^2.3.7",
     "clsx": "^2.1.1",
     "graphql": "^17.0.2",
     "lucide-react": "^1.38.0",

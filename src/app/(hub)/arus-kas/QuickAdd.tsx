@@ -6,6 +6,7 @@ import { Loader2, Plus, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { todayLocal } from "@/lib/format";
 import { ErrorText, fieldClass, groupDigits } from "@/components/hub/form";
+import { Select } from "@/components/hub/Select";
 import { paymentMethods, transactionCategories, units, type Unit } from "@/lib/options";
 import { deleteTransaction, saveTransaction, type QuickAddState } from "./actions";
 
@@ -142,40 +143,23 @@ export function QuickAdd({
                 </div>
                 <div>
                   <label htmlFor="qa-unit" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Unit</label>
-                  <select id="qa-unit" name="unit" defaultValue={editing?.unit ?? unit} className={fieldClass}>
-                    {units.filter((u) => allowedUnits.includes(u.value)).map((u) => (
-                      <option key={u.value} value={u.value}>{u.label}</option>
-                    ))}
-                  </select>
+                  <Select id="qa-unit" name="unit" defaultValue={editing?.unit ?? unit} options={units.filter((u) => allowedUnits.includes(u.value))} />
                 </div>
               </div>
 
               <div>
                 <label htmlFor="qa-category" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Kategori</label>
-                <select id="qa-category" name="category" required className={fieldClass} key={type} defaultValue={editing?.category}>
-                  {categories.map((c) => (
-                    <option key={c.value} value={c.value}>{c.label}</option>
-                  ))}
-                </select>
+                <Select id="qa-category" name="category" required key={type} defaultValue={editing?.category ?? categories[0]?.value} options={categories} />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label htmlFor="qa-client" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Klien</label>
-                  <select id="qa-client" name="client" defaultValue={editing?.client ? String(editing.client) : ""} className={fieldClass}>
-                    <option value="">Tanpa klien</option>
-                    {clients.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
+                  <Select id="qa-client" name="client" defaultValue={editing?.client ? String(editing.client) : undefined} placeholder="Tanpa klien" options={clients.map((c) => ({ label: c.name, value: String(c.id) }))} />
                 </div>
                 <div>
                   <label htmlFor="qa-method" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Metode</label>
-                  <select id="qa-method" name="method" defaultValue={editing?.method ?? "transfer"} className={fieldClass}>
-                    {paymentMethods.map((m) => (
-                      <option key={m.value} value={m.value}>{m.label}</option>
-                    ))}
-                  </select>
+                  <Select id="qa-method" name="method" defaultValue={editing?.method ?? "transfer"} options={paymentMethods} />
                 </div>
               </div>
 
