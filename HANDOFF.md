@@ -15,7 +15,13 @@
   hari dengan saldo berjalan, filter kategori, cari, CSV per unit dan bulan,
   form cepat "Catat" sebagai bottom sheet dengan server action), `/klien`
   (kartu klien, status, hitung mundur perpanjangan, tombol WA), `/alat`
-  (peta alat yang akan datang). Panel `/admin` (berlabel Zynergy Team)
+  (peta alat yang akan datang). Bahasa visual (2026-09-11 malam, dari riset
+  pola dashboard fintech dan sidebar app internal): KpiCard dengan ikon
+  berwarna dan badge tren vs bulan lalu, BarChart SVG buatan sendiri (tanpa
+  library), CategoryBars, Avatar inisial, Card, PageHeader; Arus Kas di
+  desktop berupa tabel (Transaksi, Klien, Tanggal, Metode, Bukti, Nominal,
+  Saldo), di HP daftar per hari. Komponen di `src/components/hub/`.
+  Panel `/admin` (berlabel Zynergy Team)
   tetap ada untuk edit/hapus dan data jarang. Transaksi dan Klien punya
   field `unit` (digital|supply). Peran admin/finance/member diterapkan di
   access; member tidak melihat uang.
