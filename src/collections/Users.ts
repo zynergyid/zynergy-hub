@@ -1,16 +1,13 @@
 import type { CollectionConfig } from "payload";
 import { hasRoleField, isAdmin, isLoggedIn } from "@/lib/access";
+import { jobTitles, roles, units } from "@/lib/options";
 
-/** Team accounts. Role decides what a person can see and change. */
+/** Team accounts. Role = access level, units = scope, title = descriptive only. */
 export const Users: CollectionConfig = {
   slug: "users",
   labels: { singular: "Anggota Tim", plural: "Anggota Tim" },
   auth: true,
-  admin: {
-    useAsTitle: "name",
-    defaultColumns: ["name", "email", "role"],
-    group: "Admin",
-  },
+  admin: { useAsTitle: "name" },
   access: {
     read: isLoggedIn,
     create: isAdmin,
@@ -30,13 +27,23 @@ export const Users: CollectionConfig = {
       required: true,
       defaultValue: "member",
       label: "Peran",
-      options: [
-        { label: "Admin (semua akses)", value: "admin" },
-        { label: "Finance (klien + keuangan)", value: "finance" },
-        { label: "Member (klien saja)", value: "member" },
-      ],
+      options: [...roles],
       access: { update: hasRoleField("admin") },
-      admin: { position: "sidebar" },
+    },
+    {
+      name: "units",
+      type: "select",
+      hasMany: true,
+      label: "Unit bisnis",
+      options: [...units],
+      access: { update: hasRoleField("admin") },
+      admin: { description: "Ruang lingkup finance dan anggota. Admin dan pengawas otomatis semua unit." },
+    },
+    {
+      name: "title",
+      type: "select",
+      label: "Jabatan",
+      options: jobTitles.map((t) => ({ label: t, value: t })),
     },
   ],
 };

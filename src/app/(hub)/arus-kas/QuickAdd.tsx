@@ -34,11 +34,13 @@ const initial: QuickAddState = { status: "idle" };
 
 export function QuickAdd({
   unit,
+  units: allowedUnits,
   clients,
   editing = null,
   closeHref = "/arus-kas",
 }: {
   unit: Unit;
+  units: Unit[];
   clients: ClientOption[];
   editing?: EditingTx | null;
   closeHref?: string;
@@ -141,7 +143,7 @@ export function QuickAdd({
                 <div>
                   <label htmlFor="qa-unit" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Unit</label>
                   <select id="qa-unit" name="unit" defaultValue={editing?.unit ?? unit} className={fieldClass}>
-                    {units.map((u) => (
+                    {units.filter((u) => allowedUnits.includes(u.value)).map((u) => (
                       <option key={u.value} value={u.value}>{u.label}</option>
                     ))}
                   </select>

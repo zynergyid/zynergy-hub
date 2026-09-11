@@ -1,17 +1,19 @@
 import type { NextRequest } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { getPayloadClient } from "@/lib/payload";
-import { parseMonth } from "@/lib/finance";
+import { parseMonth, scopeUnits } from "@/lib/finance";
+import { canSeeMoney } from "@/lib/session";
 
 const csvCell = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
 
 /** CSV of transactions for the accountant. Optional ?unit=digital|supply|semua and ?bulan=YYYY-MM. */
 export async function GET(req: NextRequest) {
   const user = await getSessionUser();
-  if (!user || (user.role !== "admin" && user.role !== "finance")) {
+  if (!user || !canSeeMoney(user)) {
     return new Response("Unauthorized", { status: 401 });
   }
-  const unit = req.nextUrl.searchParams.get("unit") ?? "semua";
+  const unitParam = req.nextUrl.searchParams.get("unit") ?? "semua";
+  const scoped = scopeUnits(unitParam as "semua" | "digital" | "products" | "supply", user.units);
   const bulan = req.nextUrl.searchParams.get("bulan");
   const month = bulan ? parseMonth(bulan) : null;
   const end = month ? new Date(month.getFullYear(), month.getMonth() + 1, 1) : null;
@@ -24,7 +26,7 @@ export async function GET(req: NextRequest) {
     depth: 1,
     where: {
       and: [
-        unit === "digital" || unit === "supply" ? { unit: { equals: unit } } : {},
+        { unit: { in: scoped.length ? scoped : ["none"] } },
         month && end
           ? { and: [{ date: { greater_than_equal: month.toISOString() } }, { date: { less_than: end.toISOString() } }] }
           : {},
@@ -46,7 +48,7 @@ export async function GET(req: NextRequest) {
     ]),
   ];
   const body = rows.map((r) => r.map(csvCell).join(",")).join("\r\n");
-  const name = `zynergy-${unit}-${bulan ?? "semua"}.csv`;
+  const name = `zynergy-${unitParam}-${bulan ?? "semua"}.csv`;
   return new Response("﻿" + body, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",

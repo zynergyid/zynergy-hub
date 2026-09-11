@@ -3,6 +3,7 @@
 import { useActionState, useRef, useState } from "react";
 import { Loader2, Plus, X } from "lucide-react";
 import { ErrorText, fieldClass } from "@/components/hub/form";
+import { jobTitles, roles, units } from "@/lib/options";
 import { addMember, type MemberFormState } from "./actions";
 
 const initial: MemberFormState = { status: "idle" };
@@ -48,11 +49,27 @@ export function AddMember() {
         <div>
           <label htmlFor="m-role" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Peran</label>
           <select id="m-role" name="role" defaultValue="member" className={fieldClass}>
-            <option value="member">Member (klien saja)</option>
-            <option value="finance">Finance (klien + keuangan)</option>
-            <option value="admin">Admin (semua)</option>
+            {roles.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
           </select>
         </div>
+        <div>
+          <label htmlFor="m-title" className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Jabatan</label>
+          <select id="m-title" name="title" defaultValue="" className={fieldClass}>
+            <option value="">Tanpa jabatan</option>
+            {jobTitles.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </div>
+        <fieldset>
+          <legend className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted">Unit (untuk finance dan anggota)</legend>
+          <div className="flex flex-wrap gap-2">
+            {units.map((u) => (
+              <label key={u.value} className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm has-checked:border-primary has-checked:bg-primary-soft">
+                <input type="checkbox" name="units" value={u.value} className="accent-primary" />
+                {u.label}
+              </label>
+            ))}
+          </div>
+        </fieldset>
       </div>
       <div className="mt-3"><ErrorText>{state.status === "error" ? state.message : null}</ErrorText></div>
       <button type="submit" disabled={pending} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white hover:bg-primary-dark disabled:opacity-60">

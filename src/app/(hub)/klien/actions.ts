@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getPayloadClient } from "@/lib/payload";
 import { getSessionUser } from "@/lib/session";
 import { businessTypes, clientStatuses, packages, units } from "@/lib/options";
+import { canWriteUnit } from "@/lib/access";
 
 export interface ClientFormState {
   status: "idle" | "success" | "error";
@@ -20,6 +21,7 @@ const dateOrNull = (v: string) => (/^\d{4}-\d{2}-\d{2}$/.test(v) ? new Date(`${v
 export async function saveClient(_prev: ClientFormState, formData: FormData): Promise<ClientFormState> {
   const user = await getSessionUser();
   if (!user) return { status: "error", message: "Sesi habis, login lagi." };
+  if (user.role === "viewer") return { status: "error", message: "Pengawas hanya bisa melihat." };
 
   const id = Number(formData.get("id") || 0) || null;
   const name = text(formData, "name");
@@ -51,8 +53,16 @@ export async function saveClient(_prev: ClientFormState, formData: FormData): Pr
     notes: text(formData, "notes") || null,
   };
 
+  if (!canWriteUnit(user, data.unit, false)) return { status: "error", message: "Anda tidak punya akses ke unit ini." };
+
   try {
     const payload = await getPayloadClient();
+    if (id) {
+      const existing = await payload.findByID({ collection: "clients", id, disableErrors: true });
+      if (!existing || !canWriteUnit(user, existing.unit, false)) {
+        return { status: "error", message: "Klien tidak ditemukan atau di luar unit Anda." };
+      }
+    }
     const doc = id
       ? await payload.update({ collection: "clients", id, data })
       : await payload.create({ collection: "clients", data });

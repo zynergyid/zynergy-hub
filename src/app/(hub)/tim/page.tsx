@@ -6,12 +6,12 @@ import { getPayloadClient } from "@/lib/payload";
 import { Avatar } from "@/components/hub/Avatar";
 import { PageHeader } from "@/components/hub/PageHeader";
 import { AddMember } from "./AddMember";
-import { removeMember, resetPassword, setRole } from "./actions";
+import { jobTitles, roleLabel, roles, units } from "@/lib/options";
+import { removeMember, resetPassword, updateMember } from "./actions";
 
 export const metadata: Metadata = { title: "Tim" };
 export const dynamic = "force-dynamic";
 
-const roleLabel: Record<string, string> = { admin: "Admin", finance: "Finance", member: "Member" };
 
 export default async function TimPage() {
   const user = await getSessionUser();
@@ -34,19 +34,27 @@ export default async function TimPage() {
               <li key={m.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
                 <Avatar name={m.name} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">{m.name}{self ? " (Anda)" : ""}</p>
+                  <p className="truncate text-sm font-semibold">{m.name}{self ? " (Anda)" : ""}{m.title ? <span className="font-normal text-muted"> · {m.title}</span> : null}</p>
                   <p className="truncate text-xs text-muted">{m.email}</p>
                 </div>
                 {self ? (
-                  <span className="rounded-full bg-primary-soft px-2.5 py-1 text-xs font-bold text-primary-dark">{roleLabel[m.role]}</span>
+                  <span className="rounded-full bg-primary-soft px-2.5 py-1 text-xs font-bold text-primary-dark">{roleLabel.get(m.role)} · semua unit</span>
                 ) : (
-                  <form action={setRole} className="flex items-center gap-2">
+                  <form action={updateMember} className="flex flex-wrap items-center gap-2">
                     <input type="hidden" name="id" value={m.id} />
                     <select name="role" defaultValue={m.role} className="rounded-lg border border-line bg-white px-2.5 py-1.5 text-xs font-semibold">
-                      <option value="member">Member</option>
-                      <option value="finance">Finance</option>
-                      <option value="admin">Admin</option>
+                      {roles.map((r) => <option key={r.value} value={r.value}>{roleLabel.get(r.value)}</option>)}
                     </select>
+                    <select name="title" defaultValue={m.title ?? ""} className="rounded-lg border border-line bg-white px-2.5 py-1.5 text-xs">
+                      <option value="">Jabatan</option>
+                      {jobTitles.map((t) => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                    {units.map((u) => (
+                      <label key={u.value} className="inline-flex items-center gap-1 rounded-lg border border-line px-2 py-1 text-xs has-checked:border-primary has-checked:bg-primary-soft">
+                        <input type="checkbox" name="units" value={u.value} defaultChecked={(m.units ?? []).includes(u.value)} className="accent-primary" />
+                        {u.label}
+                      </label>
+                    ))}
                     <button type="submit" className="rounded-lg border border-line px-2.5 py-1.5 text-xs font-semibold hover:border-primary/40">Simpan</button>
                   </form>
                 )}
@@ -70,7 +78,10 @@ export default async function TimPage() {
           })}
         </ul>
       </div>
-      <p className="text-xs text-muted">Member melihat klien saja. Finance melihat klien dan arus kas. Admin mengelola tim dan semua data.</p>
+      <p className="text-xs text-muted">
+        Anggota: klien dan alat di unitnya. Finance: ditambah arus kas di unitnya. Pengawas: melihat semua unit tanpa mengubah.
+        Admin: semua, termasuk tim. Jabatan hanya label.
+      </p>
     </div>
   );
 }

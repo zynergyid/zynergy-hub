@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { MessageCircle, Plus } from "lucide-react";
-import { getSessionUser } from "@/lib/session";
+import { canEditClients, getSessionUser } from "@/lib/session";
 import { getPayloadClient } from "@/lib/payload";
 import { daysUntil, formatIDR } from "@/lib/format";
 import { first, type Search } from "@/lib/search";
@@ -36,6 +36,7 @@ export default async function KlienPage({ searchParams }: { searchParams: Promis
     sort: "renewalDate",
     where: {
       and: [
+        { unit: { in: user.units.length ? user.units : ["none"] } },
         status ? { status: { equals: status } } : {},
         q ? { or: [{ name: { contains: q } }, { owner: { contains: q } }, { city: { contains: q } }] } : {},
       ],
@@ -51,10 +52,12 @@ export default async function KlienPage({ searchParams }: { searchParams: Promis
           <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">Klien</h1>
           <p className="text-sm text-muted">{docs.length} klien{status ? ` dengan status ${status}` : ""}.</p>
         </div>
-        <Link href="/klien/baru" className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary/25 hover:bg-primary-dark">
-          <Plus className="size-4" />
-          Klien baru
-        </Link>
+        {canEditClients(user) && (
+          <Link href="/klien/baru" className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary/25 hover:bg-primary-dark">
+            <Plus className="size-4" />
+            Klien baru
+          </Link>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -112,7 +115,7 @@ export default async function KlienPage({ searchParams }: { searchParams: Promis
                     <MessageCircle className="size-3.5" />
                     WhatsApp
                   </a>
-                  {user.role !== "member" && (
+                  {(user.role === "admin" || user.role === "finance" || user.role === "viewer") && (
                     <Link href={`/arus-kas?unit=${c.unit}&q=${encodeURIComponent(c.name)}`} className="inline-flex items-center rounded-lg bg-surface-soft px-3 py-1.5 text-xs font-bold text-ink hover:bg-line">
                       Transaksi
                     </Link>

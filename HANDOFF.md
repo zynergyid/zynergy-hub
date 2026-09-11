@@ -63,6 +63,27 @@
   Aturan: satu pintu per data untuk tim (layar custom); tambah field baru =
   ubah koleksi + form custom-nya, jangan hanya salah satu.
 
+## Peran dan unit (diputuskan 2026-09-11)
+
+- Tiga unit: `digital`, `products`, `supply` (field `unit` di Clients,
+  Transactions, Receipts). Design berada di dalam Digital untuk urusan uang.
+- Peran = tingkat akses, unit = ruang lingkup, jabatan = label saja.
+  - `admin`: semua unit, kelola tim.
+  - `finance`: klien dan arus kas hanya di unit yang ditugaskan (`users.units`).
+  - `member` (Anggota): klien dan alat di unitnya, tanpa uang. Designer,
+    marketing, business, developer masuk sini; jabatan diisi di `title`.
+  - `viewer` (Pengawas, untuk komisaris): melihat semua unit, ringkasan, arus
+    kas, klien; tidak bisa mengubah apa pun.
+- Pembatasan dipaksa di lapisan data (`src/lib/access.ts`: moneyRead,
+  moneyWrite, clientRead, clientWrite mengembalikan query `unit in units`),
+  di hook `enforceUnit` untuk REST, dan di server action (`canWriteUnit`).
+  UI hanya menyembunyikan; keamanannya di query.
+- Klien: satu unit per klien. Kalau nanti Supply butuh field khusus (NPWP,
+  nomor vendor, PIC pengadaan), tambahkan sebagai field bersyarat per unit.
+- Seed lokal: dev@zynergy.local (admin), finance.digital@zynergy.local
+  (finance, unit digital), pengawas@zynergy.local (viewer), semua password
+  zynergy-dev-only.
+
 ## Peta subdomain (diputuskan 2026-09-11)
 
 - zynergy.co.id: situs marketing (repo `zynergy`).

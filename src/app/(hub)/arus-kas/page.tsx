@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowDownLeft, ArrowUpRight, ChevronLeft, ChevronRight, Download, Scale, Wallet } from "lucide-react";
-import { getSessionUser } from "@/lib/session";
+import { canEditMoney, canSeeMoney, getSessionUser } from "@/lib/session";
 import { getPayloadClient } from "@/lib/payload";
 import { getLedger, getUnitMonth, monthKey, parseMonth, pctChange, type UnitFilter } from "@/lib/finance";
 import { dateKey, dayLabel, formatDate, formatIDR, formatMonthLong } from "@/lib/format";
@@ -23,12 +23,18 @@ const href = (base: Search, patch: Record<string, string | undefined> = {}) => b
 export default async function ArusKasPage({ searchParams }: { searchParams: Promise<Search> }) {
   const user = await getSessionUser();
   if (!user) redirect("/masuk");
-  if (user.role !== "admin" && user.role !== "finance") redirect("/");
+  if (!canSeeMoney(user)) redirect("/");
+  const allowed = user.units;
+  const editable = canEditMoney(user);
 
   const sp = await searchParams;
-  const unitParam = first(sp.unit);
+  const unitParam = first(sp.unit) as Unit | "semua" | undefined;
   const unit: UnitFilter =
-    unitParam === "supply" || unitParam === "semua" ? unitParam : "digital";
+    unitParam === "semua" && allowed.length > 1
+      ? "semua"
+      : unitParam && allowed.includes(unitParam as Unit)
+        ? (unitParam as Unit)
+        : allowed[0] ?? "digital";
   const month = parseMonth(first(sp.bulan));
   const q = first(sp.q) ?? "";
   const category = first(sp.kategori) ?? "";
@@ -39,20 +45,20 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
 
   const payload = await getPayloadClient();
   const [ledger, clientsRes, um] = await Promise.all([
-    getLedger({ unit, month, q, category }),
+    getLedger({ unit, allowed, month, q, category }),
     payload.find({ collection: "clients", limit: 500, sort: "name", select: { name: true, unit: true } }),
-    getUnitMonth(unit, month),
+    getUnitMonth(unit, allowed, month),
   ]);
   const clientOptions = clientsRes.docs
-    .filter((c) => unit === "semua" || c.unit === unit || Boolean(editId))
+    .filter((c) => allowed.includes(c.unit) && (unit === "semua" || c.unit === unit || Boolean(editId)))
     .map((c) => ({ id: c.id, name: c.name, unit: c.unit as Unit }));
-  const quickAddUnit: Unit = unit === "semua" ? "digital" : unit;
+  const quickAddUnit: Unit = unit === "semua" ? allowed[0] : unit;
 
-  const editId = Number(first(sp.edit) || 0);
+  const editId = editable ? Number(first(sp.edit) || 0) : 0;
   let editing: EditingTx | null = null;
   if (editId) {
     const t = await payload.findByID({ collection: "transactions", id: editId, depth: 1, disableErrors: true });
-    if (t) {
+    if (t && allowed.includes(t.unit)) {
       editing = {
         id: t.id,
         type: t.type,
@@ -87,17 +93,23 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
           <Download className="size-4" />
           CSV
         </a>
-        <QuickAdd key={editing?.id ?? "new"} unit={quickAddUnit} clients={clientOptions} editing={editing} closeHref={closeHref} />
+        {editable && (
+          <QuickAdd key={editing?.id ?? "new"} unit={quickAddUnit} units={allowed} clients={clientOptions} editing={editing} closeHref={closeHref} />
+        )}
       </PageHeader>
 
       <div className="flex flex-wrap items-center gap-3">
-        <SegmentedLinks
-          ariaLabel="Unit bisnis"
-          segments={[
-            ...units.map((u) => ({ label: u.label, href: href(base, { unit: u.value }), active: unit === u.value })),
-            { label: "Semua", href: href(base, { unit: "semua" }), active: unit === "semua" },
-          ]}
-        />
+        {allowed.length > 1 && (
+          <SegmentedLinks
+            ariaLabel="Unit bisnis"
+            segments={[
+              ...units
+                .filter((u) => allowed.includes(u.value))
+                .map((u) => ({ label: u.label, href: href(base, { unit: u.value }), active: unit === u.value })),
+              { label: "Semua", href: href(base, { unit: "semua" }), active: unit === "semua" },
+            ]}
+          />
+        )}
         <div className="inline-flex items-center rounded-xl border border-line bg-white">
           <Link href={href(base, { bulan: monthKey(prev) })} aria-label="Bulan sebelumnya" className="p-2 text-muted hover:text-ink">
             <ChevronLeft className="size-4" />
@@ -144,8 +156,8 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
 
       {ledger.rows.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-line bg-white p-10 text-center">
-          <p className="font-semibold">Belum ada transaksi {formatMonthLong(month)} untuk {unit === "semua" ? "semua unit" : unit === "digital" ? "Zynergy Digital" : "Zynergy Supply"}.</p>
-          <p className="mt-1 text-sm text-muted">Tekan &quot;Catat&quot; untuk menambah, atau pindah bulan.</p>
+          <p className="font-semibold">Belum ada transaksi {formatMonthLong(month)} untuk {unit === "semua" ? "semua unit" : `Zynergy ${units.find((u) => u.value === unit)?.label ?? unit}`}.</p>
+          <p className="mt-1 text-sm text-muted">{editable ? "Tekan \"Catat\" untuk menambah, atau pindah bulan." : "Pindah bulan untuk melihat periode lain."}</p>
         </div>
       ) : (
         <>
@@ -170,7 +182,7 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
                   return (
                     <tr key={tx.id} className="hover:bg-surface-soft/60">
                       <td className="px-4 py-3">
-                        <Link href={href(base, { edit: String(tx.id) })} className="flex items-center gap-3">
+                        <Link href={editable ? href(base, { edit: String(tx.id) }) : "#"} aria-disabled={!editable} className={cn("flex items-center gap-3", !editable && "pointer-events-none")}>
                           <span className={cn("grid size-8 shrink-0 place-items-center rounded-full text-sm font-extrabold", tx.type === "masuk" ? "bg-secondary-soft text-secondary-dark" : "bg-red-50 text-red-600")}>
                             {tx.type === "masuk" ? "+" : "-"}
                           </span>
@@ -217,7 +229,7 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
                     const clientName = typeof tx.client === "object" && tx.client ? tx.client.name : null;
                     return (
                       <li key={tx.id}>
-                        <Link href={href(base, { edit: String(tx.id) })} className="flex items-center gap-3 px-4 py-3 active:bg-surface-soft">
+                        <Link href={editable ? href(base, { edit: String(tx.id) }) : "#"} aria-disabled={!editable} className={cn("flex items-center gap-3 px-4 py-3 active:bg-surface-soft", !editable && "pointer-events-none")}>
                           <span className={cn("grid size-9 shrink-0 place-items-center rounded-full text-sm font-extrabold", tx.type === "masuk" ? "bg-secondary-soft text-secondary-dark" : "bg-red-50 text-red-600")}>
                             {tx.type === "masuk" ? "+" : "-"}
                           </span>

@@ -45,11 +45,19 @@ export function parseMonth(value?: string): Date {
 
 export const monthKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 
-async function allTransactions(unit: UnitFilter): Promise<Transaction[]> {
+/** Resolve a requested unit against what the user may see. */
+export function scopeUnits(unit: UnitFilter, allowed: Unit[]): Unit[] {
+  if (unit === "semua") return allowed;
+  return allowed.includes(unit) ? [unit] : [];
+}
+
+async function allTransactions(unit: UnitFilter, allowed: Unit[]): Promise<Transaction[]> {
+  const scoped = scopeUnits(unit, allowed);
+  if (scoped.length === 0) return [];
   const payload = await getPayloadClient();
   const { docs } = await payload.find({
     collection: "transactions",
-    where: unit === "semua" ? {} : { unit: { equals: unit } },
+    where: { unit: { in: scoped } },
     sort: "date",
     limit: 10000,
     depth: 1,
@@ -59,11 +67,12 @@ async function allTransactions(unit: UnitFilter): Promise<Transaction[]> {
 
 export async function getLedger(opts: {
   unit: UnitFilter;
+  allowed: Unit[];
   month: Date;
   q?: string;
   category?: string;
 }): Promise<Ledger> {
-  const docs = await allTransactions(opts.unit);
+  const docs = await allTransactions(opts.unit, opts.allowed);
   const q = opts.q?.trim().toLowerCase();
   const filtered = Boolean(q || opts.category);
 
@@ -99,8 +108,8 @@ export async function getLedger(opts: {
   };
 }
 
-export async function getUnitMonth(unit: UnitFilter, month = new Date()): Promise<UnitMonth> {
-  const docs = await allTransactions(unit);
+export async function getUnitMonth(unit: UnitFilter, allowed: Unit[], month = new Date()): Promise<UnitMonth> {
+  const docs = await allTransactions(unit, allowed);
   const prevMonth = new Date(month.getFullYear(), month.getMonth() - 1, 1);
   const out: UnitMonth = { masuk: 0, keluar: 0, balance: 0, masukPrev: 0, keluarPrev: 0 };
   for (const tx of docs) {
@@ -118,8 +127,8 @@ export async function getUnitMonth(unit: UnitFilter, month = new Date()): Promis
 }
 
 /** Spending by category for one month, largest first, with share of total. */
-export async function getCategoryBreakdown(unit: UnitFilter, month = new Date()): Promise<CategoryShare[]> {
-  const docs = await allTransactions(unit);
+export async function getCategoryBreakdown(unit: UnitFilter, allowed: Unit[], month = new Date()): Promise<CategoryShare[]> {
+  const docs = await allTransactions(unit, allowed);
   const totals = new Map<string, number>();
   let sum = 0;
   for (const tx of docs) {
@@ -144,8 +153,8 @@ export interface MonthPoint {
   keluar: number;
 }
 
-export async function getLast12(unit: UnitFilter): Promise<MonthPoint[]> {
-  const docs = await allTransactions(unit);
+export async function getLast12(unit: UnitFilter, allowed: Unit[]): Promise<MonthPoint[]> {
+  const docs = await allTransactions(unit, allowed);
   const now = new Date();
   const points: MonthPoint[] = Array.from({ length: 12 }, (_, i) => ({
     label: new Date(now.getFullYear(), now.getMonth() - (11 - i), 1),
@@ -161,13 +170,18 @@ export async function getLast12(unit: UnitFilter): Promise<MonthPoint[]> {
   return points;
 }
 
-export async function getRenewals(days = 30): Promise<Client[]> {
+export async function getRenewals(allowed: Unit[], days = 30): Promise<Client[]> {
+  if (allowed.length === 0) return [];
   const payload = await getPayloadClient();
   const until = new Date(Date.now() + days * 86400000).toISOString();
   const { docs } = await payload.find({
     collection: "clients",
     where: {
-      and: [{ renewalDate: { less_than_equal: until } }, { status: { in: ["aktif", "jatuh-tempo"] } }],
+      and: [
+        { unit: { in: allowed } },
+        { renewalDate: { less_than_equal: until } },
+        { status: { in: ["aktif", "jatuh-tempo"] } },
+      ],
     },
     sort: "renewalDate",
     limit: 50,
@@ -175,12 +189,14 @@ export async function getRenewals(days = 30): Promise<Client[]> {
   return docs;
 }
 
-export async function getClientCounts() {
+export async function getClientCounts(allowed: Unit[]) {
+  if (allowed.length === 0) return { aktif: 0, prospek: 0, total: 0 };
   const payload = await getPayloadClient();
+  const scope = { unit: { in: allowed } };
   const [aktif, prospek, total] = await Promise.all([
-    payload.count({ collection: "clients", where: { status: { equals: "aktif" } } }),
-    payload.count({ collection: "clients", where: { status: { equals: "prospek" } } }),
-    payload.count({ collection: "clients" }),
+    payload.count({ collection: "clients", where: { and: [scope, { status: { equals: "aktif" } }] } }),
+    payload.count({ collection: "clients", where: { and: [scope, { status: { equals: "prospek" } }] } }),
+    payload.count({ collection: "clients", where: scope }),
   ]);
   return { aktif: aktif.totalDocs, prospek: prospek.totalDocs, total: total.totalDocs };
 }

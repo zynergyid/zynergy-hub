@@ -31,7 +31,7 @@ export const navSections: NavSection[] = [
     title: "Harian",
     items: [
       { href: "/", label: "Ringkasan", icon: "dashboard" },
-      { href: "/arus-kas", label: "Arus Kas", icon: "cashflow", roles: ["admin", "finance"] },
+      { href: "/arus-kas", label: "Arus Kas", icon: "cashflow", roles: ["admin", "finance", "viewer"] },
       { href: "/klien", label: "Klien", icon: "clients" },
     ],
   },
@@ -52,7 +52,7 @@ export const navSections: NavSection[] = [
 
 export const mobileTabs: NavItem[] = [
   { href: "/", label: "Ringkasan", icon: "dashboard" },
-  { href: "/arus-kas", label: "Arus Kas", icon: "cashflow", roles: ["admin", "finance"] },
+  { href: "/arus-kas", label: "Arus Kas", icon: "cashflow", roles: ["admin", "finance", "viewer"] },
   { href: "/klien", label: "Klien", icon: "clients" },
   { href: "/alat", label: "Alat", icon: "search" },
   { href: "/tim", label: "Tim", icon: "team", roles: ["admin"] },

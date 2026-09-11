@@ -127,7 +127,7 @@ export interface UserAuthOperations {
  */
 export interface Client {
   id: number;
-  unit: 'digital' | 'supply';
+  unit: 'digital' | 'products' | 'supply';
   name: string;
   owner?: string | null;
   whatsapp: string;
@@ -157,7 +157,7 @@ export interface Client {
  */
 export interface Transaction {
   id: number;
-  unit: 'digital' | 'supply';
+  unit: 'digital' | 'products' | 'supply';
   date: string;
   type: 'masuk' | 'keluar';
   amount: number;
@@ -192,6 +192,7 @@ export interface Transaction {
  */
 export interface Receipt {
   id: number;
+  unit: 'digital' | 'products' | 'supply';
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -211,7 +212,12 @@ export interface Receipt {
 export interface User {
   id: number;
   name: string;
-  role: 'admin' | 'finance' | 'member';
+  role: 'admin' | 'finance' | 'member' | 'viewer';
+  /**
+   * Ruang lingkup finance dan anggota. Admin dan pengawas otomatis semua unit.
+   */
+  units?: ('digital' | 'products' | 'supply')[] | null;
+  title?: ('Lead' | 'Developer' | 'Designer' | 'Marketing' | 'Business' | 'Finance' | 'Komisaris' | 'Lainnya') | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -364,6 +370,7 @@ export interface TransactionsSelect<T extends boolean = true> {
  * via the `definition` "receipts_select".
  */
 export interface ReceiptsSelect<T extends boolean = true> {
+  unit?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -383,6 +390,8 @@ export interface ReceiptsSelect<T extends boolean = true> {
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
   role?: T;
+  units?: T;
+  title?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;

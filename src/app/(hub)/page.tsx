@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowDownLeft, ArrowUpRight, CalendarClock, Users, Wallet } from "lucide-react";
 import type { Client } from "@/payload-types";
-import { getSessionUser } from "@/lib/session";
+import { canSeeMoney, getSessionUser } from "@/lib/session";
 import {
   getCategoryBreakdown,
   getClientCounts,
@@ -15,7 +15,7 @@ import {
 } from "@/lib/finance";
 import { daysUntil, formatDate, formatIDR, formatMonthLong } from "@/lib/format";
 import { first, type Search } from "@/lib/search";
-import { categoryLabel, units } from "@/lib/options";
+import { categoryLabel, units, type Unit } from "@/lib/options";
 import { cn } from "@/lib/cn";
 import { Avatar } from "@/components/hub/Avatar";
 import { BarChart } from "@/components/hub/BarChart";
@@ -57,33 +57,35 @@ function RenewalRow({ c }: { c: Client }) {
 export default async function HubHome({ searchParams }: { searchParams: Promise<Search> }) {
   const user = await getSessionUser();
   if (!user) redirect("/masuk");
-  const canSeeMoney = user.role === "admin" || user.role === "finance";
+  const allowed = user.units;
   const sp = await searchParams;
-  const unitParam = first(sp.unit);
-  const unit: UnitFilter = unitParam === "digital" || unitParam === "supply" ? unitParam : "semua";
+  const unitParam = first(sp.unit) as Unit | undefined;
+  const unit: UnitFilter =
+    unitParam && allowed.includes(unitParam) ? unitParam : allowed.length === 1 ? allowed[0] : "semua";
   const now = new Date();
 
-  const [counts, renewals] = await Promise.all([getClientCounts(), getRenewals(30)]);
-  const money = canSeeMoney
+  const [counts, renewals] = await Promise.all([getClientCounts(allowed), getRenewals(allowed, 30)]);
+  const money = canSeeMoney(user)
     ? await Promise.all([
-        getUnitMonth(unit, now),
-        getLast12(unit),
-        getCategoryBreakdown(unit, now),
-        getLedger({ unit, month: now }),
-        getUnitMonth("digital", now),
-        getUnitMonth("supply", now),
+        getUnitMonth(unit, allowed, now),
+        getLast12(unit, allowed),
+        getCategoryBreakdown(unit, allowed, now),
+        getLedger({ unit, allowed, month: now }),
+        Promise.all(allowed.map(async (u) => ({ unit: u, ...(await getUnitMonth(u, allowed, now)) }))),
       ])
     : null;
 
   return (
     <div className="space-y-6">
       <PageHeader title={`Halo, ${user.name.split(" ")[0]}`} subtitle={`Ringkasan ${formatMonthLong(now)}.`}>
-        {canSeeMoney && (
+        {money && allowed.length > 1 && (
           <SegmentedLinks
             ariaLabel="Unit bisnis"
             segments={[
               { label: "Semua", href: "/", active: unit === "semua" },
-              ...units.map((u) => ({ label: u.label, href: `/?unit=${u.value}`, active: unit === u.value })),
+              ...units
+                .filter((u) => allowed.includes(u.value))
+                .map((u) => ({ label: u.label, href: `/?unit=${u.value}`, active: unit === u.value })),
             ]}
           />
         )}
@@ -91,19 +93,24 @@ export default async function HubHome({ searchParams }: { searchParams: Promise<
 
       {money ? (
         (() => {
-          const [m, last12, categories, ledger, digital, supply] = money;
+          const [m, last12, categories, ledger, perUnit] = money;
           const dueSoon = renewals.filter((c) => c.renewalDate && daysUntil(c.renewalDate) <= 30).length;
+          const unitLabelOf = (u: Unit) => units.find((x) => x.value === u)?.label ?? u;
+          const saldoHint =
+            unit === "semua" && perUnit.length > 1
+              ? perUnit.map((p) => `${unitLabelOf(p.unit)} ${formatIDR(p.balance)}`).join(" · ")
+              : "semua waktu";
           return (
             <>
               <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                <KpiCard icon={Wallet} label="Saldo" value={formatIDR(m.balance)} hint={unit === "semua" ? `Digital ${formatIDR(digital.balance)} · Supply ${formatIDR(supply.balance)}` : "semua waktu"} tone="primary" />
+                <KpiCard icon={Wallet} label="Saldo" value={formatIDR(m.balance)} hint={saldoHint} tone="primary" />
                 <KpiCard icon={ArrowDownLeft} label="Masuk bulan ini" value={formatIDR(m.masuk)} delta={pctChange(m.masuk, m.masukPrev)} tone="in" hint="vs bulan lalu" />
                 <KpiCard icon={ArrowUpRight} label="Keluar bulan ini" value={formatIDR(m.keluar)} delta={pctChange(m.keluar, m.keluarPrev)} upIsGood={false} tone="out" hint="vs bulan lalu" />
                 <KpiCard icon={Users} label="Klien aktif" value={String(counts.aktif)} hint={dueSoon ? `${dueSoon} jatuh tempo 30 hari` : `${counts.prospek} prospek`} />
               </div>
 
               <div className="grid gap-4 lg:grid-cols-5">
-                <Card title="Arus kas 12 bulan" action={{ label: "Buka arus kas", href: `/arus-kas?unit=${unit === "semua" ? "digital" : unit}` }} className="lg:col-span-3">
+                <Card title="Arus kas 12 bulan" action={{ label: "Buka arus kas", href: `/arus-kas?unit=${unit}` }} className="lg:col-span-3">
                   <BarChart points={last12} />
                 </Card>
                 <Card title="Pengeluaran bulan ini" className="lg:col-span-2">

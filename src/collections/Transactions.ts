@@ -1,8 +1,8 @@
 import type { CollectionConfig } from "payload";
-import { isFinance } from "@/lib/access";
+import { enforceUnit, moneyCreate, moneyRead, moneyWrite } from "@/lib/access";
 import { paymentMethods, transactionCategories, units } from "@/lib/options";
 
-/** Cash in and out for Zynergy Digital. Finance and admin only. */
+/** Cash in and out per unit. Admin everywhere, finance in their units, viewer read-only. */
 export const Transactions: CollectionConfig = {
   slug: "transactions",
   labels: { singular: "Transaksi", plural: "Transaksi" },
@@ -12,11 +12,12 @@ export const Transactions: CollectionConfig = {
     group: "Keuangan",
   },
   access: {
-    read: isFinance,
-    create: isFinance,
-    update: isFinance,
-    delete: isFinance,
+    read: moneyRead,
+    create: moneyCreate,
+    update: moneyWrite,
+    delete: moneyWrite,
   },
+  hooks: { beforeChange: [enforceUnit] },
   defaultSort: "-date",
   fields: [
     {

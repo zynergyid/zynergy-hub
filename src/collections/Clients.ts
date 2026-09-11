@@ -1,5 +1,5 @@
 import type { CollectionConfig } from "payload";
-import { isAdmin, isLoggedIn } from "@/lib/access";
+import { clientCreate, clientRead, clientWrite, enforceUnit, isAdmin } from "@/lib/access";
 import { businessTypes, clientStatuses, packages, units } from "@/lib/options";
 
 /** Paying clients of Zynergy Digital: who they are, what they pay, when it renews. */
@@ -13,14 +13,15 @@ export const Clients: CollectionConfig = {
     listSearchableFields: ["name", "owner", "city"],
   },
   access: {
-    read: isLoggedIn,
-    create: isLoggedIn,
-    update: isLoggedIn,
+    read: clientRead,
+    create: clientCreate,
+    update: clientWrite,
     delete: isAdmin,
   },
   defaultSort: "renewalDate",
   hooks: {
     beforeChange: [
+      enforceUnit,
       ({ data }) => {
         // Yearly model: renewal defaults to one year after start.
         if (data?.startDate && !data.renewalDate) {

@@ -1,5 +1,6 @@
 import type { CollectionConfig } from "payload";
-import { isFinance } from "@/lib/access";
+import { enforceUnit, moneyCreate, moneyRead, moneyWrite } from "@/lib/access";
+import { units } from "@/lib/options";
 
 /** Transfer proofs and invoices attached to transactions. Finance and admin only. */
 export const Receipts: CollectionConfig = {
@@ -7,13 +8,23 @@ export const Receipts: CollectionConfig = {
   labels: { singular: "Bukti", plural: "Bukti" },
   admin: { group: "Keuangan" },
   access: {
-    read: isFinance,
-    create: isFinance,
-    update: isFinance,
-    delete: isFinance,
+    read: moneyRead,
+    create: moneyCreate,
+    update: moneyWrite,
+    delete: moneyWrite,
   },
+  hooks: { beforeChange: [enforceUnit] },
   upload: {
     mimeTypes: ["image/*", "application/pdf"],
   },
-  fields: [],
+  fields: [
+    {
+      name: "unit",
+      type: "select",
+      required: true,
+      defaultValue: "digital",
+      label: "Unit bisnis",
+      options: [...units],
+    },
+  ],
 };

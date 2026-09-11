@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getPayloadClient } from "@/lib/payload";
 import { getSessionUser } from "@/lib/session";
 import { paymentMethods, transactionCategories, units } from "@/lib/options";
+import { canWriteUnit } from "@/lib/access";
 
 export interface QuickAddState {
   status: "idle" | "success" | "error";
@@ -37,6 +38,7 @@ export async function saveTransaction(_prev: QuickAddState, formData: FormData):
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return { status: "error", message: "Tanggal tidak valid." };
   if (!category) return { status: "error", message: "Pilih kategori." };
   if (!unit) return { status: "error", message: "Pilih unit bisnis." };
+  if (!canWriteUnit(user, unit, true)) return { status: "error", message: "Anda tidak punya akses ke unit ini." };
 
   try {
     const payload = await getPayloadClient();
@@ -45,7 +47,7 @@ export async function saveTransaction(_prev: QuickAddState, formData: FormData):
       if (receipt.size > 8 * 1024 * 1024) return { status: "error", message: "Bukti maksimal 8MB." };
       const uploaded = await payload.create({
         collection: "receipts",
-        data: {},
+        data: { unit },
         file: {
           data: Buffer.from(await receipt.arrayBuffer()),
           name: receipt.name,
@@ -67,8 +69,15 @@ export async function saveTransaction(_prev: QuickAddState, formData: FormData):
       notes: notes || null,
       ...(receiptId ? { receipt: receiptId } : {}),
     };
-    if (id) await payload.update({ collection: "transactions", id, data });
-    else await payload.create({ collection: "transactions", data });
+    if (id) {
+      const existing = await payload.findByID({ collection: "transactions", id, disableErrors: true });
+      if (!existing || !canWriteUnit(user, existing.unit, true)) {
+        return { status: "error", message: "Transaksi tidak ditemukan atau di luar unit Anda." };
+      }
+      await payload.update({ collection: "transactions", id, data });
+    } else {
+      await payload.create({ collection: "transactions", data });
+    }
   } catch (error) {
     console.error("createTransaction failed:", error);
     return { status: "error", message: "Gagal menyimpan. Coba lagi." };
@@ -85,6 +94,8 @@ export async function deleteTransaction(formData: FormData) {
   const id = Number(formData.get("id") || 0);
   if (!id) return;
   const payload = await getPayloadClient();
+  const existing = await payload.findByID({ collection: "transactions", id, disableErrors: true });
+  if (!existing || !canWriteUnit(user, existing.unit, true)) return;
   await payload.delete({ collection: "transactions", id });
   revalidatePath("/arus-kas");
   revalidatePath("/");

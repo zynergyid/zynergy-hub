@@ -2,6 +2,7 @@
 
 export const units = [
   { label: "Digital", value: "digital" },
+  { label: "Products", value: "products" },
   { label: "Supply", value: "supply" },
 ] as const;
 export type Unit = (typeof units)[number]["value"];
@@ -58,3 +59,25 @@ export const categoryLabel = new Map<string, string>(
   transactionCategories.map((c) => [c.value, c.label]),
 );
 export const unitLabel = new Map<string, string>(units.map((u) => [u.value, u.label]));
+
+/** Access level. Scope (which units) is a separate field on the user. */
+export const roles = [
+  { label: "Admin (semua unit, kelola tim)", value: "admin" },
+  { label: "Finance (klien + arus kas di unitnya)", value: "finance" },
+  { label: "Anggota (klien + alat di unitnya)", value: "member" },
+  { label: "Pengawas (lihat semua, tanpa mengubah)", value: "viewer" },
+] as const;
+export type Role = (typeof roles)[number]["value"];
+export const roleLabel = new Map<string, string>(roles.map((r) => [r.value, r.label.split(" (")[0]]));
+
+/** Job titles are descriptive only; they never grant access. */
+export const jobTitles = [
+  "Lead",
+  "Developer",
+  "Designer",
+  "Marketing",
+  "Business",
+  "Finance",
+  "Komisaris",
+  "Lainnya",
+] as const;

@@ -11,7 +11,7 @@ const users = await payload.find({ collection: "users", where: { email: { equals
 if (users.totalDocs === 0) {
   await payload.create({
     collection: "users",
-    data: { email: "dev@zynergy.local", password: "zynergy-dev-only", name: "Dev Admin", role: "admin" },
+    data: { email: "dev@zynergy.local", password: "zynergy-dev-only", name: "Dev Admin", role: "admin", title: "Lead" },
   });
   payload.logger.info("Seeded dev admin");
 }
@@ -58,6 +58,17 @@ if (supplyTx.totalDocs === 0) {
   ] as const;
   for (const r of rows) await payload.create({ collection: "transactions", data: { ...r, unit: "supply" } });
   payload.logger.info("Seeded sample supply transactions");
+}
+
+for (const u of [
+  { email: "finance.digital@zynergy.local", name: "Finance Digital", role: "finance", units: ["digital"], title: "Finance" },
+  { email: "pengawas@zynergy.local", name: "Pengawas Test", role: "viewer", units: [], title: "Komisaris" },
+] as const) {
+  const found = await payload.find({ collection: "users", where: { email: { equals: u.email } }, limit: 1 });
+  if (found.totalDocs === 0) {
+    await payload.create({ collection: "users", data: { ...u, units: [...u.units], password: "zynergy-dev-only" } });
+    payload.logger.info(`Seeded ${u.email}`);
+  }
 }
 
 payload.logger.info("Seed complete");

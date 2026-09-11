@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, MessageCircle } from "lucide-react";
-import { getSessionUser } from "@/lib/session";
+import { canEditClients, canSeeMoney, getSessionUser } from "@/lib/session";
 import { getPayloadClient } from "@/lib/payload";
 import { formatDate, formatIDR } from "@/lib/format";
 import { categoryLabel, clientStatuses } from "@/lib/options";
@@ -23,9 +23,8 @@ export default async function KlienDetailPage({ params }: { params: Promise<{ id
 
   const payload = await getPayloadClient();
   const client = await payload.findByID({ collection: "clients", id: clientId, disableErrors: true });
-  if (!client) notFound();
-  const canSeeMoney = user.role === "admin" || user.role === "finance";
-  const tx = canSeeMoney
+  if (!client || !user.units.includes(client.unit)) notFound();
+  const tx = canSeeMoney(user)
     ? await payload.find({ collection: "transactions", where: { client: { equals: clientId } }, sort: "-date", limit: 8 })
     : null;
   const statusLabel = clientStatuses.find((s) => s.value === client.status)?.label;
@@ -55,7 +54,7 @@ export default async function KlienDetailPage({ params }: { params: Promise<{ id
 
       <div className="grid gap-5 lg:grid-cols-5">
         <div className="lg:col-span-3">
-          <ClientForm client={client} canDelete={user.role === "admin"} />
+          <ClientForm client={client} canDelete={user.role === "admin"} readOnly={!canEditClients(user)} units={user.units} />
         </div>
         {tx && (
           <Card title="Transaksi klien ini" action={{ label: "Arus kas", href: `/arus-kas?unit=${client.unit}&q=${encodeURIComponent(client.name)}` }} className="lg:col-span-2">
