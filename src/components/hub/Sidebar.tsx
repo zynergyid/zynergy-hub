@@ -27,7 +27,7 @@ export function Sidebar({ role, userName }: { role: Role; userName: string }) {
       <div className="flex h-14 items-center gap-2.5 border-b border-line px-5">
         <BrandMark className="size-7 text-navy" />
         <span className="text-base font-extrabold tracking-tight">
-          Zynergy <span className="text-muted">Team</span>
+          Zynergy <span className="text-muted">Hub</span>
         </span>
       </div>
       <nav className="flex-1 overflow-y-auto px-3 py-4">

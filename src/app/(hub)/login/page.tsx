@@ -22,7 +22,7 @@ export default async function MasukPage() {
         <div className="mb-6 flex items-center justify-center gap-2.5">
           <BrandMark className="size-9 text-navy" />
           <span className="text-xl font-extrabold tracking-tight">
-            Zynergy <span className="text-muted">Team</span>
+            Zynergy <span className="text-muted">Hub</span>
           </span>
         </div>
         <div className="rounded-2xl border border-line bg-white p-6 shadow-[0_1px_2px_rgba(15,27,51,0.04)]">

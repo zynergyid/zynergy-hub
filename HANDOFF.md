@@ -28,7 +28,7 @@
   `/team` untuk admin (tambah anggota dengan password sementara, ubah peran,
   hapus). Panel Payload dipaksa tema terang (`admin.theme: "light"`,
   `custom.scss`) dan hanya untuk keadaan darurat lewat URL.
-  Panel `/admin` (berlabel Zynergy Team)
+  Panel `/admin` (berlabel Zynergy Hub)
   tetap ada untuk edit/hapus dan data jarang. Transaksi dan Klien punya
   field `unit` (digital|supply). Peran admin/finance/member diterapkan di
   access; member tidak melihat uang.
@@ -38,12 +38,12 @@
   seed.
 - Repo privat `danish-deepskill/zynergy-hub` (push 2026-09-11), Vercel
   project `zynergy-hub` (scope `devdanzen-projects`) dengan domain
-  team.zynergy.co.id terpasang dan PAYLOAD_SECRET production sudah diset.
+  hub.zynergy.co.id terpasang dan PAYLOAD_SECRET production sudah diset.
   BELUM ada database Neon: user harus klik Vercel > project zynergy-hub >
   Storage > Connect Database > Neon > database baru `zynergy-hub` (mengisi
   DATABASE_URL dan DATABASE_URL_UNPOOLED otomatis). Setelah itu deploy
   pertama (`vercel deploy --prod`), lalu user membuat admin pertama di
-  team.zynergy.co.id/admin dengan admin@zynergy.co.id. `vercel.json`
+  hub.zynergy.co.id/admin dengan admin@zynergy.co.id. `vercel.json`
   menjalankan migrate saat build.
 - Lokal: Postgres docker `zynergy-pg` database `zynergy_hub`, dev admin
   dev@zynergy.local / zynergy-dev-only via `pnpm seed`. Port 3011.
@@ -95,9 +95,9 @@
 ## Peta subdomain (diputuskan 2026-09-11)
 
 - zynergy.co.id: situs marketing (repo `zynergy`).
-- team.zynergy.co.id: aplikasi ini, sisi tim.
-- portal.zynergy.co.id: aplikasi ini, sisi klien (nanti, via proxy.ts host
-  routing).
+- hub.zynergy.co.id: Zynergy Hub, satu aplikasi untuk tim DAN klien (klien
+  = peran tersendiri nanti, bukan subdomain terpisah). Diputuskan 2026-09-11
+  menggantikan rencana team. + portal.
 - app.zynergy.co.id: Zynergy Products, project terpisah per produk.
 
 ## Roadmap modul

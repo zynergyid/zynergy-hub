@@ -8,10 +8,10 @@ import { LogoutButton } from "@/components/hub/LogoutButton";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "Zynergy Team", template: "%s | Zynergy Team" },
+  title: { default: "Zynergy Hub", template: "%s | Zynergy Hub" },
   description: "Aplikasi internal tim Zynergy: klien, arus kas, alat kerja.",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "Zynergy Team", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "Zynergy Hub", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {
@@ -33,7 +33,7 @@ export default async function HubLayout({ children }: LayoutProps<"/">) {
               <header className="sticky top-0 z-30 flex h-14 items-center gap-2.5 border-b border-line bg-white px-4 md:hidden">
                 <BrandMark className="size-7 text-navy" />
                 <span className="flex-1 text-base font-extrabold tracking-tight">
-                  Zynergy <span className="text-muted">Team</span>
+                  Zynergy <span className="text-muted">Hub</span>
                 </span>
                 <Link href="/profile" className="rounded-lg p-2 text-muted hover:bg-surface-soft hover:text-ink" aria-label="Profil">
                   <span className="grid size-6 place-items-center rounded-full bg-primary-soft text-[10px] font-extrabold text-primary-dark">{user.name.slice(0, 1).toUpperCase()}</span>

@@ -1,7 +1,7 @@
 # Zynergy Hub
 
-Aplikasi internal tim Zynergy (team.zynergy.co.id): klien, keuangan, dan
-nanti riset klien, laporan bulanan, portal klien, RFQ Supply.
+Zynergy Hub (hub.zynergy.co.id): satu aplikasi untuk tim dan, nanti, klien.
+Klien, keuangan, lalu riset klien, laporan bulanan, area klien, RFQ Supply.
 
 ## Stack
 
