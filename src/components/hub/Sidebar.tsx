@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BrandMark } from "@/components/ui/BrandMark";
+import { Avatar } from "./Avatar";
 import { cn } from "@/lib/cn";
 import type { Role } from "@/lib/access";
 import { navSections, type NavItem } from "./nav";
@@ -46,9 +47,9 @@ export function Sidebar({ role, userName }: { role: Role; userName: string }) {
                         href={item.href}
                         aria-current={active ? "page" : undefined}
                         className={cn(
-                          "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors",
+                          "relative flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
                           active
-                            ? "bg-primary-soft text-primary-dark"
+                            ? "bg-primary-soft font-semibold text-primary-dark before:absolute before:left-0 before:top-2 before:h-[calc(100%-1rem)] before:w-[3px] before:rounded-full before:bg-primary"
                             : "text-ink hover:bg-surface-soft",
                           item.soon && "text-muted",
                         )}
@@ -69,9 +70,12 @@ export function Sidebar({ role, userName }: { role: Role; userName: string }) {
           );
         })}
       </nav>
-      <div className="border-t border-line px-5 py-3">
-        <p className="truncate text-sm font-semibold">{userName}</p>
-        <p className="text-xs capitalize text-muted">{role}</p>
+      <div className="flex items-center gap-3 border-t border-line px-4 py-3">
+        <Avatar name={userName} className="size-8 text-[10px]" />
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold">{userName}</p>
+          <p className="text-xs capitalize text-muted">{role}</p>
+        </div>
       </div>
     </aside>
   );

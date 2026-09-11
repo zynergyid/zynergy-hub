@@ -23,6 +23,14 @@ export interface UnitMonth {
   masuk: number;
   keluar: number;
   balance: number;
+  masukPrev: number;
+  keluarPrev: number;
+}
+
+export interface CategoryShare {
+  category: string;
+  amount: number;
+  share: number;
 }
 
 const sameMonth = (a: Date, b: Date) =>
@@ -91,19 +99,43 @@ export async function getLedger(opts: {
   };
 }
 
-export async function getUnitMonth(unit: Unit, month = new Date()): Promise<UnitMonth> {
+export async function getUnitMonth(unit: UnitFilter, month = new Date()): Promise<UnitMonth> {
   const docs = await allTransactions(unit);
-  let masuk = 0;
-  let keluar = 0;
-  let balance = 0;
+  const prevMonth = new Date(month.getFullYear(), month.getMonth() - 1, 1);
+  const out: UnitMonth = { masuk: 0, keluar: 0, balance: 0, masukPrev: 0, keluarPrev: 0 };
   for (const tx of docs) {
-    balance += tx.type === "masuk" ? tx.amount : -tx.amount;
-    if (sameMonth(new Date(tx.date), month)) {
-      if (tx.type === "masuk") masuk += tx.amount;
-      else keluar += tx.amount;
+    out.balance += tx.type === "masuk" ? tx.amount : -tx.amount;
+    const d = new Date(tx.date);
+    if (sameMonth(d, month)) {
+      if (tx.type === "masuk") out.masuk += tx.amount;
+      else out.keluar += tx.amount;
+    } else if (sameMonth(d, prevMonth)) {
+      if (tx.type === "masuk") out.masukPrev += tx.amount;
+      else out.keluarPrev += tx.amount;
     }
   }
-  return { masuk, keluar, balance };
+  return out;
+}
+
+/** Spending by category for one month, largest first, with share of total. */
+export async function getCategoryBreakdown(unit: UnitFilter, month = new Date()): Promise<CategoryShare[]> {
+  const docs = await allTransactions(unit);
+  const totals = new Map<string, number>();
+  let sum = 0;
+  for (const tx of docs) {
+    if (tx.type !== "keluar" || !sameMonth(new Date(tx.date), month)) continue;
+    totals.set(tx.category, (totals.get(tx.category) ?? 0) + tx.amount);
+    sum += tx.amount;
+  }
+  return [...totals.entries()]
+    .map(([category, amount]) => ({ category, amount, share: sum ? amount / sum : 0 }))
+    .sort((a, b) => b.amount - a.amount);
+}
+
+/** Percentage change, null when there is no baseline. */
+export function pctChange(now: number, prev: number): number | null {
+  if (!prev) return null;
+  return ((now - prev) / prev) * 100;
 }
 
 export interface MonthPoint {

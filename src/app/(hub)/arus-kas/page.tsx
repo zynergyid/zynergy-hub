@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ChevronLeft, ChevronRight, Download } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, ChevronLeft, ChevronRight, Download, Scale, Wallet } from "lucide-react";
 import { getSessionUser } from "@/lib/session";
 import { getPayloadClient } from "@/lib/payload";
-import { getLedger, monthKey, parseMonth, type UnitFilter } from "@/lib/finance";
-import { dateKey, dayLabel, formatIDR, formatMonthLong } from "@/lib/format";
+import { getLedger, getUnitMonth, monthKey, parseMonth, pctChange, type UnitFilter } from "@/lib/finance";
+import { dateKey, dayLabel, formatDate, formatIDR, formatMonthLong } from "@/lib/format";
 import { categoryLabel, transactionCategories, units, type Unit } from "@/lib/options";
 import { cn } from "@/lib/cn";
 import { SegmentedLinks } from "@/components/hub/SegmentedLinks";
-import { Stat } from "@/components/hub/Stat";
+import { KpiCard } from "@/components/hub/KpiCard";
+import { PageHeader } from "@/components/hub/PageHeader";
+import { Avatar } from "@/components/hub/Avatar";
 import { QuickAdd } from "./QuickAdd";
 
 export const metadata: Metadata = { title: "Arus Kas" };
@@ -47,9 +49,10 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
   const base: Search = { unit, bulan: monthKey(month), q: q || undefined, kategori: category || undefined };
 
   const payload = await getPayloadClient();
-  const [ledger, clientsRes] = await Promise.all([
+  const [ledger, clientsRes, um] = await Promise.all([
     getLedger({ unit, month, q, category }),
     payload.find({ collection: "clients", limit: 500, sort: "name", select: { name: true, unit: true } }),
+    getUnitMonth(unit, month),
   ]);
   const clientOptions = clientsRes.docs
     .filter((c) => unit === "semua" || c.unit === unit)
@@ -65,13 +68,16 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">Arus Kas</h1>
-          <p className="text-sm text-muted">Catatan uang masuk dan keluar per unit bisnis.</p>
-        </div>
+      <PageHeader title="Arus Kas" subtitle="Uang masuk dan keluar per unit bisnis.">
+        <a
+          href={`/api/export/transactions?unit=${unit}&bulan=${monthKey(month)}`}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm font-semibold hover:border-primary/40"
+        >
+          <Download className="size-4" />
+          CSV
+        </a>
         <QuickAdd unit={quickAddUnit} clients={clientOptions} />
-      </div>
+      </PageHeader>
 
       <div className="flex flex-wrap items-center gap-3">
         <SegmentedLinks
@@ -93,10 +99,10 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="Masuk" value={formatIDR(ledger.masuk)} tone="in" />
-        <Stat label="Keluar" value={formatIDR(ledger.keluar)} tone="out" />
-        <Stat label="Selisih bulan ini" value={formatIDR(ledger.masuk - ledger.keluar)} tone={ledger.masuk - ledger.keluar >= 0 ? "in" : "out"} />
-        <Stat label="Saldo akhir bulan" value={formatIDR(ledger.closing)} hint={`Awal bulan ${formatIDR(ledger.opening)}`} />
+        <KpiCard icon={ArrowDownLeft} label="Masuk" value={formatIDR(ledger.masuk)} delta={pctChange(um.masuk, um.masukPrev)} tone="in" hint="vs bulan lalu" />
+        <KpiCard icon={ArrowUpRight} label="Keluar" value={formatIDR(ledger.keluar)} delta={pctChange(um.keluar, um.keluarPrev)} upIsGood={false} tone="out" hint="vs bulan lalu" />
+        <KpiCard icon={Scale} label="Selisih" value={formatIDR(ledger.masuk - ledger.keluar)} tone={ledger.masuk - ledger.keluar >= 0 ? "in" : "out"} hint="bulan ini" />
+        <KpiCard icon={Wallet} label="Saldo akhir bulan" value={formatIDR(ledger.closing)} hint={`Awal bulan ${formatIDR(ledger.opening)}`} tone="primary" />
       </div>
 
       <form className="flex flex-wrap items-center gap-2" action="/arus-kas">
@@ -110,13 +116,6 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
           className="w-full flex-1 rounded-xl border border-line bg-white px-3.5 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 sm:max-w-sm"
         />
         <button type="submit" className="rounded-xl border border-line bg-white px-3.5 py-2 text-sm font-semibold hover:border-primary/40">Cari</button>
-        <a
-          href={`/api/export/transactions?unit=${unit}&bulan=${monthKey(month)}`}
-          className="ml-auto inline-flex items-center gap-1.5 rounded-xl border border-line bg-white px-3.5 py-2 text-sm font-semibold hover:border-primary/40"
-        >
-          <Download className="size-4" />
-          CSV
-        </a>
       </form>
 
       {usedCategories.size > 0 && (
@@ -138,53 +137,100 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
           <p className="mt-1 text-sm text-muted">Tekan &quot;Catat&quot; untuk menambah, atau pindah bulan.</p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-line bg-white">
-          {[...groups.entries()].map(([day, rows]) => (
-            <section key={day}>
-              <h2 className="sticky top-0 border-b border-line bg-surface-soft px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-muted">
-                {dayLabel(rows[0].tx.date)}
-              </h2>
-              <ul className="divide-y divide-line">
-                {rows.map(({ tx, balance }) => {
+        <>
+          {/* Desktop: table with running balance */}
+          <div className="hidden overflow-hidden rounded-2xl border border-line bg-white shadow-[0_1px_2px_rgba(15,27,51,0.04)] md:block">
+            <table className="w-full text-sm">
+              <thead className="bg-surface-soft text-left text-[11px] uppercase tracking-wider text-muted">
+                <tr>
+                  <th className="px-4 py-2.5 font-bold">Transaksi</th>
+                  <th className="px-3 py-2.5 font-bold">Klien</th>
+                  <th className="px-3 py-2.5 font-bold">Tanggal</th>
+                  <th className="px-3 py-2.5 font-bold">Metode</th>
+                  <th className="px-3 py-2.5 font-bold">Bukti</th>
+                  <th className="px-3 py-2.5 text-right font-bold">Nominal</th>
+                  {!ledger.filtered && <th className="px-4 py-2.5 text-right font-bold">Saldo</th>}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {ledger.rows.map(({ tx, balance }) => {
                   const clientName = typeof tx.client === "object" && tx.client ? tx.client.name : null;
-                  const receiptUrl = typeof tx.receipt === "object" && tx.receipt ? tx.receipt.url : null;
+                  const hasReceipt = Boolean(tx.receipt);
                   return (
-                    <li key={tx.id}>
-                      <Link href={`/admin/collections/transactions/${tx.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-surface-soft">
-                        <span
-                          className={cn(
-                            "grid size-9 shrink-0 place-items-center rounded-full text-sm font-extrabold",
-                            tx.type === "masuk" ? "bg-secondary-soft text-secondary-dark" : "bg-red-50 text-red-600",
-                          )}
-                        >
-                          {tx.type === "masuk" ? "+" : "-"}
+                    <tr key={tx.id} className="hover:bg-surface-soft/60">
+                      <td className="px-4 py-3">
+                        <Link href={`/admin/collections/transactions/${tx.id}`} className="flex items-center gap-3">
+                          <span className={cn("grid size-8 shrink-0 place-items-center rounded-full text-sm font-extrabold", tx.type === "masuk" ? "bg-secondary-soft text-secondary-dark" : "bg-red-50 text-red-600")}>
+                            {tx.type === "masuk" ? "+" : "-"}
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block truncate font-semibold hover:text-primary">{tx.reference || categoryLabel.get(tx.category)}</span>
+                            <span className="block truncate text-xs text-muted">
+                              {categoryLabel.get(tx.category)}{unit === "semua" ? ` · ${tx.unit === "supply" ? "Supply" : "Digital"}` : ""}
+                            </span>
+                          </span>
+                        </Link>
+                      </td>
+                      <td className="px-3 py-3">
+                        {clientName ? (
+                          <span className="inline-flex items-center gap-2"><Avatar name={clientName} className="size-7 text-[10px]" /><span className="truncate">{clientName}</span></span>
+                        ) : <span className="text-muted">-</span>}
+                      </td>
+                      <td className="px-3 py-3 text-muted">{formatDate(tx.date)}</td>
+                      <td className="px-3 py-3 capitalize text-muted">{tx.method ?? "-"}</td>
+                      <td className="px-3 py-3">
+                        <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-bold", hasReceipt ? "bg-secondary-soft text-secondary-dark" : "bg-surface-soft text-muted")}>
+                          {hasReceipt ? "Ada" : "Belum"}
                         </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold">{tx.reference || categoryLabel.get(tx.category)}</p>
-                          <p className="truncate text-xs text-muted">
-                            {categoryLabel.get(tx.category)}
-                            {clientName ? ` · ${clientName}` : ""}
-                            {tx.method ? ` · ${tx.method}` : ""}
-                            {unit === "semua" ? ` · ${tx.unit === "supply" ? "Supply" : "Digital"}` : ""}
-                            {receiptUrl ? " · ada bukti" : ""}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className={cn("text-sm font-extrabold", tx.type === "masuk" ? "text-secondary-dark" : "text-red-600")}>
-                            {tx.type === "masuk" ? "+" : "-"}{formatIDR(tx.amount)}
-                          </p>
-                          {!ledger.filtered && (
-                            <p className="hidden text-xs text-muted sm:block">saldo {formatIDR(balance)}</p>
-                          )}
-                        </div>
-                      </Link>
-                    </li>
+                      </td>
+                      <td className={cn("px-3 py-3 text-right font-extrabold", tx.type === "masuk" ? "text-secondary-dark" : "text-red-600")}>
+                        {tx.type === "masuk" ? "+" : "-"}{formatIDR(tx.amount)}
+                      </td>
+                      {!ledger.filtered && <td className="px-4 py-3 text-right text-muted">{formatIDR(balance)}</td>}
+                    </tr>
                   );
                 })}
-              </ul>
-            </section>
-          ))}
-        </div>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile: grouped by day */}
+          <div className="overflow-hidden rounded-2xl border border-line bg-white md:hidden">
+            {[...groups.entries()].map(([day, rows]) => (
+              <section key={day}>
+                <h2 className="border-b border-line bg-surface-soft px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted">
+                  {dayLabel(rows[0].tx.date)}
+                </h2>
+                <ul className="divide-y divide-line">
+                  {rows.map(({ tx, balance }) => {
+                    const clientName = typeof tx.client === "object" && tx.client ? tx.client.name : null;
+                    return (
+                      <li key={tx.id}>
+                        <Link href={`/admin/collections/transactions/${tx.id}`} className="flex items-center gap-3 px-4 py-3 active:bg-surface-soft">
+                          <span className={cn("grid size-9 shrink-0 place-items-center rounded-full text-sm font-extrabold", tx.type === "masuk" ? "bg-secondary-soft text-secondary-dark" : "bg-red-50 text-red-600")}>
+                            {tx.type === "masuk" ? "+" : "-"}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold">{tx.reference || categoryLabel.get(tx.category)}</p>
+                            <p className="truncate text-xs text-muted">
+                              {categoryLabel.get(tx.category)}{clientName ? ` · ${clientName}` : ""}{unit === "semua" ? ` · ${tx.unit === "supply" ? "Supply" : "Digital"}` : ""}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className={cn("text-sm font-extrabold", tx.type === "masuk" ? "text-secondary-dark" : "text-red-600")}>
+                              {tx.type === "masuk" ? "+" : "-"}{formatIDR(tx.amount)}
+                            </p>
+                            {!ledger.filtered && <p className="text-[11px] text-muted">saldo {formatIDR(balance)}</p>}
+                          </div>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
