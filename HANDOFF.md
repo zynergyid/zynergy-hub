@@ -43,8 +43,9 @@
   was canceled") kalau dijalankan saat dev server hidup dengan cache lama;
   obatnya matikan dev server, `rm -rf .next`, build lagi.
 - LIVE di https://hub.zynergy.co.id (dan zynergy-hub.vercel.app) sejak
-  2026-09-11 malam, deploy pertama dari commit 3e5c90c atas perintah
-  "deploy". Repo privat `danish-deepskill/zynergy-hub`, Vercel project
+  2026-09-11 malam, deploy pertama dari commit 3e5c90c; deploy kedua
+  (impor PDF, buyer per PO, laporan Excel) dari commit 7f4991a larut malam,
+  keduanya atas perintah "deploy". Repo privat `danish-deepskill/zynergy-hub`, Vercel project
   `zynergy-hub` (scope `devdanzen-projects`). Neon `zynergy-hub` (paket
   gratis) dan Blob store `zynergy-hub-files` (region sin1) dibuat lewat
   CLI (`vercel integration add neon`, `vercel blob create-store`) dengan
