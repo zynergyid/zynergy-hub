@@ -48,6 +48,19 @@
 - Lokal: Postgres docker `zynergy-pg` database `zynergy_hub`, dev admin
   dev@zynergy.local / zynergy-dev-only via `pnpm seed`. Port 3011.
 
+- Login custom di `/masuk` (POST ke /api/users/login, cookie dari Payload),
+  tombol Keluar di sidebar dan header HP, semua halaman mengalihkan tamu ke
+  `/masuk`. Panel Payload hanya bisa dimasuki peran admin
+  (`Users.access.admin`) dan hanya untuk keadaan darurat lewat URL (impor
+  massal, perbaikan data); reset password masih memakai alur Payload
+  (`/admin/forgot`).
+- Kebersihan kode (audit 2026-09-11): opsi bersama di `src/lib/options.ts`,
+  primitif form di `src/components/hub/form.tsx` (Input, Select, Label,
+  RupiahInput, ErrorText), helper URL di `src/lib/search.ts`, tanggal di
+  `src/lib/format.ts`. Editor rich text dilepas (tidak ada field rich text).
+  Aturan: satu pintu per data untuk tim (layar custom); tambah field baru =
+  ubah koleksi + form custom-nya, jangan hanya salah satu.
+
 ## Peta subdomain (diputuskan 2026-09-11)
 
 - zynergy.co.id: situs marketing (repo `zynergy`).
