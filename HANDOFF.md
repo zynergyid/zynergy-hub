@@ -10,11 +10,11 @@
   UI custom (bukan admin Payload) untuk pemakaian harian:
   app shell (sidebar 256px desktop, bottom tab HP; urutan alat dari
   sederhana ke kompleks di `src/components/hub/nav.ts`), `/` ringkasan per
-  unit (Digital dan Supply), `/arus-kas` (segmented Digital/Supply/Semua,
+  unit (Digital dan Supply), `/cash-flow` (segmented Digital/Supply/Semua,
   navigasi bulan, kartu masuk/keluar/selisih/saldo, daftar terkelompok per
   hari dengan saldo berjalan, filter kategori, cari, CSV per unit dan bulan,
-  form cepat "Catat" sebagai bottom sheet dengan server action), `/klien`
-  (kartu klien, status, hitung mundur perpanjangan, tombol WA), `/alat`
+  form cepat "Catat" sebagai bottom sheet dengan server action), `/clients`
+  (kartu klien, status, hitung mundur perpanjangan, tombol WA), `/tools`
   (peta alat yang akan datang). Bahasa visual (2026-09-11 malam, dari riset
   pola dashboard fintech dan sidebar app internal): KpiCard dengan ikon
   berwarna dan badge tren vs bulan lalu, BarChart SVG buatan sendiri (tanpa
@@ -22,10 +22,10 @@
   desktop berupa tabel (Transaksi, Klien, Tanggal, Metode, Bukti, Nominal,
   Saldo), di HP daftar per hari. Komponen di `src/components/hub/`.
   Semua pekerjaan harian sekarang punya layar custom sehingga /admin tidak
-  ditautkan dari sidebar: `/klien/baru` dan `/klien/[id]` (ClientForm, server
+  ditautkan dari sidebar: `/clients/new` dan `/clients/[id]` (ClientForm, server
   action saveClient/deleteClient), ubah dan hapus transaksi lewat sheet yang
-  sama dengan Catat (`/arus-kas?edit=ID`, saveTransaction/deleteTransaction),
-  `/tim` untuk admin (tambah anggota dengan password sementara, ubah peran,
+  sama dengan Catat (`/cash-flow?edit=ID`, saveTransaction/deleteTransaction),
+  `/team` untuk admin (tambah anggota dengan password sementara, ubah peran,
   hapus). Panel Payload dipaksa tema terang (`admin.theme: "light"`,
   `custom.scss`) dan hanya untuk keadaan darurat lewat URL.
   Panel `/admin` (berlabel Zynergy Team)
@@ -50,8 +50,8 @@
 
 - Panel Payload DIMATIKAN (`admin.disable: true`); `/admin` 404, file
   panelnya dihapus. Payload hanya jadi lapisan data, auth, dan REST API.
-  Login custom di `/masuk` (POST /api/users/login), tombol Keluar di sidebar
-  dan header HP. Saat database belum punya user, `/masuk` menampilkan form
+  Login custom di `/login` (POST /api/users/login), tombol Keluar di sidebar
+  dan header HP. Saat database belum punya user, `/login` menampilkan form
   "Buat admin pertama" (POST /api/users/first-register); ini cara membuat
   admin di prod. Reset password: admin mengatur password sementara dari
   halaman Tim (tanpa email server). Impor massal, kalau perlu, lewat script
@@ -62,6 +62,14 @@
   `src/lib/format.ts`. Editor rich text dilepas (tidak ada field rich text).
   Aturan: satu pintu per data untuk tim (layar custom); tambah field baru =
   ubah koleksi + form custom-nya, jangan hanya salah satu.
+
+- Konvensi bahasa (2026-09-11): kode, route, dan parameter URL berbahasa
+  Inggris (`/cash-flow?unit=&month=&category=`, `/clients`, `/team`,
+  `/tools`, `/login`, `/profile`); teks di layar berbahasa Indonesia.
+- Tim: `/team` daftar, `/team/new` tambah, `/team/[id]` ubah nama, email,
+  peran, jabatan, unit, atur ulang password, hapus. `/profile`: tiap orang
+  mengubah nama, email, dan password sendiri (wajib setelah login pertama
+  dengan password sementara).
 
 ## Peran dan unit (diputuskan 2026-09-11)
 

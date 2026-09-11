@@ -31,29 +31,29 @@ export const navSections: NavSection[] = [
     title: "Harian",
     items: [
       { href: "/", label: "Ringkasan", icon: "dashboard" },
-      { href: "/arus-kas", label: "Arus Kas", icon: "cashflow", roles: ["admin", "finance", "viewer"] },
-      { href: "/klien", label: "Klien", icon: "clients" },
+      { href: "/cash-flow", label: "Arus Kas", icon: "cashflow", roles: ["admin", "finance", "viewer"] },
+      { href: "/clients", label: "Klien", icon: "clients" },
     ],
   },
   {
     title: "Alat",
     items: [
-      { href: "/alat#cek-google", label: "Cek Google", icon: "search", soon: true },
-      { href: "/alat#laporan", label: "Laporan Bulanan", icon: "report", soon: true },
-      { href: "/alat#portal", label: "Portal Klien", icon: "portal", soon: true },
-      { href: "/alat#rfq", label: "RFQ Supply", icon: "rfq", soon: true },
+      { href: "/tools#cek-google", label: "Cek Google", icon: "search", soon: true },
+      { href: "/tools#laporan", label: "Laporan Bulanan", icon: "report", soon: true },
+      { href: "/tools#portal", label: "Portal Klien", icon: "portal", soon: true },
+      { href: "/tools#rfq", label: "RFQ Supply", icon: "rfq", soon: true },
     ],
   },
   {
     title: "Admin",
-    items: [{ href: "/tim", label: "Tim", icon: "team", roles: ["admin"] }],
+    items: [{ href: "/team", label: "Tim", icon: "team", roles: ["admin"] }],
   },
 ];
 
 export const mobileTabs: NavItem[] = [
   { href: "/", label: "Ringkasan", icon: "dashboard" },
-  { href: "/arus-kas", label: "Arus Kas", icon: "cashflow", roles: ["admin", "finance", "viewer"] },
-  { href: "/klien", label: "Klien", icon: "clients" },
-  { href: "/alat", label: "Alat", icon: "search" },
-  { href: "/tim", label: "Tim", icon: "team", roles: ["admin"] },
+  { href: "/cash-flow", label: "Arus Kas", icon: "cashflow", roles: ["admin", "finance", "viewer"] },
+  { href: "/clients", label: "Klien", icon: "clients" },
+  { href: "/tools", label: "Alat", icon: "search" },
+  { href: "/team", label: "Tim", icon: "team", roles: ["admin"] },
 ];

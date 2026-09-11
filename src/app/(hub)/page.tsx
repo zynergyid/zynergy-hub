@@ -34,7 +34,7 @@ function RenewalRow({ c }: { c: Client }) {
     <li className="flex items-center gap-3 py-3">
       <Avatar name={c.name} />
       <div className="min-w-0 flex-1">
-        <Link href={`/klien/${c.id}`} className="block truncate text-sm font-semibold hover:text-primary">
+        <Link href={`/clients/${c.id}`} className="block truncate text-sm font-semibold hover:text-primary">
           {c.name}
         </Link>
         <p className="truncate text-xs text-muted">
@@ -56,7 +56,7 @@ function RenewalRow({ c }: { c: Client }) {
 
 export default async function HubHome({ searchParams }: { searchParams: Promise<Search> }) {
   const user = await getSessionUser();
-  if (!user) redirect("/masuk");
+  if (!user) redirect("/login");
   const allowed = user.units;
   const sp = await searchParams;
   const unitParam = first(sp.unit) as Unit | undefined;
@@ -110,7 +110,7 @@ export default async function HubHome({ searchParams }: { searchParams: Promise<
               </div>
 
               <div className="grid gap-4 lg:grid-cols-5">
-                <Card title="Arus kas 12 bulan" action={{ label: "Buka arus kas", href: `/arus-kas?unit=${unit}` }} className="lg:col-span-3">
+                <Card title="Arus kas 12 bulan" action={{ label: "Buka arus kas", href: `/cash-flow?unit=${unit}` }} className="lg:col-span-3">
                   <BarChart points={last12} />
                 </Card>
                 <Card title="Pengeluaran bulan ini" className="lg:col-span-2">
@@ -119,7 +119,7 @@ export default async function HubHome({ searchParams }: { searchParams: Promise<
               </div>
 
               <div className="grid gap-4 lg:grid-cols-5">
-                <Card title="Perpanjangan terdekat" action={{ label: "Semua klien", href: "/klien" }} className="lg:col-span-2">
+                <Card title="Perpanjangan terdekat" action={{ label: "Semua klien", href: "/clients" }} className="lg:col-span-2">
                   {renewals.length === 0 ? (
                     <p className="text-sm text-muted">Tidak ada perpanjangan dalam 30 hari.</p>
                   ) : (
@@ -128,7 +128,7 @@ export default async function HubHome({ searchParams }: { searchParams: Promise<
                     </ul>
                   )}
                 </Card>
-                <Card title="Transaksi terbaru" action={{ label: "Semua", href: `/arus-kas?unit=${unit}` }} className="lg:col-span-3">
+                <Card title="Transaksi terbaru" action={{ label: "Semua", href: `/cash-flow?unit=${unit}` }} className="lg:col-span-3">
                   {ledger.rows.length === 0 ? (
                     <p className="text-sm text-muted">Belum ada transaksi bulan ini.</p>
                   ) : (
@@ -183,7 +183,7 @@ export default async function HubHome({ searchParams }: { searchParams: Promise<
             <KpiCard icon={CalendarClock} label="Jatuh tempo 30 hari" value={String(renewals.length)} tone={renewals.length ? "out" : "neutral"} />
             <KpiCard icon={Users} label="Prospek" value={String(counts.prospek)} />
           </div>
-          <Card title="Perpanjangan terdekat" action={{ label: "Semua klien", href: "/klien" }}>
+          <Card title="Perpanjangan terdekat" action={{ label: "Semua klien", href: "/clients" }}>
             {renewals.length === 0 ? <p className="text-sm text-muted">Tidak ada perpanjangan dalam 30 hari.</p> : (
               <ul className="divide-y divide-line">{renewals.map((c) => <RenewalRow key={c.id} c={c} />)}</ul>
             )}

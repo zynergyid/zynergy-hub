@@ -24,7 +24,7 @@ const statusTone: Record<string, string> = {
 
 export default async function KlienPage({ searchParams }: { searchParams: Promise<Search> }) {
   const user = await getSessionUser();
-  if (!user) redirect("/masuk");
+  if (!user) redirect("/login");
   const sp = await searchParams;
   const status = first(sp.status) ?? "";
   const q = (first(sp.q) ?? "").trim();
@@ -43,7 +43,7 @@ export default async function KlienPage({ searchParams }: { searchParams: Promis
     },
   });
 
-  const href = (s: string) => `/klien?${new URLSearchParams({ ...(s ? { status: s } : {}), ...(q ? { q } : {}) })}`;
+  const href = (s: string) => `/clients?${new URLSearchParams({ ...(s ? { status: s } : {}), ...(q ? { q } : {}) })}`;
 
   return (
     <div className="space-y-5">
@@ -53,7 +53,7 @@ export default async function KlienPage({ searchParams }: { searchParams: Promis
           <p className="text-sm text-muted">{docs.length} klien{status ? ` dengan status ${status}` : ""}.</p>
         </div>
         {canEditClients(user) && (
-          <Link href="/klien/baru" className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary/25 hover:bg-primary-dark">
+          <Link href="/clients/new" className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary/25 hover:bg-primary-dark">
             <Plus className="size-4" />
             Klien baru
           </Link>
@@ -68,7 +68,7 @@ export default async function KlienPage({ searchParams }: { searchParams: Promis
             ...clientStatuses.map((s) => ({ label: s.label, href: href(s.value), active: status === s.value })),
           ]}
         />
-        <form className="flex gap-2" action="/klien">
+        <form className="flex gap-2" action="/clients">
           {status && <input type="hidden" name="status" value={status} />}
           <input name="q" defaultValue={q} placeholder="Cari nama, pemilik, kota" className="rounded-xl border border-line bg-white px-3.5 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
           <button type="submit" className="rounded-xl border border-line bg-white px-3.5 py-2 text-sm font-semibold hover:border-primary/40">Cari</button>
@@ -87,7 +87,7 @@ export default async function KlienPage({ searchParams }: { searchParams: Promis
               <li key={c.id} className="flex flex-col rounded-2xl border border-line bg-white p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <Link href={`/klien/${c.id}`} className="block truncate font-bold hover:text-primary">{c.name}</Link>
+                    <Link href={`/clients/${c.id}`} className="block truncate font-bold hover:text-primary">{c.name}</Link>
                     <p className="truncate text-xs text-muted">{[c.owner, c.city].filter(Boolean).join(" · ") || "belum ada detail"}</p>
                   </div>
                   <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold", statusTone[c.status])}>
@@ -116,7 +116,7 @@ export default async function KlienPage({ searchParams }: { searchParams: Promis
                     WhatsApp
                   </a>
                   {(user.role === "admin" || user.role === "finance" || user.role === "viewer") && (
-                    <Link href={`/arus-kas?unit=${c.unit}&q=${encodeURIComponent(c.name)}`} className="inline-flex items-center rounded-lg bg-surface-soft px-3 py-1.5 text-xs font-bold text-ink hover:bg-line">
+                    <Link href={`/cash-flow?unit=${c.unit}&q=${encodeURIComponent(c.name)}`} className="inline-flex items-center rounded-lg bg-surface-soft px-3 py-1.5 text-xs font-bold text-ink hover:bg-line">
                       Transaksi
                     </Link>
                   )}

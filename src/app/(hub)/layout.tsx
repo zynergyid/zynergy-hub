@@ -3,6 +3,7 @@ import { getSessionUser } from "@/lib/session";
 import { Sidebar } from "@/components/hub/Sidebar";
 import { MobileTabs } from "@/components/hub/MobileTabs";
 import { BrandMark } from "@/components/ui/BrandMark";
+import Link from "next/link";
 import { LogoutButton } from "@/components/hub/LogoutButton";
 import "./globals.css";
 
@@ -34,6 +35,9 @@ export default async function HubLayout({ children }: LayoutProps<"/">) {
                 <span className="flex-1 text-base font-extrabold tracking-tight">
                   Zynergy <span className="text-muted">Team</span>
                 </span>
+                <Link href="/profile" className="rounded-lg p-2 text-muted hover:bg-surface-soft hover:text-ink" aria-label="Profil">
+                  <span className="grid size-6 place-items-center rounded-full bg-primary-soft text-[10px] font-extrabold text-primary-dark">{user.name.slice(0, 1).toUpperCase()}</span>
+                </Link>
                 <LogoutButton />
               </header>
               <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-24 pt-5 sm:px-6 md:pb-10 md:pt-8">

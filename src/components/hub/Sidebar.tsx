@@ -72,11 +72,13 @@ export function Sidebar({ role, userName }: { role: Role; userName: string }) {
         })}
       </nav>
       <div className="flex items-center gap-3 border-t border-line px-4 py-3">
-        <Avatar name={userName} className="size-8 text-[10px]" />
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold">{userName}</p>
-          <p className="text-xs capitalize text-muted">{role}</p>
-        </div>
+        <Link href="/profile" className="flex min-w-0 flex-1 items-center gap-3 rounded-lg hover:text-primary">
+          <Avatar name={userName} className="size-8 text-[10px]" />
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-semibold">{userName}</span>
+            <span className="block text-xs capitalize text-muted">{role}</span>
+          </span>
+        </Link>
         <LogoutButton />
       </div>
     </aside>

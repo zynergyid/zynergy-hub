@@ -28,7 +28,7 @@ export function ClientForm({
   const [state, formAction, pending] = useActionState(
     async (prev: ClientFormState, fd: FormData) => {
       const r = await saveClient(prev, fd);
-      if (r.status === "success" && r.id) router.push(`/klien/${r.id}`);
+      if (r.status === "success" && r.id) router.push(`/clients/${r.id}`);
       return r;
     },
     initial,

@@ -66,7 +66,7 @@ export async function saveClient(_prev: ClientFormState, formData: FormData): Pr
     const doc = id
       ? await payload.update({ collection: "clients", id, data })
       : await payload.create({ collection: "clients", data });
-    revalidatePath("/klien");
+    revalidatePath("/clients");
     revalidatePath("/");
     return { status: "success", id: doc.id };
   } catch (error) {
@@ -82,7 +82,7 @@ export async function deleteClient(formData: FormData) {
   if (!id) return;
   const payload = await getPayloadClient();
   await payload.delete({ collection: "clients", id });
-  revalidatePath("/klien");
+  revalidatePath("/clients");
   revalidatePath("/");
-  redirect("/klien");
+  redirect("/clients");
 }

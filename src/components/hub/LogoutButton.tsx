@@ -8,7 +8,7 @@ export function LogoutButton({ className }: { className?: string }) {
   const router = useRouter();
   async function logout() {
     await fetch("/api/users/logout", { method: "POST" });
-    router.push("/masuk");
+    router.push("/login");
     router.refresh();
   }
   return (

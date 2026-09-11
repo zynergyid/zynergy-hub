@@ -83,7 +83,7 @@ export async function saveTransaction(_prev: QuickAddState, formData: FormData):
     return { status: "error", message: "Gagal menyimpan. Coba lagi." };
   }
 
-  revalidatePath("/arus-kas");
+  revalidatePath("/cash-flow");
   revalidatePath("/");
   return { status: "success" };
 }
@@ -97,8 +97,8 @@ export async function deleteTransaction(formData: FormData) {
   const existing = await payload.findByID({ collection: "transactions", id, disableErrors: true });
   if (!existing || !canWriteUnit(user, existing.unit, true)) return;
   await payload.delete({ collection: "transactions", id });
-  revalidatePath("/arus-kas");
+  revalidatePath("/cash-flow");
   revalidatePath("/");
-  const back = String(formData.get("closeHref") || "/arus-kas");
+  const back = String(formData.get("closeHref") || "/cash-flow");
   redirect(back);
 }

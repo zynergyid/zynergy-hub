@@ -18,11 +18,11 @@ import { QuickAdd, type EditingTx } from "./QuickAdd";
 export const metadata: Metadata = { title: "Arus Kas" };
 export const dynamic = "force-dynamic";
 
-const href = (base: Search, patch: Record<string, string | undefined> = {}) => buildHref("/arus-kas", base, patch);
+const href = (base: Search, patch: Record<string, string | undefined> = {}) => buildHref("/cash-flow", base, patch);
 
 export default async function ArusKasPage({ searchParams }: { searchParams: Promise<Search> }) {
   const user = await getSessionUser();
-  if (!user) redirect("/masuk");
+  if (!user) redirect("/login");
   if (!canSeeMoney(user)) redirect("/");
   const allowed = user.units;
   const editable = canEditMoney(user);
@@ -35,13 +35,13 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
       : unitParam && allowed.includes(unitParam as Unit)
         ? (unitParam as Unit)
         : allowed[0] ?? "digital";
-  const month = parseMonth(first(sp.bulan));
+  const month = parseMonth(first(sp.month));
   const q = first(sp.q) ?? "";
-  const category = first(sp.kategori) ?? "";
+  const category = first(sp.category) ?? "";
 
   const prev = new Date(month.getFullYear(), month.getMonth() - 1, 1);
   const next = new Date(month.getFullYear(), month.getMonth() + 1, 1);
-  const base: Search = { unit, bulan: monthKey(month), q: q || undefined, kategori: category || undefined };
+  const base: Search = { unit, month: monthKey(month), q: q || undefined, category: category || undefined };
 
   const payload = await getPayloadClient();
   const [ledger, clientsRes, um] = await Promise.all([
@@ -87,7 +87,7 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
     <div className="space-y-5">
       <PageHeader title="Arus Kas" subtitle="Uang masuk dan keluar per unit bisnis.">
         <a
-          href={`/api/export/transactions?unit=${unit}&bulan=${monthKey(month)}`}
+          href={`/api/export/transactions?unit=${unit}&month=${monthKey(month)}`}
           className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm font-semibold hover:border-primary/40"
         >
           <Download className="size-4" />
@@ -111,11 +111,11 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
           />
         )}
         <div className="inline-flex items-center rounded-xl border border-line bg-white">
-          <Link href={href(base, { bulan: monthKey(prev) })} aria-label="Bulan sebelumnya" className="p-2 text-muted hover:text-ink">
+          <Link href={href(base, { month: monthKey(prev) })} aria-label="Bulan sebelumnya" className="p-2 text-muted hover:text-ink">
             <ChevronLeft className="size-4" />
           </Link>
           <span className="min-w-36 text-center text-sm font-semibold">{formatMonthLong(month)}</span>
-          <Link href={href(base, { bulan: monthKey(next) })} aria-label="Bulan berikutnya" className="p-2 text-muted hover:text-ink">
+          <Link href={href(base, { month: monthKey(next) })} aria-label="Bulan berikutnya" className="p-2 text-muted hover:text-ink">
             <ChevronRight className="size-4" />
           </Link>
         </div>
@@ -128,10 +128,10 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
         <KpiCard icon={Wallet} label="Saldo akhir bulan" value={formatIDR(ledger.closing)} hint={`Awal bulan ${formatIDR(ledger.opening)}`} tone="primary" />
       </div>
 
-      <form className="flex flex-wrap items-center gap-2" action="/arus-kas">
+      <form className="flex flex-wrap items-center gap-2" action="/cash-flow">
         <input type="hidden" name="unit" value={unit} />
-        <input type="hidden" name="bulan" value={monthKey(month)} />
-        {category && <input type="hidden" name="kategori" value={category} />}
+        <input type="hidden" name="month" value={monthKey(month)} />
+        {category && <input type="hidden" name="category" value={category} />}
         <input
           name="q"
           defaultValue={q}
@@ -143,11 +143,11 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
 
       {usedCategories.size > 0 && (
         <div className="flex flex-wrap gap-1.5">
-          <Link href={href(base, { kategori: undefined })} className={cn("rounded-full border px-3 py-1 text-xs font-semibold", !category ? "border-ink bg-ink text-white" : "border-line bg-white text-muted hover:text-ink")}>
+          <Link href={href(base, { category: undefined })} className={cn("rounded-full border px-3 py-1 text-xs font-semibold", !category ? "border-ink bg-ink text-white" : "border-line bg-white text-muted hover:text-ink")}>
             Semua kategori
           </Link>
           {transactionCategories.filter((c) => usedCategories.has(c.value) || c.value === category).map((c) => (
-            <Link key={c.value} href={href(base, { kategori: c.value })} className={cn("rounded-full border px-3 py-1 text-xs font-semibold", category === c.value ? "border-ink bg-ink text-white" : "border-line bg-white text-muted hover:text-ink")}>
+            <Link key={c.value} href={href(base, { category: c.value })} className={cn("rounded-full border px-3 py-1 text-xs font-semibold", category === c.value ? "border-ink bg-ink text-white" : "border-line bg-white text-muted hover:text-ink")}>
               {c.label}
             </Link>
           ))}

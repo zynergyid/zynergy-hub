@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 
 export default async function KlienDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await getSessionUser();
-  if (!user) redirect("/masuk");
+  if (!user) redirect("/login");
   const { id } = await params;
   const clientId = Number(id);
   if (!clientId) notFound();
@@ -31,7 +31,7 @@ export default async function KlienDetailPage({ params }: { params: Promise<{ id
 
   return (
     <div className="space-y-5">
-      <Link href="/klien" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-primary">
+      <Link href="/clients" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-primary">
         <ArrowLeft className="size-4" />
         Semua klien
       </Link>
@@ -57,7 +57,7 @@ export default async function KlienDetailPage({ params }: { params: Promise<{ id
           <ClientForm client={client} canDelete={user.role === "admin"} readOnly={!canEditClients(user)} units={user.units} />
         </div>
         {tx && (
-          <Card title="Transaksi klien ini" action={{ label: "Arus kas", href: `/arus-kas?unit=${client.unit}&q=${encodeURIComponent(client.name)}` }} className="lg:col-span-2">
+          <Card title="Transaksi klien ini" action={{ label: "Arus kas", href: `/cash-flow?unit=${client.unit}&q=${encodeURIComponent(client.name)}` }} className="lg:col-span-2">
             {tx.docs.length === 0 ? (
               <p className="text-sm text-muted">Belum ada transaksi.</p>
             ) : (

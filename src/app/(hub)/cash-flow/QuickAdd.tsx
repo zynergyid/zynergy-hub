@@ -38,7 +38,7 @@ export function QuickAdd({
   units: allowedUnits,
   clients,
   editing = null,
-  closeHref = "/arus-kas",
+  closeHref = "/cash-flow",
 }: {
   unit: Unit;
   units: Unit[];
