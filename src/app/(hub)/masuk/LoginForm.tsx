@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { ErrorText, Input, Label } from "@/components/hub/form";
@@ -50,10 +49,7 @@ export function LoginForm() {
         {pending && <Loader2 className="size-4 animate-spin" />}
         Masuk
       </button>
-      <p className="text-center text-xs text-muted">
-        Lupa password? Minta admin mengatur ulang, atau{" "}
-        <Link href="/admin/forgot" className="font-semibold text-primary hover:underline">kirim tautan reset</Link>.
-      </p>
+      <p className="text-center text-xs text-muted">Lupa password? Minta admin mengatur ulang dari halaman Tim.</p>
     </form>
   );
 }

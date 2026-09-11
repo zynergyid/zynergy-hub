@@ -6,7 +6,7 @@ import { getPayloadClient } from "@/lib/payload";
 import { Avatar } from "@/components/hub/Avatar";
 import { PageHeader } from "@/components/hub/PageHeader";
 import { AddMember } from "./AddMember";
-import { removeMember, setRole } from "./actions";
+import { removeMember, resetPassword, setRole } from "./actions";
 
 export const metadata: Metadata = { title: "Tim" };
 export const dynamic = "force-dynamic";
@@ -48,6 +48,13 @@ export default async function TimPage() {
                       <option value="admin">Admin</option>
                     </select>
                     <button type="submit" className="rounded-lg border border-line px-2.5 py-1.5 text-xs font-semibold hover:border-primary/40">Simpan</button>
+                  </form>
+                )}
+                {!self && (
+                  <form action={resetPassword} className="flex items-center gap-2">
+                    <input type="hidden" name="id" value={m.id} />
+                    <input name="password" type="text" minLength={8} required placeholder="password sementara" className="w-40 rounded-lg border border-line bg-white px-2.5 py-1.5 text-xs" />
+                    <button type="submit" className="rounded-lg border border-line px-2.5 py-1.5 text-xs font-semibold hover:border-primary/40">Atur ulang</button>
                   </form>
                 )}
                 {!self && (

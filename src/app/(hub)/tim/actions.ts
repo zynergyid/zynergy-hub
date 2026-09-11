@@ -54,3 +54,14 @@ export async function removeMember(formData: FormData) {
   await payload.delete({ collection: "users", id });
   revalidatePath("/tim");
 }
+
+export async function resetPassword(formData: FormData) {
+  const user = await getSessionUser();
+  if (!user || user.role !== "admin") return;
+  const id = Number(formData.get("id") || 0);
+  const password = String(formData.get("password") ?? "");
+  if (!id || password.length < 8) return;
+  const payload = await getPayloadClient();
+  await payload.update({ collection: "users", id, data: { password } });
+  revalidatePath("/tim");
+}

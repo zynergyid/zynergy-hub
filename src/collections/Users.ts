@@ -12,8 +12,6 @@ export const Users: CollectionConfig = {
     group: "Admin",
   },
   access: {
-    // The Payload panel is an escape hatch for admins; everyone else uses the custom screens.
-    admin: ({ req }) => (req.user as { role?: string } | null)?.role === "admin",
     read: isLoggedIn,
     create: isAdmin,
     delete: isAdmin,

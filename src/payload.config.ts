@@ -14,14 +14,8 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
 export default buildConfig({
   admin: {
     user: Users.slug,
-    theme: "light",
-    components: {
-      graphics: {
-        Logo: "@/components/admin/Branding#Logo",
-        Icon: "@/components/admin/Branding#Icon",
-      },
-    },
-    meta: { titleSuffix: " | Zynergy Team" },
+    // The team uses the custom screens; the Payload panel is not served at all.
+    disable: true,
   },
   collections: [Clients, Transactions, Receipts, Users],
   secret: process.env.PAYLOAD_SECRET || "",

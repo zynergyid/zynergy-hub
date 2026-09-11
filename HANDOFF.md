@@ -48,12 +48,14 @@
 - Lokal: Postgres docker `zynergy-pg` database `zynergy_hub`, dev admin
   dev@zynergy.local / zynergy-dev-only via `pnpm seed`. Port 3011.
 
-- Login custom di `/masuk` (POST ke /api/users/login, cookie dari Payload),
-  tombol Keluar di sidebar dan header HP, semua halaman mengalihkan tamu ke
-  `/masuk`. Panel Payload hanya bisa dimasuki peran admin
-  (`Users.access.admin`) dan hanya untuk keadaan darurat lewat URL (impor
-  massal, perbaikan data); reset password masih memakai alur Payload
-  (`/admin/forgot`).
+- Panel Payload DIMATIKAN (`admin.disable: true`); `/admin` 404, file
+  panelnya dihapus. Payload hanya jadi lapisan data, auth, dan REST API.
+  Login custom di `/masuk` (POST /api/users/login), tombol Keluar di sidebar
+  dan header HP. Saat database belum punya user, `/masuk` menampilkan form
+  "Buat admin pertama" (POST /api/users/first-register); ini cara membuat
+  admin di prod. Reset password: admin mengatur password sementara dari
+  halaman Tim (tanpa email server). Impor massal, kalau perlu, lewat script
+  `payload run`.
 - Kebersihan kode (audit 2026-09-11): opsi bersama di `src/lib/options.ts`,
   primitif form di `src/components/hub/form.tsx` (Input, Select, Label,
   RupiahInput, ErrorText), helper URL di `src/lib/search.ts`, tanggal di
