@@ -29,7 +29,7 @@ export default async function HubLayout({ children }: LayoutProps<"/">) {
           <div className="flex min-h-screen">
             <Sidebar role={user.role} userName={user.name} />
             <div className="flex min-w-0 flex-1 flex-col">
-              <header className="flex h-14 items-center gap-2.5 border-b border-line bg-white px-4 md:hidden">
+              <header className="sticky top-0 z-30 flex h-14 items-center gap-2.5 border-b border-line bg-white px-4 md:hidden">
                 <BrandMark className="size-7 text-navy" />
                 <span className="flex-1 text-base font-extrabold tracking-tight">
                   Zynergy <span className="text-muted">Team</span>
