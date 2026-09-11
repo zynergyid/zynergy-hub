@@ -21,6 +21,13 @@
   library), CategoryBars, Avatar inisial, Card, PageHeader; Arus Kas di
   desktop berupa tabel (Transaksi, Klien, Tanggal, Metode, Bukti, Nominal,
   Saldo), di HP daftar per hari. Komponen di `src/components/hub/`.
+  Semua pekerjaan harian sekarang punya layar custom sehingga /admin tidak
+  ditautkan dari sidebar: `/klien/baru` dan `/klien/[id]` (ClientForm, server
+  action saveClient/deleteClient), ubah dan hapus transaksi lewat sheet yang
+  sama dengan Catat (`/arus-kas?edit=ID`, saveTransaction/deleteTransaction),
+  `/tim` untuk admin (tambah anggota dengan password sementara, ubah peran,
+  hapus). Panel Payload dipaksa tema terang (`admin.theme: "light"`,
+  `custom.scss`) dan hanya untuk keadaan darurat lewat URL.
   Panel `/admin` (berlabel Zynergy Team)
   tetap ada untuk edit/hapus dan data jarang. Transaksi dan Klien punya
   field `unit` (digital|supply). Peran admin/finance/member diterapkan di

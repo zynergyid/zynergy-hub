@@ -36,7 +36,7 @@ function RenewalRow({ c }: { c: Client }) {
     <li className="flex items-center gap-3 py-3">
       <Avatar name={c.name} />
       <div className="min-w-0 flex-1">
-        <Link href={`/admin/collections/clients/${c.id}`} className="block truncate text-sm font-semibold hover:text-primary">
+        <Link href={`/klien/${c.id}`} className="block truncate text-sm font-semibold hover:text-primary">
           {c.name}
         </Link>
         <p className="truncate text-xs text-muted">

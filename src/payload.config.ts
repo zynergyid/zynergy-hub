@@ -15,6 +15,7 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
 export default buildConfig({
   admin: {
     user: Users.slug,
+    theme: "light",
     components: {
       graphics: {
         Logo: "@/components/admin/Branding#Logo",

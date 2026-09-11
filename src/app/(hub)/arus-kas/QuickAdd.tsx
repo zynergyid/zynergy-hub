@@ -2,15 +2,30 @@
 
 import { useActionState, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Plus, X } from "lucide-react";
+import { Loader2, Plus, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { paymentMethods, transactionCategories, units, type Unit } from "@/lib/options";
-import { createTransaction, type QuickAddState } from "./actions";
+import { deleteTransaction, saveTransaction, type QuickAddState } from "./actions";
 
 export interface ClientOption {
   id: number;
   name: string;
   unit: Unit;
+}
+
+/** Plain, serializable subset of a transaction for the edit sheet. */
+export interface EditingTx {
+  id: number;
+  type: "masuk" | "keluar";
+  amount: number;
+  date: string;
+  unit: Unit;
+  category: string;
+  method: string | null;
+  client: number | null;
+  reference: string | null;
+  notes: string | null;
+  receiptUrl: string | null;
 }
 
 const initial: QuickAddState = { status: "idle" };
@@ -25,19 +40,36 @@ function todayLocal() {
 
 const groupDigits = (digits: string) => digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
-export function QuickAdd({ unit, clients }: { unit: Unit; clients: ClientOption[] }) {
+export function QuickAdd({
+  unit,
+  clients,
+  editing = null,
+  closeHref = "/arus-kas",
+}: {
+  unit: Unit;
+  clients: ClientOption[];
+  editing?: EditingTx | null;
+  closeHref?: string;
+}) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [type, setType] = useState<"masuk" | "keluar">("keluar");
-  const [amount, setAmount] = useState("");
+  const [open, setOpen] = useState(Boolean(editing));
+  const [type, setType] = useState<"masuk" | "keluar">(editing?.type ?? "keluar");
+  const [amount, setAmount] = useState(editing ? groupDigits(String(editing.amount)) : "");
   const formRef = useRef<HTMLFormElement>(null);
+
+  const close = () => {
+    setOpen(false);
+    if (editing) router.replace(closeHref);
+  };
+
   const [state, formAction, pending] = useActionState(
     async (prev: QuickAddState, formData: FormData) => {
-      const result = await createTransaction(prev, formData);
+      const result = await saveTransaction(prev, formData);
       if (result.status === "success") {
         setOpen(false);
         setAmount("");
         formRef.current?.reset();
+        if (editing) router.replace(closeHref);
         router.refresh();
       }
       return result;
@@ -62,13 +94,14 @@ export function QuickAdd({ unit, clients }: { unit: Unit; clients: ClientOption[
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 sm:items-center" role="dialog" aria-modal="true">
           <div className="max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-white p-5 shadow-2xl sm:max-w-lg sm:rounded-3xl sm:p-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-extrabold">Catat transaksi</h2>
-              <button type="button" onClick={() => setOpen(false)} aria-label="Tutup" className="rounded-lg p-1.5 text-muted hover:bg-surface-soft">
+              <h2 className="text-lg font-extrabold">{editing ? "Ubah transaksi" : "Catat transaksi"}</h2>
+              <button type="button" onClick={close} aria-label="Tutup" className="rounded-lg p-1.5 text-muted hover:bg-surface-soft">
                 <X className="size-5" />
               </button>
             </div>
 
             <form ref={formRef} action={formAction} className="mt-4 space-y-4">
+              {editing && <input type="hidden" name="id" value={editing.id} />}
               <input type="hidden" name="type" value={type} />
               <div className="grid grid-cols-2 gap-2">
                 {(["masuk", "keluar"] as const).map((t) => (
@@ -111,11 +144,11 @@ export function QuickAdd({ unit, clients }: { unit: Unit; clients: ClientOption[
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label htmlFor="qa-date" className={label}>Tanggal</label>
-                  <input id="qa-date" name="date" type="date" required defaultValue={todayLocal()} className={field} />
+                  <input id="qa-date" name="date" type="date" required defaultValue={editing ? editing.date.slice(0, 10) : todayLocal()} className={field} />
                 </div>
                 <div>
                   <label htmlFor="qa-unit" className={label}>Unit</label>
-                  <select id="qa-unit" name="unit" defaultValue={unit} className={field}>
+                  <select id="qa-unit" name="unit" defaultValue={editing?.unit ?? unit} className={field}>
                     {units.map((u) => (
                       <option key={u.value} value={u.value}>{u.label}</option>
                     ))}
@@ -125,7 +158,7 @@ export function QuickAdd({ unit, clients }: { unit: Unit; clients: ClientOption[
 
               <div>
                 <label htmlFor="qa-category" className={label}>Kategori</label>
-                <select id="qa-category" name="category" required className={field} key={type}>
+                <select id="qa-category" name="category" required className={field} key={type} defaultValue={editing?.category}>
                   {categories.map((c) => (
                     <option key={c.value} value={c.value}>{c.label}</option>
                   ))}
@@ -135,7 +168,7 @@ export function QuickAdd({ unit, clients }: { unit: Unit; clients: ClientOption[
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label htmlFor="qa-client" className={label}>Klien</label>
-                  <select id="qa-client" name="client" defaultValue="" className={field}>
+                  <select id="qa-client" name="client" defaultValue={editing?.client ? String(editing.client) : ""} className={field}>
                     <option value="">Tanpa klien</option>
                     {clients.map((c) => (
                       <option key={c.id} value={c.id}>{c.name}</option>
@@ -144,7 +177,7 @@ export function QuickAdd({ unit, clients }: { unit: Unit; clients: ClientOption[
                 </div>
                 <div>
                   <label htmlFor="qa-method" className={label}>Metode</label>
-                  <select id="qa-method" name="method" defaultValue="transfer" className={field}>
+                  <select id="qa-method" name="method" defaultValue={editing?.method ?? "transfer"} className={field}>
                     {paymentMethods.map((m) => (
                       <option key={m.value} value={m.value}>{m.label}</option>
                     ))}
@@ -154,7 +187,7 @@ export function QuickAdd({ unit, clients }: { unit: Unit; clients: ClientOption[
 
               <div>
                 <label htmlFor="qa-reference" className={label}>Keterangan / nomor invoice</label>
-                <input id="qa-reference" name="reference" className={field} placeholder="Contoh: INV-2026-004 atau Domain klien" />
+                <input id="qa-reference" name="reference" defaultValue={editing?.reference ?? ""} className={field} placeholder="Contoh: INV-2026-004 atau Domain klien" />
               </div>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -164,9 +197,17 @@ export function QuickAdd({ unit, clients }: { unit: Unit; clients: ClientOption[
                 </div>
                 <div>
                   <label htmlFor="qa-notes" className={label}>Catatan</label>
-                  <input id="qa-notes" name="notes" className={field} placeholder="Opsional" />
+                  <input id="qa-notes" name="notes" defaultValue={editing?.notes ?? ""} className={field} placeholder="Opsional" />
                 </div>
               </div>
+
+              {editing?.receiptUrl && (
+                <p className="text-xs text-muted">
+                  Bukti tersimpan:{" "}
+                  <a href={editing.receiptUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary hover:underline">lihat</a>
+                  . Unggah file baru untuk mengganti.
+                </p>
+              )}
 
               {state.status === "error" && (
                 <p role="alert" className="text-sm font-medium text-red-600">{state.message}</p>
@@ -181,8 +222,21 @@ export function QuickAdd({ unit, clients }: { unit: Unit; clients: ClientOption[
                 )}
               >
                 {pending && <Loader2 className="size-4 animate-spin" />}
-                {pending ? "Menyimpan..." : type === "masuk" ? "Simpan uang masuk" : "Simpan uang keluar"}
+                {pending ? "Menyimpan..." : editing ? "Simpan perubahan" : type === "masuk" ? "Simpan uang masuk" : "Simpan uang keluar"}
               </button>
+              {editing && (
+                <button
+                  type="submit"
+                  formAction={deleteTransaction}
+                  formNoValidate
+                  onClick={(e) => { if (!confirm("Hapus transaksi ini?")) e.preventDefault(); }}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50"
+                >
+                  <Trash2 className="size-4" />
+                  Hapus transaksi
+                </button>
+              )}
+              <input type="hidden" name="closeHref" value={closeHref} />
             </form>
           </div>
         </div>

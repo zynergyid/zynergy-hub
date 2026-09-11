@@ -12,7 +12,7 @@ import { SegmentedLinks } from "@/components/hub/SegmentedLinks";
 import { KpiCard } from "@/components/hub/KpiCard";
 import { PageHeader } from "@/components/hub/PageHeader";
 import { Avatar } from "@/components/hub/Avatar";
-import { QuickAdd } from "./QuickAdd";
+import { QuickAdd, type EditingTx } from "./QuickAdd";
 
 export const metadata: Metadata = { title: "Arus Kas" };
 export const dynamic = "force-dynamic";
@@ -55,9 +55,31 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
     getUnitMonth(unit, month),
   ]);
   const clientOptions = clientsRes.docs
-    .filter((c) => unit === "semua" || c.unit === unit)
+    .filter((c) => unit === "semua" || c.unit === unit || Boolean(editId))
     .map((c) => ({ id: c.id, name: c.name, unit: c.unit as Unit }));
   const quickAddUnit: Unit = unit === "semua" ? "digital" : unit;
+
+  const editId = Number(first(sp.edit) || 0);
+  let editing: EditingTx | null = null;
+  if (editId) {
+    const t = await payload.findByID({ collection: "transactions", id: editId, depth: 1, disableErrors: true });
+    if (t) {
+      editing = {
+        id: t.id,
+        type: t.type,
+        amount: t.amount,
+        date: t.date,
+        unit: t.unit,
+        category: t.category,
+        method: t.method ?? null,
+        client: typeof t.client === "object" && t.client ? t.client.id : (t.client ?? null),
+        reference: t.reference ?? null,
+        notes: t.notes ?? null,
+        receiptUrl: typeof t.receipt === "object" && t.receipt ? (t.receipt.url ?? null) : null,
+      };
+    }
+  }
+  const closeHref = buildHref(base, { edit: undefined });
 
   const groups = new Map<string, typeof ledger.rows>();
   for (const row of ledger.rows) {
@@ -76,7 +98,7 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
           <Download className="size-4" />
           CSV
         </a>
-        <QuickAdd unit={quickAddUnit} clients={clientOptions} />
+        <QuickAdd key={editing?.id ?? "new"} unit={quickAddUnit} clients={clientOptions} editing={editing} closeHref={closeHref} />
       </PageHeader>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -159,7 +181,7 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
                   return (
                     <tr key={tx.id} className="hover:bg-surface-soft/60">
                       <td className="px-4 py-3">
-                        <Link href={`/admin/collections/transactions/${tx.id}`} className="flex items-center gap-3">
+                        <Link href={buildHref(base, { edit: String(tx.id) })} className="flex items-center gap-3">
                           <span className={cn("grid size-8 shrink-0 place-items-center rounded-full text-sm font-extrabold", tx.type === "masuk" ? "bg-secondary-soft text-secondary-dark" : "bg-red-50 text-red-600")}>
                             {tx.type === "masuk" ? "+" : "-"}
                           </span>
@@ -206,7 +228,7 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
                     const clientName = typeof tx.client === "object" && tx.client ? tx.client.name : null;
                     return (
                       <li key={tx.id}>
-                        <Link href={`/admin/collections/transactions/${tx.id}`} className="flex items-center gap-3 px-4 py-3 active:bg-surface-soft">
+                        <Link href={buildHref(base, { edit: String(tx.id) })} className="flex items-center gap-3 px-4 py-3 active:bg-surface-soft">
                           <span className={cn("grid size-9 shrink-0 place-items-center rounded-full text-sm font-extrabold", tx.type === "masuk" ? "bg-secondary-soft text-secondary-dark" : "bg-red-50 text-red-600")}>
                             {tx.type === "masuk" ? "+" : "-"}
                           </span>

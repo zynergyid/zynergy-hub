@@ -55,7 +55,7 @@ export default async function KlienPage({ searchParams }: { searchParams: Promis
           <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">Klien</h1>
           <p className="text-sm text-muted">{docs.length} klien{status ? ` dengan status ${status}` : ""}.</p>
         </div>
-        <Link href="/admin/collections/clients/create" className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary/25 hover:bg-primary-dark">
+        <Link href="/klien/baru" className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary/25 hover:bg-primary-dark">
           <Plus className="size-4" />
           Klien baru
         </Link>
@@ -88,7 +88,7 @@ export default async function KlienPage({ searchParams }: { searchParams: Promis
               <li key={c.id} className="flex flex-col rounded-2xl border border-line bg-white p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <Link href={`/admin/collections/clients/${c.id}`} className="block truncate font-bold hover:text-primary">{c.name}</Link>
+                    <Link href={`/klien/${c.id}`} className="block truncate font-bold hover:text-primary">{c.name}</Link>
                     <p className="truncate text-xs text-muted">{[c.owner, c.city].filter(Boolean).join(" · ") || "belum ada detail"}</p>
                   </div>
                   <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold", statusTone[c.status])}>

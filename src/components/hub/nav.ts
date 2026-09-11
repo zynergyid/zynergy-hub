@@ -47,10 +47,7 @@ export const navSections: NavSection[] = [
   },
   {
     title: "Admin",
-    items: [
-      { href: "/admin/collections/users", label: "Anggota Tim", icon: "team", roles: ["admin"] },
-      { href: "/admin", label: "Panel Data", icon: "database" },
-    ],
+    items: [{ href: "/tim", label: "Tim", icon: "team", roles: ["admin"] }],
   },
 ];
 
@@ -59,5 +56,5 @@ export const mobileTabs: NavItem[] = [
   { href: "/arus-kas", label: "Arus Kas", icon: "cashflow", roles: ["admin", "finance"] },
   { href: "/klien", label: "Klien", icon: "clients" },
   { href: "/alat", label: "Alat", icon: "search" },
-  { href: "/admin", label: "Panel", icon: "database" },
+  { href: "/tim", label: "Tim", icon: "team", roles: ["admin"] },
 ];

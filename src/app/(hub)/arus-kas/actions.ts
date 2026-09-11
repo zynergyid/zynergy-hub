@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { getPayloadClient } from "@/lib/payload";
 import { getSessionUser } from "@/lib/session";
 import { paymentMethods, transactionCategories, units } from "@/lib/options";
@@ -13,12 +14,13 @@ export interface QuickAddState {
 const pick = <T extends readonly { value: string }[]>(opts: T, v: string) =>
   opts.some((o) => o.value === v) ? (v as T[number]["value"]) : undefined;
 
-export async function createTransaction(_prev: QuickAddState, formData: FormData): Promise<QuickAddState> {
+export async function saveTransaction(_prev: QuickAddState, formData: FormData): Promise<QuickAddState> {
   const user = await getSessionUser();
   if (!user || (user.role !== "admin" && user.role !== "finance")) {
     return { status: "error", message: "Hanya admin dan finance yang bisa mencatat transaksi." };
   }
 
+  const id = Number(formData.get("id") || 0) || null;
   const type = String(formData.get("type") ?? "");
   const amount = Number(String(formData.get("amount") ?? "").replace(/\D/g, ""));
   const dateStr = String(formData.get("date") ?? "");
@@ -53,21 +55,20 @@ export async function createTransaction(_prev: QuickAddState, formData: FormData
       });
       receiptId = uploaded.id;
     }
-    await payload.create({
-      collection: "transactions",
-      data: {
-        unit,
-        type,
-        amount,
-        date: new Date(`${dateStr}T12:00:00`).toISOString(),
-        category,
-        method,
-        client: clientId ? Number(clientId) : undefined,
-        reference: reference || undefined,
-        notes: notes || undefined,
-        receipt: receiptId,
-      },
-    });
+    const data = {
+      unit,
+      type: type === "masuk" ? ("masuk" as const) : ("keluar" as const),
+      amount,
+      date: new Date(`${dateStr}T12:00:00`).toISOString(),
+      category,
+      method: method ?? null,
+      client: clientId ? Number(clientId) : null,
+      reference: reference || null,
+      notes: notes || null,
+      ...(receiptId ? { receipt: receiptId } : {}),
+    };
+    if (id) await payload.update({ collection: "transactions", id, data });
+    else await payload.create({ collection: "transactions", data });
   } catch (error) {
     console.error("createTransaction failed:", error);
     return { status: "error", message: "Gagal menyimpan. Coba lagi." };
@@ -76,4 +77,17 @@ export async function createTransaction(_prev: QuickAddState, formData: FormData
   revalidatePath("/arus-kas");
   revalidatePath("/");
   return { status: "success" };
+}
+
+export async function deleteTransaction(formData: FormData) {
+  const user = await getSessionUser();
+  if (!user || (user.role !== "admin" && user.role !== "finance")) return;
+  const id = Number(formData.get("id") || 0);
+  if (!id) return;
+  const payload = await getPayloadClient();
+  await payload.delete({ collection: "transactions", id });
+  revalidatePath("/arus-kas");
+  revalidatePath("/");
+  const back = String(formData.get("closeHref") || "/arus-kas");
+  redirect(back);
 }
