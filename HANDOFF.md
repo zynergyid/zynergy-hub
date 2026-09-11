@@ -39,15 +39,19 @@
   koleksi. Mode push langsung menerapkan skema baru ke database lokal, lalu
   `migrate` gagal dengan "already exists". Obatnya reset database seperti di
   atas; berkas migrasinya sendiri tetap benar dan itulah yang dipakai prod.
-- Repo privat `danish-deepskill/zynergy-hub` (push 2026-09-11), Vercel
-  project `zynergy-hub` (scope `devdanzen-projects`) dengan domain
-  hub.zynergy.co.id terpasang dan PAYLOAD_SECRET production sudah diset.
-  BELUM ada database Neon: user harus klik Vercel > project zynergy-hub >
-  Storage > Connect Database > Neon > database baru `zynergy-hub` (mengisi
-  DATABASE_URL dan DATABASE_URL_UNPOOLED otomatis). Setelah itu deploy
-  pertama (`vercel deploy --prod`), lalu user membuat admin pertama di
-  hub.zynergy.co.id/admin dengan admin@zynergy.co.id. `vercel.json`
-  menjalankan migrate saat build.
+- LIVE di https://hub.zynergy.co.id (dan zynergy-hub.vercel.app) sejak
+  2026-09-11 malam, deploy pertama dari commit 3e5c90c atas perintah
+  "deploy". Repo privat `danish-deepskill/zynergy-hub`, Vercel project
+  `zynergy-hub` (scope `devdanzen-projects`). Neon `zynergy-hub` (paket
+  gratis) dan Blob store `zynergy-hub-files` (region sin1) dibuat lewat
+  CLI (`vercel integration add neon`, `vercel blob create-store`) dengan
+  persetujuan Danish; env Production: PAYLOAD_SECRET, DATABASE_URL,
+  DATABASE_URL_UNPOOLED, BLOB_READ_WRITE_TOKEN. `vercel.json` menjalankan
+  migrate saat build (tujuh migrasi jalan bersih di Neon). Database prod
+  masih kosong: Danish membuat admin pertama lewat form "Buat admin pertama"
+  di hub.zynergy.co.id/login, lalu akun tim dari halaman Tim. Seed lokal
+  tidak dipakai di prod. Deploy berikutnya: `vercel deploy --prod` dari repo
+  ini, hanya atas perintah "deploy".
 - Lokal: Postgres docker `zynergy-pg` database `zynergy_hub`, dev admin
   dev@zynergy.local / zynergy-dev-only via `pnpm seed`. Port 3011.
 
