@@ -8,7 +8,7 @@ import { canEditMoney, getSessionUser } from "@/lib/session";
 import { paymentMethods, transactionCategories, units } from "@/lib/options";
 import { canWriteUnit } from "@/lib/access";
 import { digits, pick, text } from "@/lib/form-data";
-import { MAX_UPLOAD_BYTES, uploadFile } from "@/lib/uploads";
+import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MESSAGE, uploadFile } from "@/lib/uploads";
 import { getOrderPayments, orderTotal } from "@/lib/orders";
 
 export interface QuickAddState {
@@ -60,7 +60,7 @@ export async function saveTransaction(_prev: QuickAddState, formData: FormData):
   if (!category) return { status: "error", message: "Pilih kategori." };
   if (!unit) return { status: "error", message: "Pilih unit bisnis." };
   if (!canWriteUnit(user, unit, true)) return { status: "error", message: "Anda tidak punya akses ke unit ini." };
-  if (receipt instanceof File && receipt.size > MAX_UPLOAD_BYTES) return { status: "error", message: "Bukti maksimal 8MB." };
+  if (receipt instanceof File && receipt.size > MAX_UPLOAD_BYTES) return { status: "error", message: MAX_UPLOAD_MESSAGE };
 
   try {
     const payload = await getPayloadClient();

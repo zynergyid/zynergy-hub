@@ -10,6 +10,7 @@ import * as migration_20260911_153950_ai_usage from './20260911_153950_ai_usage'
 import * as migration_20260917_162501_outreach_prospects_api_keys from './20260917_162501_outreach_prospects_api_keys';
 import * as migration_20260917_163932_prospect_history from './20260917_163932_prospect_history';
 import * as migration_20260917_171115_vault from './20260917_171115_vault';
+import * as migration_20260917_173829_vault_thumbnail from './20260917_173829_vault_thumbnail';
 
 export const migrations = [
   {
@@ -70,6 +71,11 @@ export const migrations = [
   {
     up: migration_20260917_171115_vault.up,
     down: migration_20260917_171115_vault.down,
-    name: '20260917_171115_vault'
+    name: '20260917_171115_vault',
+  },
+  {
+    up: migration_20260917_173829_vault_thumbnail.up,
+    down: migration_20260917_173829_vault_thumbnail.down,
+    name: '20260917_173829_vault_thumbnail'
   },
 ];

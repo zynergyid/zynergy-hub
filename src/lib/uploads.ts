@@ -1,6 +1,6 @@
 import type { Payload } from "payload";
 
-export const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
+export { MAX_UPLOAD_BYTES, MAX_UPLOAD_MESSAGE } from "@/lib/limits";
 
 type UploadCollection = "receipts" | "documents" | "vault-files";
 

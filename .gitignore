@@ -51,3 +51,6 @@ skills-lock.json
 /receipts
 /documents
 /vault-files
+
+# copied from pdfjs-dist on postinstall
+/public/pdf.worker.min.mjs

@@ -3,7 +3,8 @@ import type { Order } from "@/payload-types";
 import { documentKindLabel, documentKinds } from "@/lib/options";
 import { Card } from "@/components/hub/Card";
 import { ConfirmButton } from "@/components/hub/ConfirmButton";
-import { ErrorText, buttonOutline, fieldClass, fileInputClass } from "@/components/hub/form";
+import { ErrorText, buttonOutline, fieldClass } from "@/components/hub/form";
+import { FileInput } from "@/components/hub/FileInput";
 import { Select } from "@/components/hub/Select";
 import { addDocument, removeDocument } from "./actions";
 
@@ -52,8 +53,8 @@ export function DocumentsCard({ order, editable, error }: { order: Order; editab
             <Select name="kind" defaultValue="po" options={documentKinds} size="compact" />
             <input name="note" placeholder="Keterangan (opsional)" className={`${fieldClass} px-2.5 py-1.5 text-xs`} />
           </div>
-          <input name="file" type="file" required accept="application/pdf,image/*" className={fileInputClass} />
-          <ErrorText>{error === "berkas" ? "Berkas gagal diunggah. Pastikan PDF atau gambar yang utuh, maksimal 8MB." : null}</ErrorText>
+          <FileInput name="file" required accept="application/pdf,image/*" hint={false} />
+          <ErrorText>{error === "berkas" ? "Berkas gagal diunggah. Pastikan PDF atau gambar yang utuh, maksimal 4 MB." : null}</ErrorText>
           <button type="submit" className={buttonOutline}>
             <Upload className="size-4" />
             Unggah

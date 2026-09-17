@@ -116,6 +116,22 @@
   layar. CSV mentah tetap ada sebagai tautan kecil untuk impor ke software
   akuntansi.
 
+## Batas unggahan (2026-09-18, bug prod pertama Brankas)
+
+- Gejala: "Simpan dokumen" di prod 500; log Vercel: "Body exceeded 1 MB
+  limit" (bawaan server action Next). Uji lokal hanya memakai PDF kecil.
+- Obat: `experimental.serverActions.bodySizeLimit: "4mb"` di next.config.ts;
+  satu konstanta `src/lib/limits.ts` (MAX_UPLOAD_MB = 4, karena fungsi
+  Vercel menolak body > 4,5 MB) dipakai Payload `upload.limits.fileSize`,
+  semua server action, dan komponen `FileInput` (client) yang menolak berkas
+  kebesaran SEBELUM dikirim (setCustomValidity + pesan), karena server action
+  tidak pernah jalan saat body terlalu besar sehingga tidak bisa memberi
+  pesan sendiri. FileInput dipakai di Brankas, bukti transaksi, PDF PO, dan
+  dokumen PO.
+- Kalau nanti butuh berkas > 4 MB (akta scan panjang): unggah langsung dari
+  browser ke Vercel Blob (`@vercel/blob/client` + route handleUpload) lalu
+  buat dokumennya, bukan lewat server action.
+
 ## Brankas Dokumen (2026-09-18)
 
 - Dokumen legal PT, bukan per unit: koleksi `vault-documents` (title,
@@ -142,6 +158,18 @@
   vault-documents, jadi hapus lewat REST pun tidak meninggalkan berkas.
 - `uploadFile(payload, collection, data, file)` sekarang generik untuk
   receipts, documents, vault-files.
+- Pratinjau (thumbnail, 2026-09-18, permintaan Danish): dibuat di BROWSER
+  saat berkas dipilih (`src/lib/thumbnail.ts`: pdf.js dimuat dinamis untuk
+  halaman pertama PDF, canvas untuk gambar; lebar 320px, PNG), dikirim
+  bersama form sebagai field `thumbnail`, disimpan sebagai dokumen kedua di
+  `vault-files` dengan flag rahasia yang sama, ditautkan di
+  `vault-documents.thumbnail`. Server tidak merender PDF (tidak ada poppler
+  di Vercel). Tampil 56px di kiri baris daftar dan 80x112 di halaman
+  dokumen; ikon berkas kalau tidak ada. Berkas baru menghapus pratinjau
+  lama; hook afterDelete menghapus keduanya. Worker pdf.js disalin ke `public/pdf.worker.min.mjs` oleh
+  `scripts/copy-pdf-worker.mjs` saat postinstall (di-ignore git, jadi selalu
+  sama dengan versi pdfjs-dist yang terpasang); rujukan `import.meta.url`
+  tidak menghasilkan aset di Turbopack (404).
 - Belum: pengingat email/WA, "unduh paket" zip untuk registrasi vendor.
 
 ## Outreach (2026-09-17, modul pertama dari roadmap Supply)

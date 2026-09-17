@@ -8,7 +8,8 @@ import { orderStatuses, units, usdToIdrApprox, type Unit } from "@/lib/options";
 import { formatIDR } from "@/lib/format";
 import type { ClientOption } from "@/lib/orders";
 import { orderToDraft, type OrderDraft } from "@/lib/order-draft";
-import { ErrorText, Label, RupiahInput, buttonPrimary, fieldClass, fileInputClass, groupDigits } from "@/components/hub/form";
+import { ErrorText, Label, RupiahInput, buttonPrimary, fieldClass, groupDigits } from "@/components/hub/form";
+import { FileInput } from "@/components/hub/FileInput";
 import { ConfirmButton } from "@/components/hub/ConfirmButton";
 import { Select } from "@/components/hub/Select";
 import { deleteOrder, importOrderPdf, saveOrder, type ImportResult, type OrderFormState } from "./actions";
@@ -129,7 +130,7 @@ export function OrderForm({
               <p className="text-xs text-muted">Pilih PDF, tekan Baca, periksa hasilnya, lalu Simpan. PDF-nya ikut tersimpan sebagai dokumen PO. Bisa juga dilewati dan diisi manual.</p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <input ref={fileRef} id="of-file" name="poFile" type="file" accept="application/pdf,image/*" aria-label="PDF PO pembeli" className={`${fileInputClass} sm:w-auto sm:flex-1`} />
+              <FileInput ref={fileRef} id="of-file" name="poFile" accept="application/pdf,image/*" aria-label="PDF PO pembeli" hint={false} />
               <button type="button" onClick={readPdf} disabled={importing} className={buttonPrimary}>
                 {importing ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
                 {importing ? "Membaca PDF..." : "Baca PDF dan isi form"}
@@ -293,7 +294,7 @@ export function OrderForm({
         {order && (
           <section>
             <Label htmlFor="of-file">Unggah PDF PO revisi ini</Label>
-            <input ref={fileRef} id="of-file" name="poFile" type="file" accept="application/pdf,image/*" className={fileInputClass} />
+            <FileInput ref={fileRef} id="of-file" name="poFile" accept="application/pdf,image/*" hint={false} />
             <p className="mt-1 text-xs text-muted">Dokumen lain (invoice, surat jalan, faktur) diunggah dari halaman PO.</p>
           </section>
         )}

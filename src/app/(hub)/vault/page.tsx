@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Download, Lock, Plus } from "lucide-react";
+import { Download, FileText, Lock, Plus } from "lucide-react";
 import { canEditMoney, getSessionUser } from "@/lib/session";
-import { fileOf, getVaultDocuments, groupByCategory } from "@/lib/vault";
+import { fileOf, getVaultDocuments, groupByCategory, thumbnailOf } from "@/lib/vault";
 import { formatDate } from "@/lib/format";
 import { buildHref, first, type Search } from "@/lib/search";
 import { vaultCategories, type VaultCategory } from "@/lib/options";
@@ -57,8 +57,17 @@ export default async function VaultPage({ searchParams }: { searchParams: Promis
             <ul className="overflow-hidden rounded-2xl border border-line bg-white divide-y divide-line">
               {g.docs.map((d) => {
                 const f = fileOf(d);
+                const thumb = thumbnailOf(d);
                 return (
                   <li key={d.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
+                    <Link href={`/vault/${d.id}`} className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-lg border border-line bg-surface-soft" aria-hidden>
+                      {thumb?.url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={thumb.url} alt="" className="size-full object-cover object-top" />
+                      ) : (
+                        <FileText className="size-6 text-muted" />
+                      )}
+                    </Link>
                     <div className="min-w-0 flex-1">
                       <Link href={`/vault/${d.id}`} className="flex items-center gap-1.5 font-semibold hover:text-primary">
                         {d.confidential && <Lock className="size-3.5 shrink-0 text-muted" aria-label="Rahasia" />}

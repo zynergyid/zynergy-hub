@@ -5,6 +5,7 @@ import { daysUntil } from "@/lib/format";
 import { VAULT_WARN_DAYS, vaultCategories, type VaultCategory } from "@/lib/options";
 
 export const fileOf = (d: VaultDocument) => (typeof d.file === "object" && d.file ? d.file : null);
+export const thumbnailOf = (d: VaultDocument) => (typeof d.thumbnail === "object" && d.thumbnail ? d.thumbnail : null);
 
 /** Expired, expiring within the warning window, or fine. Null when the document does not expire. */
 export function expiryState(d: Pick<VaultDocument, "expiresAt">): "lewat" | "segera" | "aman" | null {

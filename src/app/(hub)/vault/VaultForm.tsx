@@ -1,11 +1,13 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Trash2 } from "lucide-react";
 import type { VaultDocument } from "@/payload-types";
 import { vaultCategories } from "@/lib/options";
-import { ErrorText, Label, buttonPrimary, fieldClass, fileInputClass } from "@/components/hub/form";
+import { makeThumbnail } from "@/lib/thumbnail";
+import { ErrorText, Label, buttonPrimary, fieldClass } from "@/components/hub/form";
+import { FileInput } from "@/components/hub/FileInput";
 import { ConfirmButton } from "@/components/hub/ConfirmButton";
 import { Select } from "@/components/hub/Select";
 import { deleteVaultDocument, saveVaultDocument, type VaultFormState } from "./actions";
@@ -15,8 +17,30 @@ const day = (iso?: string | null) => (iso ? iso.slice(0, 10) : "");
 
 export function VaultForm({ doc, currentFile, readOnly = false }: { doc?: VaultDocument; currentFile?: { url: string; filename: string } | null; readOnly?: boolean }) {
   const router = useRouter();
+  // Preview of the picked file, rendered in the browser and sent along with the form.
+  const [thumb, setThumb] = useState<Blob | null>(null);
+  const [thumbUrl, setThumbUrl] = useState<string | null>(null);
+  const [rendering, setRendering] = useState(false);
+  const showThumb = (blob: Blob | null) => {
+    setThumbUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return blob ? URL.createObjectURL(blob) : null;
+    });
+    setThumb(blob);
+  };
+  // Release the last object URL when the form goes away.
+  useEffect(() => () => showThumb(null), []);
+  const onFilePicked = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    showThumb(null);
+    if (!file || !e.target.checkValidity()) return;
+    setRendering(true);
+    showThumb(await makeThumbnail(file));
+    setRendering(false);
+  };
   const [state, formAction, pending] = useActionState(
     async (prev: VaultFormState, fd: FormData) => {
+      if (thumb) fd.set("thumbnail", thumb, "pratinjau.png");
       const r = await saveVaultDocument(prev, fd);
       if (r.status === "success" && r.id) {
         router.push(`/vault/${r.id}`);
@@ -60,7 +84,20 @@ export function VaultForm({ doc, currentFile, readOnly = false }: { doc?: VaultD
           </div>
           <div>
             <Label htmlFor="vf-file">{doc ? "Ganti berkas" : "Berkas (PDF atau gambar)"}</Label>
-            <input id="vf-file" name="file" type="file" accept="application/pdf,image/*" required={!doc} className={fileInputClass} />
+            <FileInput id="vf-file" name="file" accept="application/pdf,image/*" required={!doc} onChange={onFilePicked} />
+            {(rendering || thumbUrl) && (
+              <div className="mt-2 flex items-center gap-3">
+                <div className="grid h-20 w-14 place-items-center overflow-hidden rounded-lg border border-line bg-surface-soft">
+                  {thumbUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={thumbUrl} alt="Pratinjau halaman pertama" className="size-full object-cover object-top" />
+                  ) : (
+                    <Loader2 className="size-4 animate-spin text-muted" />
+                  )}
+                </div>
+                <p className="text-xs text-muted">{rendering ? "Membuat pratinjau..." : "Pratinjau halaman pertama ikut disimpan."}</p>
+              </div>
+            )}
             {currentFile && (
               <p className="mt-1 text-xs text-muted">
                 Berkas saat ini:{" "}

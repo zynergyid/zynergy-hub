@@ -22,8 +22,10 @@ export const VaultDocuments: CollectionConfig = {
   hooks: {
     afterDelete: [
       async ({ doc, req }) => {
-        const fileId = typeof doc.file === "object" && doc.file ? doc.file.id : doc.file;
-        if (fileId) await req.payload.delete({ collection: "vault-files", id: fileId, req }).catch(() => undefined);
+        for (const ref of [doc.file, doc.thumbnail]) {
+          const fileId = typeof ref === "object" && ref ? ref.id : ref;
+          if (fileId) await req.payload.delete({ collection: "vault-files", id: fileId, req }).catch(() => undefined);
+        }
       },
     ],
   },
@@ -45,6 +47,13 @@ export const VaultDocuments: CollectionConfig = {
       ],
     },
     { name: "file", type: "upload", relationTo: "vault-files", required: true, label: "Berkas" },
+    {
+      name: "thumbnail",
+      type: "upload",
+      relationTo: "vault-files",
+      label: "Pratinjau",
+      admin: { description: "PNG kecil halaman pertama, dirender di browser saat unggah." },
+    },
     {
       name: "confidential",
       type: "checkbox",

@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { Loader2, Plus, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { todayLocal } from "@/lib/format";
-import { ErrorText, Label, buttonPrimary, fieldClass, fileInputClass, groupDigits } from "@/components/hub/form";
+import { ErrorText, Label, buttonPrimary, fieldClass, groupDigits } from "@/components/hub/form";
+import { FileInput } from "@/components/hub/FileInput";
 import { ConfirmButton } from "@/components/hub/ConfirmButton";
 import { Select } from "@/components/hub/Select";
 import { paymentMethods, transactionCategories, units, type Unit } from "@/lib/options";
@@ -180,7 +181,7 @@ export function QuickAdd({
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <Label htmlFor="qa-receipt">Bukti (opsional)</Label>
-                  <input id="qa-receipt" name="receipt" type="file" accept="image/*,application/pdf" className={fileInputClass} />
+                  <FileInput id="qa-receipt" name="receipt" accept="image/*,application/pdf" hint={false} />
                 </div>
                 <div>
                   <Label htmlFor="qa-notes">Catatan</Label>

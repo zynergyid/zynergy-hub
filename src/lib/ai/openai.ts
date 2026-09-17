@@ -160,6 +160,8 @@ export async function extractPurchaseOrder(file: File): Promise<{ data: Extracte
     }),
   });
   const body = (await res.json().catch(() => ({}))) as ResponsesBody;
+  if (res.status === 401) throw new Error("Kunci OpenAI di server ditolak. Periksa OPENAI_API_KEY di Vercel, lalu deploy ulang.");
+  if (res.status === 429) throw new Error("Kuota atau batas belanja OpenAI tercapai. Periksa saldo dan limit di dashboard OpenAI.");
   if (!res.ok) throw new Error(`OpenAI ${res.status}: ${body.error?.message ?? "permintaan ditolak"}`);
   const message = body.output?.find((o) => o.type === "message");
   const part = message?.content?.find((c) => c.type === "output_text");

@@ -11,7 +11,7 @@ import { formatIDR } from "@/lib/format";
 import { canEditMoney, getSessionUser } from "@/lib/session";
 import { canTouchOrder, canWriteUnit } from "@/lib/access";
 import { dateOrNull, digits, pick, text } from "@/lib/form-data";
-import { MAX_UPLOAD_BYTES, uploadFile } from "@/lib/uploads";
+import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MESSAGE, uploadFile } from "@/lib/uploads";
 import { documentKinds, orderStatuses, units } from "@/lib/options";
 
 export interface OrderFormState {
@@ -93,7 +93,7 @@ export async function saveOrder(_prev: OrderFormState, formData: FormData): Prom
   const subtotal = Number(digits(text(formData, "subtotal"))) || null;
   const terms = text(formData, "paymentTermsDays");
   const poFile = formData.get("poFile");
-  if (poFile instanceof File && poFile.size > MAX_UPLOAD_BYTES) return err("Berkas maksimal 8MB.");
+  if (poFile instanceof File && poFile.size > MAX_UPLOAD_BYTES) return err(MAX_UPLOAD_MESSAGE);
 
   try {
     const payload = await getPayloadClient();
@@ -158,7 +158,7 @@ export async function importOrderPdf(formData: FormData): Promise<ImportResult> 
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) return { status: "error", message: "Pilih PDF PO dulu." };
   if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) return { status: "error", message: "Impor hanya menerima PDF." };
-  if (file.size > MAX_UPLOAD_BYTES) return { status: "error", message: "Berkas maksimal 8MB." };
+  if (file.size > MAX_UPLOAD_BYTES) return { status: "error", message: MAX_UPLOAD_MESSAGE };
 
   try {
     const { data, usage } = await extractPurchaseOrder(file);

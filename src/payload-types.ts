@@ -410,6 +410,10 @@ export interface VaultDocument {
   expiresAt?: string | null;
   file: number | VaultFile;
   /**
+   * PNG kecil halaman pertama, dirender di browser saat unggah.
+   */
+  thumbnail?: (number | null) | VaultFile;
+  /**
    * Hanya admin, finance, dan staf yang bisa melihat dan mengunduh.
    */
   confidential?: boolean | null;
@@ -755,6 +759,7 @@ export interface VaultDocumentsSelect<T extends boolean = true> {
   issuedAt?: T;
   expiresAt?: T;
   file?: T;
+  thumbnail?: T;
   confidential?: T;
   notes?: T;
   updatedAt?: T;

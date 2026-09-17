@@ -4,6 +4,7 @@ import { buildConfig } from "payload";
 import { postgresAdapter } from "@payloadcms/db-postgres";
 import { vercelBlobStorage } from "@payloadcms/storage-vercel-blob";
 import sharp from "sharp";
+import { MAX_UPLOAD_BYTES } from "@/lib/limits";
 import { AiUsage } from "@/collections/AiUsage";
 import { Clients } from "@/collections/Clients";
 import { Documents } from "@/collections/Documents";
@@ -32,7 +33,7 @@ export default buildConfig({
     },
   }),
   sharp,
-  upload: { limits: { fileSize: 8 * 1024 * 1024 } },
+  upload: { limits: { fileSize: MAX_UPLOAD_BYTES } },
   typescript: { outputFile: path.resolve(dirname, "payload-types.ts") },
   plugins: [
     // Registered unconditionally so its admin components land in the importMap.
