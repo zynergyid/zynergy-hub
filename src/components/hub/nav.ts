@@ -9,6 +9,11 @@ export type IconName =
   | "report"
   | "rfq"
   | "portal"
+  | "outreach"
+  | "followup"
+  | "vendor"
+  | "vault"
+  | "inbox"
   | "team";
 
 export interface NavItem {
@@ -35,15 +40,15 @@ export const navSections: NavSection[] = [
       { href: "/cash-flow", label: "Arus Kas", icon: "cashflow", roles: ["admin", "finance", "staff", "viewer"] },
       { href: "/clients", label: "Klien", icon: "clients" },
       { href: "/orders", label: "Pesanan", icon: "orders" },
+      { href: "/outreach", label: "Outreach", icon: "outreach" },
+      { href: "/vault", label: "Brankas Dokumen", icon: "vault" },
     ],
   },
   {
     title: "Alat",
     items: [
-      { href: "/tools#cek-google", label: "Cek Google", icon: "search", soon: true },
-      { href: "/tools#laporan", label: "Laporan Bulanan", icon: "report", soon: true },
-      { href: "/tools#portal", label: "Portal Klien", icon: "portal", soon: true },
-      { href: "/tools#rfq", label: "RFQ Supply", icon: "rfq", soon: true },
+      { href: "/tools#vendor", label: "Registrasi Vendor", icon: "vendor", soon: true },
+      { href: "/tools#po-email", label: "PO dari Email", icon: "inbox", soon: true },
     ],
   },
   {
@@ -57,6 +62,5 @@ export const mobileTabs: NavItem[] = [
   { href: "/cash-flow", label: "Arus Kas", icon: "cashflow", roles: ["admin", "finance", "staff", "viewer"] },
   { href: "/clients", label: "Klien", icon: "clients" },
   { href: "/orders", label: "Pesanan", icon: "orders" },
-  { href: "/tools", label: "Alat", icon: "search", roles: ["member"] },
-  { href: "/team", label: "Tim", icon: "team", roles: ["admin"] },
+  { href: "/outreach", label: "Outreach", icon: "outreach" },
 ];

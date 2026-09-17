@@ -5,6 +5,8 @@ import { ArrowLeft, MessageCircle, Plus } from "lucide-react";
 import { canEditClients, canEditMoney, canSeeMoney, getSessionUser } from "@/lib/session";
 import { getPayloadClient } from "@/lib/payload";
 import { getOrders, nextDate, orderTotal } from "@/lib/orders";
+import { nextAction } from "@/lib/outreach";
+import { openProspectStatuses } from "@/lib/options";
 import { daysLabel, formatDate, formatIDR } from "@/lib/format";
 import { clientStatuses } from "@/lib/options";
 import { first, type Search } from "@/lib/search";
@@ -12,6 +14,9 @@ import { Avatar } from "@/components/hub/Avatar";
 import { Card } from "@/components/hub/Card";
 import { ErrorText } from "@/components/hub/form";
 import { OrderStatusPill } from "@/components/hub/OrderStatusPill";
+import { ProspectStatusPill } from "@/components/hub/ProspectStatusPill";
+import { buttonOutline } from "@/components/hub/form";
+import { startOutreachFromClient } from "../../outreach/actions";
 import { TxList } from "@/components/hub/TxList";
 import { ClientForm } from "../ClientForm";
 
@@ -31,10 +36,12 @@ export default async function KlienDetailPage({ params, searchParams }: { params
   if (!client || !user.units.includes(client.unit)) notFound();
   const money = canSeeMoney(user);
   const isSupply = client.unit === "supply";
-  const [tx, orders] = await Promise.all([
+  const [tx, orders, prospects] = await Promise.all([
     money ? payload.find({ collection: "transactions", where: { client: { equals: clientId } }, sort: "-date", limit: 8 }) : null,
     money && isSupply ? getOrders({ unit: client.unit, allowed: user.units, filter: "semua", clientId }) : null,
+    payload.find({ collection: "prospects", where: { client: { equals: clientId } }, sort: "-updatedAt", limit: 5, depth: 0 }),
   ]);
+  const hasOpenOutreach = prospects.docs.some((p) => openProspectStatuses.includes(p.status));
   const statusLabel = clientStatuses.find((s) => s.value === client.status)?.label;
   const blocked = Number(first(sp.blocked) || 0);
 
@@ -78,6 +85,30 @@ export default async function KlienDetailPage({ params, searchParams }: { params
           <ClientForm client={client} canDelete={user.role === "admin"} readOnly={!canEditClients(user)} units={user.units} />
         </div>
         <div className="space-y-5 lg:col-span-2">
+          <Card title="Outreach" action={prospects.docs.length ? { label: "Semua outreach", href: `/outreach?status=semua&q=${encodeURIComponent(client.name)}` } : undefined}>
+            {prospects.docs.length === 0 ? (
+              <p className="text-sm text-muted">Belum pernah didekati lewat Outreach.</p>
+            ) : (
+              <ul className="divide-y divide-line">
+                {prospects.docs.map((p) => (
+                  <li key={p.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+                    <div className="min-w-0">
+                      <Link href={`/outreach/${p.id}`} className="block truncate font-semibold hover:text-primary">{nextAction(p) || "target"}</Link>
+                      <p className="text-xs text-muted">{p.lastSentAt ? `dikirim ${formatDate(p.lastSentAt)}` : `dibuat ${formatDate(p.createdAt)}`}</p>
+                    </div>
+                    <ProspectStatusPill status={p.status} />
+                  </li>
+                ))}
+              </ul>
+            )}
+            {canEditClients(user) && !hasOpenOutreach && (
+              <form action={startOutreachFromClient} className="mt-3 border-t border-line pt-3">
+                <input type="hidden" name="clientId" value={client.id} />
+                <button type="submit" className={buttonOutline}>Mulai outreach</button>
+                <p className="mt-1 text-xs text-muted">Membuat target terisi dari data klien ini, tertaut, dengan sumber klien lama.</p>
+              </form>
+            )}
+          </Card>
           {orders && (
             <Card title="PO klien ini" action={{ label: "Semua pesanan", href: `/orders?unit=${client.unit}&filter=semua&q=${encodeURIComponent(client.name)}` }}>
               {orders.length === 0 ? (

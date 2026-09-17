@@ -107,7 +107,7 @@ export async function saveOrder(_prev: OrderFormState, formData: FormData): Prom
     const revision = Math.max(0, Math.floor(Number(text(formData, "revision")) || 0));
     const documents = keepDocuments(existing);
     if (poFile instanceof File && poFile.size > 0) {
-      const uploaded = await uploadFile(payload, "documents", unit, poFile);
+      const uploaded = await uploadFile(payload, "documents", { unit }, poFile);
       documents.push({ id: undefined, kind: "po", file: uploaded.id, note: revision ? `Revisi ${revision}` : null });
     }
     const data = {
@@ -270,7 +270,7 @@ export async function addDocument(formData: FormData) {
   const kind = pick(documentKinds, text(formData, "kind")) ?? "lainnya";
   if (!(file instanceof File) || file.size === 0 || file.size > MAX_UPLOAD_BYTES) redirect(`/orders/${orderId}?error=berkas`);
   try {
-    const uploaded = await uploadFile(ctx.payload, "documents", ctx.order.unit, file);
+    const uploaded = await uploadFile(ctx.payload, "documents", { unit: ctx.order.unit }, file);
     await ctx.payload.update({
       collection: "orders",
       id: orderId,

@@ -8,9 +8,11 @@ import { AiUsage } from "@/collections/AiUsage";
 import { Clients } from "@/collections/Clients";
 import { Documents } from "@/collections/Documents";
 import { Orders } from "@/collections/Orders";
+import { Prospects } from "@/collections/Prospects";
 import { Receipts } from "@/collections/Receipts";
 import { Transactions } from "@/collections/Transactions";
 import { Users } from "@/collections/Users";
+import { VaultDocuments, VaultFiles } from "@/collections/Vault";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -20,7 +22,7 @@ export default buildConfig({
     // The team uses the custom screens; the Payload panel is not served at all.
     disable: true,
   },
-  collections: [Clients, Orders, Documents, Transactions, Receipts, AiUsage, Users],
+  collections: [Clients, Orders, Documents, Transactions, Receipts, Prospects, VaultDocuments, VaultFiles, AiUsage, Users],
   secret: process.env.PAYLOAD_SECRET || "",
   db: postgresAdapter({
     pool: {
@@ -36,7 +38,7 @@ export default buildConfig({
     // Registered unconditionally so its admin components land in the importMap.
     vercelBlobStorage({
       enabled: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
-      collections: { receipts: true, documents: true },
+      collections: { receipts: true, documents: true, "vault-files": true },
       // Files are served through Payload's access-checked route, never by the
       // blob URL; the random suffix keeps that URL unguessable anyway.
       addRandomSuffix: true,

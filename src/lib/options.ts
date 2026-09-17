@@ -92,6 +92,82 @@ export const documentKinds = [
 ] as const;
 export const documentKindLabel = new Map<string, string>(documentKinds.map((d) => [d.value, d.label]));
 
+/** Outreach pipeline for Supply prospects: research, draft, send by hand, follow up. */
+export const prospectStatuses = [
+  { label: "Perlu riset", value: "baru" },
+  { label: "Perlu draf", value: "riset" },
+  { label: "Draf siap diperiksa", value: "draf" },
+  { label: "Menunggu balasan", value: "terkirim" },
+  { label: "Dibalas", value: "dibalas" },
+  { label: "Pertemuan / penawaran", value: "pertemuan" },
+  { label: "Jadi klien", value: "klien" },
+  { label: "Berhenti", value: "berhenti" },
+] as const;
+export type ProspectStatus = (typeof prospectStatuses)[number]["value"];
+export const prospectStatusLabel = new Map<string, string>(prospectStatuses.map((s) => [s.value, s.label]));
+/** Order the queue is shown in: what needs a hand first. */
+export const prospectStatusOrder: readonly ProspectStatus[] = ["draf", "terkirim", "baru", "riset", "dibalas", "pertemuan", "klien", "berhenti"];
+export const openProspectStatuses: readonly ProspectStatus[] = ["baru", "riset", "draf", "terkirim", "dibalas", "pertemuan"];
+
+export const prospectSectors = [
+  { label: "Tambang & mineral", value: "tambang" },
+  { label: "Migas & energi", value: "migas" },
+  { label: "EPC & kontraktor", value: "epc" },
+  { label: "Manufaktur", value: "manufaktur" },
+  { label: "Distributor & trading", value: "distributor" },
+  { label: "Lainnya", value: "lainnya" },
+] as const;
+
+export const prospectSources = [
+  { label: "Klien lama", value: "klien-lama" },
+  { label: "Referensi", value: "referensi" },
+  { label: "Riset sendiri", value: "riset" },
+  { label: "Asosiasi (IMA, Kadin)", value: "asosiasi" },
+  { label: "LinkedIn", value: "linkedin" },
+  { label: "Lainnya", value: "lainnya" },
+] as const;
+
+export const outreachChannels = [
+  { label: "Email", value: "email" },
+  { label: "WhatsApp", value: "whatsapp" },
+  { label: "LinkedIn", value: "linkedin" },
+  { label: "Telepon", value: "telepon" },
+  { label: "Pertemuan", value: "pertemuan" },
+] as const;
+export type OutreachChannel = (typeof outreachChannels)[number]["value"];
+
+export const outreachLogTypes = [
+  { label: "Riset", value: "riset" },
+  { label: "Draf", value: "draf" },
+  { label: "Terkirim", value: "kirim" },
+  { label: "Tindak lanjut", value: "tindak-lanjut" },
+  { label: "Balasan", value: "balasan" },
+  { label: "Catatan", value: "catatan" },
+  { label: "Status", value: "status" },
+] as const;
+export const outreachLogLabel = new Map<string, string>(outreachLogTypes.map((t) => [t.value, t.label]));
+
+/** Days after a message (and after each follow-up) before the next nudge is due. */
+export const FOLLOW_UP_DAYS = 7;
+
+/** Company documents kept in the vault. Order = how they appear on the page. */
+export const vaultCategories = [
+  { label: "Akta & perubahan", value: "akta" },
+  { label: "NIB & izin usaha", value: "izin" },
+  { label: "NPWP & SPPKP", value: "pajak" },
+  { label: "Sertifikat (ISO, K3, keagenan)", value: "sertifikat" },
+  { label: "Company profile & katalog", value: "profil" },
+  { label: "Referensi & pengalaman kerja", value: "referensi" },
+  { label: "Identitas pengurus", value: "identitas" },
+  { label: "Rekening & keuangan", value: "keuangan" },
+  { label: "Kontrak & perjanjian", value: "kontrak" },
+  { label: "Lainnya", value: "lainnya" },
+] as const;
+export type VaultCategory = (typeof vaultCategories)[number]["value"];
+export const vaultCategoryLabel = new Map<string, string>(vaultCategories.map((c) => [c.value, c.label]));
+/** Days ahead the vault warns about an expiry. */
+export const VAULT_WARN_DAYS = 30;
+
 /** USD per million tokens (input, output) for the models the Hub calls. Update when OpenAI changes prices. */
 export const aiModels: Record<string, { input: number; output: number }> = {
   "gpt-5-mini": { input: 0.25, output: 2 },

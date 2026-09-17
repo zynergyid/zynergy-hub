@@ -82,6 +82,18 @@ export const hasRoleField =
     return Boolean(role && allowed.includes(role));
   };
 
+/**
+ * Vault: every team member may read and download, except documents marked
+ * confidential, which only money roles see. Uploading and deleting: money roles.
+ */
+export const vaultRead: Access = ({ req }) => {
+  const u = asUser(req.user);
+  if (!u?.role) return false;
+  if (editsMoney(u.role)) return true;
+  return { confidential: { not_equals: true } };
+};
+export const vaultWrite: Access = ({ req }) => editsMoney(asUser(req.user)?.role);
+
 /** Field-level rules for prices and billing on orders. */
 export const moneyFieldRead = hasRoleField("admin", "finance", "staff", "viewer");
 export const moneyFieldWrite = hasRoleField("admin", "finance", "staff");

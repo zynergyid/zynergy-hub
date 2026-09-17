@@ -70,7 +70,7 @@ export async function saveTransaction(_prev: QuickAddState, formData: FormData):
     }
     let receiptId: number | undefined;
     if (receipt instanceof File && receipt.size > 0) {
-      receiptId = (await uploadFile(payload, "receipts", unit, receipt)).id;
+      receiptId = (await uploadFile(payload, "receipts", { unit }, receipt)).id;
     }
     const data = {
       unit,

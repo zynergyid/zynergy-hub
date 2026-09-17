@@ -7,6 +7,9 @@ import * as migration_20260911_131101_funding_categories from './20260911_131101
 import * as migration_20260911_132812_staff_role_documents from './20260911_132812_staff_role_documents';
 import * as migration_20260911_152205_order_buyer from './20260911_152205_order_buyer';
 import * as migration_20260911_153950_ai_usage from './20260911_153950_ai_usage';
+import * as migration_20260917_162501_outreach_prospects_api_keys from './20260917_162501_outreach_prospects_api_keys';
+import * as migration_20260917_163932_prospect_history from './20260917_163932_prospect_history';
+import * as migration_20260917_171115_vault from './20260917_171115_vault';
 
 export const migrations = [
   {
@@ -52,6 +55,21 @@ export const migrations = [
   {
     up: migration_20260911_153950_ai_usage.up,
     down: migration_20260911_153950_ai_usage.down,
-    name: '20260911_153950_ai_usage'
+    name: '20260911_153950_ai_usage',
+  },
+  {
+    up: migration_20260917_162501_outreach_prospects_api_keys.up,
+    down: migration_20260917_162501_outreach_prospects_api_keys.down,
+    name: '20260917_162501_outreach_prospects_api_keys',
+  },
+  {
+    up: migration_20260917_163932_prospect_history.up,
+    down: migration_20260917_163932_prospect_history.down,
+    name: '20260917_163932_prospect_history',
+  },
+  {
+    up: migration_20260917_171115_vault.up,
+    down: migration_20260917_171115_vault.down,
+    name: '20260917_171115_vault'
   },
 ];

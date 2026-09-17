@@ -9,6 +9,23 @@ export interface ProfileState {
   message?: string;
 }
 
+/** Personal API key for the /outreach Claude Code skill. Shown on the profile page, never sent anywhere else. */
+export async function generateApiKey() {
+  const user = await getSessionUser();
+  if (!user) return;
+  const payload = await getPayloadClient();
+  await payload.update({ collection: "users", id: user.id, data: { enableAPIKey: true, apiKey: crypto.randomUUID() } });
+  revalidatePath("/profile");
+}
+
+export async function revokeApiKey() {
+  const user = await getSessionUser();
+  if (!user) return;
+  const payload = await getPayloadClient();
+  await payload.update({ collection: "users", id: user.id, data: { enableAPIKey: false, apiKey: null } });
+  revalidatePath("/profile");
+}
+
 export async function saveProfile(_prev: ProfileState, formData: FormData): Promise<ProfileState> {
   const user = await getSessionUser();
   if (!user) return { status: "error", message: "Sesi habis, login lagi." };

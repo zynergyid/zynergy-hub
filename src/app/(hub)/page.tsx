@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowDownLeft, ArrowUpRight, CalendarClock, Download, Users, Wallet } from "lucide-react";
 import type { Client } from "@/payload-types";
-import { canSeeMoney, getSessionUser } from "@/lib/session";
+import { canEditMoney, canSeeMoney, getSessionUser } from "@/lib/session";
 import {
   getCategoryBreakdown,
   getClientCounts,
@@ -17,6 +17,8 @@ import {
 } from "@/lib/finance";
 import { daysLabel, formatDate, formatIDR, formatMonthLong } from "@/lib/format";
 import { getOrderSummary } from "@/lib/orders";
+import { getOutreachSummary } from "@/lib/outreach";
+import { getVaultSummary } from "@/lib/vault";
 import { first, type Search } from "@/lib/search";
 import { categoryLabel, unitLabel } from "@/lib/options";
 import { cn } from "@/lib/cn";
@@ -26,6 +28,8 @@ import { Card } from "@/components/hub/Card";
 import { CategoryBars } from "@/components/hub/CategoryBars";
 import { KpiCard } from "@/components/hub/KpiCard";
 import { OrdersCard } from "@/components/hub/OrdersCard";
+import { OutreachCard } from "@/components/hub/OutreachCard";
+import { VaultCard } from "@/components/hub/VaultCard";
 import { PageHeader } from "@/components/hub/PageHeader";
 import { UnitTabs } from "@/components/hub/UnitTabs";
 import { deadlinePill, deadlineTone } from "@/components/hub/deadline";
@@ -64,12 +68,15 @@ export default async function HubHome({ searchParams }: { searchParams: Promise<
   const now = new Date();
   const hasSupply = unit === "supply" || (unit === "semua" && allowed.includes("supply"));
 
-  const [counts, renewals, orderSummary] = await Promise.all([
+  const [counts, renewals, orderSummary, outreach, vault] = await Promise.all([
     getClientCounts(allowed),
     getRenewals(allowed, 30),
     hasSupply ? getOrderSummary(unit, allowed) : null,
+    getOutreachSummary(unit, allowed),
+    getVaultSummary(canEditMoney(user)),
   ]);
   const ordersHref = unit === "semua" ? "/orders" : `/orders?unit=${unit}`;
+  const outreachHref = unit === "semua" ? "/outreach" : `/outreach?unit=${unit}`;
   const money = canSeeMoney(user)
     ? await Promise.all([
         getUnitMonth(unit, allowed, now),
@@ -109,7 +116,9 @@ export default async function HubHome({ searchParams }: { searchParams: Promise<
                 <KpiCard icon={Users} label="Klien aktif" value={String(counts.aktif)} hint={dueSoon ? `${dueSoon} jatuh tempo 30 hari` : `${counts.prospek} prospek`} />
               </div>
 
+              <OutreachCard summary={outreach} href={outreachHref} />
               {orderSummary && <OrdersCard summary={orderSummary} href={ordersHref} />}
+              <VaultCard docs={vault.expiring} total={vault.total} />
 
               <div className="grid gap-4 lg:grid-cols-5">
                 <Card title="Arus kas 12 bulan" action={{ label: "Buka arus kas", href: `/cash-flow?unit=${unit}` }} className="lg:col-span-3">
@@ -185,7 +194,9 @@ export default async function HubHome({ searchParams }: { searchParams: Promise<
             <KpiCard icon={CalendarClock} label="Jatuh tempo 30 hari" value={String(renewals.length)} tone={renewals.length ? "out" : "neutral"} />
             <KpiCard icon={Users} label="Prospek" value={String(counts.prospek)} />
           </div>
+          <OutreachCard summary={outreach} href={outreachHref} />
           {orderSummary && <OrdersCard summary={orderSummary} href={ordersHref} showMoney={false} />}
+          <VaultCard docs={vault.expiring} total={vault.total} />
           <Card title="Perpanjangan terdekat" action={{ label: "Semua klien", href: "/clients" }}>
             {renewals.length === 0 ? <p className="text-sm text-muted">Tidak ada perpanjangan dalam 30 hari.</p> : (
               <ul className="divide-y divide-line">{renewals.map((c) => <RenewalRow key={c.id} c={c} />)}</ul>

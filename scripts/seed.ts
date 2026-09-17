@@ -98,6 +98,25 @@ if (orders.totalDocs === 0) {
   payload.logger.info("Seeded sample supply buyer and PO");
 }
 
+const prospects = await payload.find({ collection: "prospects", limit: 1 });
+if (prospects.totalDocs === 0) {
+  await payload.create({
+    collection: "prospects",
+    data: {
+      unit: "supply",
+      company: "PT Kontraktor Nusantara (contoh)",
+      sector: "epc",
+      city: "Balikpapan",
+      source: "klien-lama",
+      website: "https://contoh.local",
+      contacts: [{ name: "Bu Ratna", role: "Procurement Supervisor", email: "ratna@contoh.local", phone: "6281200000009" }],
+      status: "baru",
+      notes: "Contoh target dari seed lokal.",
+    },
+  });
+  payload.logger.info("Seeded sample prospect");
+}
+
 for (const u of [
   { email: "finance.digital@zynergy.local", name: "Finance Digital", role: "finance", units: ["digital"], title: "Finance" },
   { email: "pengawas@zynergy.local", name: "Pengawas Test", role: "viewer", units: [], title: "Komisaris" },

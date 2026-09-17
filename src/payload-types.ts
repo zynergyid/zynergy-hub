@@ -72,6 +72,9 @@ export interface Config {
     documents: Document;
     transactions: Transaction;
     receipts: Receipt;
+    prospects: Prospect;
+    'vault-documents': VaultDocument;
+    'vault-files': VaultFile;
     'ai-usage': AiUsage;
     users: User;
     'payload-kv': PayloadKv;
@@ -86,6 +89,9 @@ export interface Config {
     documents: DocumentsSelect<false> | DocumentsSelect<true>;
     transactions: TransactionsSelect<false> | TransactionsSelect<true>;
     receipts: ReceiptsSelect<false> | ReceiptsSelect<true>;
+    prospects: ProspectsSelect<false> | ProspectsSelect<true>;
+    'vault-documents': VaultDocumentsSelect<false> | VaultDocumentsSelect<true>;
+    'vault-files': VaultFilesSelect<false> | VaultFilesSelect<true>;
     'ai-usage': AiUsageSelect<false> | AiUsageSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -293,18 +299,53 @@ export interface Receipt {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "ai-usage".
+ * via the `definition` "prospects".
  */
-export interface AiUsage {
+export interface Prospect {
   id: number;
-  feature: 'po-import';
-  model: string;
   unit: 'digital' | 'apps' | 'supply';
-  inputTokens: number;
-  outputTokens: number;
-  costUsd: number;
-  user?: (number | null) | User;
-  note?: string | null;
+  company: string;
+  sector?: ('tambang' | 'migas' | 'epc' | 'manufaktur' | 'distributor' | 'lainnya') | null;
+  city?: string | null;
+  source?: ('klien-lama' | 'referensi' | 'riset' | 'asosiasi' | 'linkedin' | 'lainnya') | null;
+  website?: string | null;
+  linkedin?: string | null;
+  contacts?:
+    | {
+        name: string;
+        role?: string | null;
+        email?: string | null;
+        phone?: string | null;
+        linkedin?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Kapan terakhir kontak, dengan siapa, apa yang dipasok atau dibahas, hasilnya. Dipakai skill /outreach agar pesan membuka dengan pengingat yang spesifik.
+   */
+  history?: string | null;
+  status: 'baru' | 'riset' | 'draf' | 'terkirim' | 'dibalas' | 'pertemuan' | 'klien' | 'berhenti';
+  owner?: (number | null) | User;
+  research?: string | null;
+  researchedAt?: string | null;
+  draftSubject?: string | null;
+  draftChannel?: ('email' | 'whatsapp' | 'linkedin' | 'telepon' | 'pertemuan') | null;
+  draft?: string | null;
+  lastSentAt?: string | null;
+  sentChannel?: ('email' | 'whatsapp' | 'linkedin' | 'telepon' | 'pertemuan') | null;
+  nextFollowUpAt?: string | null;
+  followUpCount?: number | null;
+  repliedAt?: string | null;
+  client?: (number | null) | Client;
+  log?:
+    | {
+        date: string;
+        type: 'riset' | 'draf' | 'kirim' | 'tindak-lanjut' | 'balasan' | 'catatan' | 'status';
+        note?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  notes?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -325,6 +366,9 @@ export interface User {
     | null;
   updatedAt: string;
   createdAt: string;
+  enableAPIKey?: boolean | null;
+  apiKey?: string | null;
+  apiKeyIndex?: string | null;
   email: string;
   resetPasswordToken?: string | null;
   resetPasswordExpiration?: string | null;
@@ -341,6 +385,73 @@ export interface User {
     | null;
   password?: string | null;
   collection: 'users';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vault-documents".
+ */
+export interface VaultDocument {
+  id: number;
+  title: string;
+  category:
+    | 'akta'
+    | 'izin'
+    | 'pajak'
+    | 'sertifikat'
+    | 'profil'
+    | 'referensi'
+    | 'identitas'
+    | 'keuangan'
+    | 'kontrak'
+    | 'lainnya';
+  number?: string | null;
+  issuer?: string | null;
+  issuedAt?: string | null;
+  expiresAt?: string | null;
+  file: number | VaultFile;
+  /**
+   * Hanya admin, finance, dan staf yang bisa melihat dan mengunduh.
+   */
+  confidential?: boolean | null;
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vault-files".
+ */
+export interface VaultFile {
+  id: number;
+  confidential?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ai-usage".
+ */
+export interface AiUsage {
+  id: number;
+  feature: 'po-import';
+  model: string;
+  unit: 'digital' | 'apps' | 'supply';
+  inputTokens: number;
+  outputTokens: number;
+  costUsd: number;
+  user?: (number | null) | User;
+  note?: string | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -385,6 +496,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'receipts';
         value: number | Receipt;
+      } | null)
+    | ({
+        relationTo: 'prospects';
+        value: number | Prospect;
+      } | null)
+    | ({
+        relationTo: 'vault-documents';
+        value: number | VaultDocument;
+      } | null)
+    | ({
+        relationTo: 'vault-files';
+        value: number | VaultFile;
       } | null)
     | ({
         relationTo: 'ai-usage';
@@ -574,6 +697,89 @@ export interface ReceiptsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "prospects_select".
+ */
+export interface ProspectsSelect<T extends boolean = true> {
+  unit?: T;
+  company?: T;
+  sector?: T;
+  city?: T;
+  source?: T;
+  website?: T;
+  linkedin?: T;
+  contacts?:
+    | T
+    | {
+        name?: T;
+        role?: T;
+        email?: T;
+        phone?: T;
+        linkedin?: T;
+        id?: T;
+      };
+  history?: T;
+  status?: T;
+  owner?: T;
+  research?: T;
+  researchedAt?: T;
+  draftSubject?: T;
+  draftChannel?: T;
+  draft?: T;
+  lastSentAt?: T;
+  sentChannel?: T;
+  nextFollowUpAt?: T;
+  followUpCount?: T;
+  repliedAt?: T;
+  client?: T;
+  log?:
+    | T
+    | {
+        date?: T;
+        type?: T;
+        note?: T;
+        id?: T;
+      };
+  notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vault-documents_select".
+ */
+export interface VaultDocumentsSelect<T extends boolean = true> {
+  title?: T;
+  category?: T;
+  number?: T;
+  issuer?: T;
+  issuedAt?: T;
+  expiresAt?: T;
+  file?: T;
+  confidential?: T;
+  notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vault-files_select".
+ */
+export interface VaultFilesSelect<T extends boolean = true> {
+  confidential?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "ai-usage_select".
  */
 export interface AiUsageSelect<T extends boolean = true> {
@@ -599,6 +805,9 @@ export interface UsersSelect<T extends boolean = true> {
   title?: T;
   updatedAt?: T;
   createdAt?: T;
+  enableAPIKey?: T;
+  apiKey?: T;
+  apiKeyIndex?: T;
   email?: T;
   resetPasswordToken?: T;
   resetPasswordExpiration?: T;

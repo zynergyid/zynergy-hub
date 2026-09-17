@@ -114,6 +114,92 @@
   layar. CSV mentah tetap ada sebagai tautan kecil untuk impor ke software
   akuntansi.
 
+## Brankas Dokumen (2026-09-18)
+
+- Dokumen legal PT, bukan per unit: koleksi `vault-documents` (title,
+  category dari `vaultCategories`, number, issuer, issuedAt, expiresAt,
+  file → `vault-files`, confidential, notes) dan koleksi upload
+  `vault-files` (Vercel Blob; field `confidential` dicerminkan dari dokumen
+  agar endpoint berkas menerapkan aturan yang sama). Akses (`vaultRead`,
+  `vaultWrite` di access.ts): semua yang login boleh melihat dan mengunduh,
+  kecuali dokumen `confidential` yang hanya untuk peran uang (admin,
+  finance, staf); unggah, ubah, hapus hanya peran uang.
+- Layar: `/vault` (dikelompokkan per kategori, filter chip kategori, cari,
+  badge kedaluwarsa merah/kuning dari `expiryState`, tombol Unduh),
+  `/vault/new`, `/vault/[id]` (form, ganti berkas, hapus; dokumen rahasia
+  404 untuk peran non-uang). Ringkasan: kartu "Brankas Dokumen" berisi
+  dokumen yang kedaluwarsa atau habis dalam 30 hari (`VAULT_WARN_DAYS`).
+  Sidebar bagian Harian: "Brankas Dokumen"; tidak di tab HP (masuk lewat
+  kartu Ringkasan). Logika di `src/lib/vault.ts`.
+- Jebakan yang ketemu saat uji: halaman server memakai Local API
+  (`payload.find`) yang MELEWATI access control, jadi aturan "rahasia"
+  harus diterapkan lagi di query halaman (`visibility()` di lib/vault.ts,
+  parameter `includeConfidential`). REST sudah aman lewat `vaultRead`.
+  Berlaku umum: setiap aturan akses yang bukan per unit harus diulang di
+  query halaman. Berkas ikut terhapus lewat hook `afterDelete` di
+  vault-documents, jadi hapus lewat REST pun tidak meninggalkan berkas.
+- `uploadFile(payload, collection, data, file)` sekarang generik untuk
+  receipts, documents, vault-files.
+- Belum: pengingat email/WA, "unduh paket" zip untuk registrasi vendor.
+
+## Outreach (2026-09-17, modul pertama dari roadmap Supply)
+
+- Keputusan runtime AI: riset dan draf TIDAK memanggil OpenAI dari Hub.
+  Dikerjakan oleh skill Claude Code `/outreach` di seat Max Danish
+  (`~/.claude/skills/outreach/SKILL.md`, di luar repo), lewat REST API Hub
+  dengan kunci API per pengguna (`auth.useAPIKey` di Users; header
+  `Authorization: users API-Key <kunci>`). Kunci dibuat/diganti/dicabut di
+  `/profile` (kartu "Kunci API untuk Claude Code"), disimpan Danish di
+  `~/.config/zynergy-hub/env` (HUB_URL, HUB_API_KEY, SENDER_NAME). Hub tidak
+  pernah mengirim pesan; manusia yang mengirim lewat email/WA/LinkedIn.
+- Koleksi `prospects` (`src/collections/Prospects.ts`): unit, company,
+  sector, city, source, website, linkedin, contacts[] (name, role, email,
+  phone, linkedin), history (riwayat hubungan: email lama, order lama, siapa
+  yang kenal; skill membacanya agar pesan membuka dengan pengingat spesifik,
+  ditambah 2026-09-17 atas permintaan Danish), status (baru → riset → draf → terkirim → dibalas →
+  pertemuan → klien; berhenti), owner (user), research + researchedAt,
+  draftSubject/draftChannel/draft, lastSentAt/sentChannel/nextFollowUpAt/
+  followUpCount, repliedAt, client (relasi setelah jadi klien), log[]
+  (date, type, note), notes. Akses seperti Klien (semua peran di unitnya,
+  pengawas baca saja); bukan data uang.
+- Layar: `/outreach` (tab unit, filter Aktif/Perlu riset/Draf siap/
+  Menunggu/Dibalas/Semua, cari; urutan: tindak lanjut jatuh tempo dulu, lalu
+  status yang butuh tangan), `/outreach/new`, `/outreach/[id]` (kartu Draf
+  dengan Salin, Buka WhatsApp (wa.me?text=), Buka email (mailto); kartu
+  Progres: Tandai terkirim → status terkirim + nextFollowUpAt = +7 hari;
+  Catat tindak lanjut → count+1, +7 hari lagi; Catat balasan → dibalas;
+  Jadikan klien → membuat Klien Supply dari data target dan menautkannya;
+  Ubah status bebas; kartu Riset (`ResearchCard`: teks riset diurai
+  `src/lib/research.ts` menjadi bagian berjudul plus daftar tautan Sumber
+  sebagai chip; kotak teks hanya saat Ubah; URL di teks jadi tautan lewat
+  `Linkify`); kartu Riwayat dengan catatan). Ringkasan
+  punya kartu "Outreach hari ini" (tindak lanjut jatuh tempo, draf siap,
+  perlu riset, menunggu) untuk semua peran. Logika di `src/lib/outreach.ts`
+  (getProspects, getOutreachSummary, followUpDue, nextAction).
+- Alur skill: GET prospects status in (baru, riset) → riset dengan
+  WebSearch/WebFetch → PATCH research/researchedAt/status=riset + log →
+  draf (email kalau ada email kontak, kalau tidak WhatsApp) → PATCH
+  draft/draftSubject/draftChannel/status=draf + log → tampilkan tindak
+  lanjut jatuh tempo. `log` diganti utuh saat PATCH, jadi skill mengambil
+  log lama dulu. Skill tidak boleh mengubah status ke terkirim.
+- Navigasi: "Outreach" di sidebar bagian Harian dan di tab HP (tab Alat dan
+  Tim dikeluarkan dari HP; admin punya tautan "Kelola tim" di Profil).
+  Halaman Alat: Antrean Outreach dan Tindak Lanjut dipindah ke "sudah
+  jalan"; sisa: Registrasi Vendor, Brankas Dokumen, PO dari Email, RFQ.
+- Migrasi `20260917_162501_outreach_prospects_api_keys` (tabel prospects +
+  kolom api key di users) dan `20260917_163932_prospect_history`. Seed lokal menambah satu target contoh.
+- Tautan ke Klien (2026-09-17, "sambungkan"): target dan klien tetap dua
+  koleksi (daftar Klien = yang membayar; antrean = banyak nama yang tidak
+  jadi), tapi satu perusahaan satu catatan: form target punya pilihan
+  "Klien yang sudah ada" (plus saran otomatis via `matchClient` kalau nama
+  mirip), halaman target menampilkan kartu "Klien terkait" dengan PO
+  terakhir, halaman klien menampilkan kartu "Outreach" (status target
+  terkait) dan tombol "Mulai outreach" (`startOutreachFromClient`: target
+  terisi dari data klien, sumber klien-lama, tertaut). "Jadikan klien" pada
+  target yang sudah tertaut hanya mengubah status, tidak membuat klien
+  duplikat. Skill membaca PO klien terkait untuk draf reaktivasi.
+- Belum: kirim otomatis (tidak akan), tarik LinkedIn, pengingat via email.
+
 ## Layar HP: tabel tidak boleh melebarkan halaman (2026-09-17)
 
 - Gejala di prod (Chrome DevTools iPhone 16 Pro Max, 440px): header dan kartu
@@ -329,25 +415,67 @@ tidak pernah ke skrip seed; data nyata diisi lewat UI di prod.
   ikut diganti lewat migrasi `rename_unit_products_to_apps` (RENAME VALUE
   pada lima enum unit).
 
-## Roadmap modul
+## Roadmap modul (disinkronkan 2026-09-17 dengan keputusan strategis Danish)
 
-1. Klien + Keuangan (selesai).
-2. Cek Google (riset klien): input nama + lokasi, cek profil Google, ulasan,
-   website, IG, visibilitas kata kunci; laporan satu halaman. Google Places API.
-3. Laporan bulanan: tarik angka Google Business Profile per klien, susun teks
-   laporan, kirim manual via WA Business dulu, WhatsApp Cloud API nanti
-   (nomor kedua, biaya per pesan, minta persetujuan dulu).
-4. Portal klien (portal.zynergy.co.id): laporan, langganan, edit isi website
-   (platform template, project terpisah).
-5. Supply: PO masuk dan piutang SELESAI (modul Pesanan, 2026-09-11 malam).
-   Berikutnya: halaman invoice cetak dari PO (menunggu contoh invoice lama
-   yang diterima pembeli sebagai spesifikasi), lalu PO keluar ke distributor
-   dan margin per PO. RFQ dari inbox sales@ (kartu RFQ, tenggat, template
-   penawaran) dibangun setelah sesi 30 menit dengan Pak Rizal; email masuk
-   via Zoho Mail API, forwarding ke webhook, atau IMAP (Mail Lite).
-6. Claude API untuk ringkasan/draf/laporan: akun console dengan admin@,
-   batas pengeluaran bulanan, minta persetujuan sebelum aktif.
+Kerangka (dari rangkuman Danish sendiri, percakapan lain, dibagikan
+2026-09-17): fokus **Supply** (PT sejak 2008, PO Freeport nyata); **Digital
+pasif** (terima kalau datang sendiri, tidak dikejar); **Apps/ERP ditunda 1
+sampai 3 tahun**. Cara kerja: outreach personal ("silaturahmi", bukan cold
+outreach), pertanyaan gaya Mom Test, AI menyusun riset dan draf, manusia yang
+memeriksa dan mengirim; balasan otomatis penuh tidak akan dibangun.
+Kebiasaan yang ingin dia jaga: riset 5 kontak per hari, 1 pesan perkenalan
+per hari, tindak lanjut H+7, review pipeline tiap Sabtu.
+
+Selesai: Klien, Arus Kas (kategori pendanaan, Excel, laporan keuangan
+ringkas), Pesanan (PO, dokumen, pembayaran, buyer per PO), impor PDF PO
+(OpenAI, tahap periksa), peran dan unit (admin/finance/staf/anggota/pengawas),
+"Ingat saya". Prinsip data yang dia minta (tabel PO terpisah dari tabel kas,
+terhubung `transactions.order`) sudah terpenuhi.
+
+Berikutnya, urut prioritas:
+
+1. **Antrean Outreach.** Target = perusahaan + kontak (klien lama untuk
+   reaktivasi: Trakindo, Hyundai E&C, Merdeka Copper, Sorikmas; klien baru:
+   tambang/EPC menengah, IMA, Kadin, LinkedIn). Alur: riset AI (profil
+   perusahaan, kebutuhan pengadaan, kontak) -> draf pesan perkenalan
+   personal -> antrean periksa -> Danish edit dan setujui -> kirim MANUAL
+   (email/WA/LinkedIn) -> catat tanggal kirim. Target 1 per hari. Butuh
+   koleksi prospek/kontak + aktivitas. Model: OpenAI (kunci sudah ada), biaya
+   dicatat di ai-usage.
+2. **Tindak lanjut.** Pengingat H+7 dan H+14 tanpa balasan, tampil di
+   Ringkasan; ringkasan mingguan untuk review Sabtu.
+3. **Registrasi vendor.** Per perusahaan target: status pendaftaran, dokumen
+   yang diminta, tenggat, PIC, portal vendor.
+4. **Brankas dokumen.** Dokumen legal PT (akta, NIB, NPWP, sertifikat,
+   company profile, referensi) dengan tanggal kedaluwarsa dan pengingat;
+   koleksi upload terpisah, akses admin dan staf.
+5. **PO dari email.** Sumber yang benar adalah Gmail lama PT (alamat vendor
+   yang tercetak di PO Freeport adalah Gmail), BUKAN Zoho; Zoho hanya email
+   brand. Gmail API baca email masuk -> deteksi PO (pola subjek/lampiran) ->
+   impor PDF yang sudah ada -> draf PO -> Danish periksa dan simpan. Tetap
+   ada tahap periksa (risiko salah baca angka).
+6. **Invoice cetak dari PO** (menunggu contoh invoice lama yang diterima
+   pembeli), lalu PO keluar ke distributor dan margin per PO.
+7. **RFQ Supply** (kartu RFQ dari email, tenggat, template penawaran)
+   setelah sesi 30 menit dengan Pak Rizal.
+8. **WhatsApp:** tetap level 1 (tombol wa.me). Business API + draf AI dengan
+   review hanya nanti; balasan otomatis penuh tidak dibangun (risiko
+   reputasi, budaya butuh sentuhan personal).
+
+Ditunda (Digital; dibangun hanya kalau ada klien Digital yang membayar): Cek
+Google, Laporan bulanan via WA, Portal klien. Dicatat di halaman Alat sebagai
+"Ditunda", tidak lagi di sidebar.
+
+Apps/ERP (visi Odoo + agen AI): tidak ada pekerjaan; visi jangka panjang.
+
+Aplikasi native: Danish ingin aplikasi native "beneran" suatu saat.
+Arsitektur yang disepakati: satu database + satu API (REST Payload sudah
+ada) + dua tampilan (web Hub dan React Native/Expo). PWA dulu sampai ada
+kebutuhan nyata; Play Store internal testing ($25 sekali), App Store $99/tahun
+kalau perlu.
+
+Tidak dipakai sekarang: n8n, OpenClaw/ML/DevOps, analitik kompleks.
 
 Keputusan yang sudah dibahas: keuangan resmi PT tetap di pembukuan akuntan,
-hub adalah buku kas operasional Digital; dokumentasi tim tetap di Notion;
-email marketing tidak dibangun; aplikasi native ditunda, PWA dulu.
+hub adalah buku kas operasional semua unit; dokumentasi tim tetap di Notion;
+email marketing tidak dibangun.

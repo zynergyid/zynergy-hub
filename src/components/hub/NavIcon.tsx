@@ -1,10 +1,15 @@
 import {
   ArrowLeftRight,
+  BadgeCheck,
+  BellRing,
   ClipboardList,
   FileSearch,
+  FolderLock,
+  Inbox,
   LayoutDashboard,
   MessageSquareText,
   Search,
+  Send,
   UserRound,
   Users,
   type LucideIcon,
@@ -20,6 +25,11 @@ const icons: Record<IconName, LucideIcon> = {
   report: MessageSquareText,
   rfq: FileSearch,
   portal: UserRound,
+  outreach: Send,
+  followup: BellRing,
+  vendor: BadgeCheck,
+  vault: FolderLock,
+  inbox: Inbox,
   team: Users,
 };
 

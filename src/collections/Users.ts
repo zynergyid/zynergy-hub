@@ -11,6 +11,8 @@ export const Users: CollectionConfig = {
     // Longest a token may live. The login route gives remembered devices this
     // much (renewed on use) and other devices four hours.
     tokenExpiration: SESSION_MAX_AGE_SECONDS,
+    // Per-user API keys for the /outreach Claude Code skill (header: "users API-Key <key>").
+    useAPIKey: true,
   },
   admin: { useAsTitle: "name" },
   access: {

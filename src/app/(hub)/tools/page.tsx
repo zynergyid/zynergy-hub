@@ -27,36 +27,79 @@ async function getAiSpend(allowed: string[]) {
 
 export const metadata: Metadata = { title: "Alat" };
 
-const tools: { id: string; icon: IconName; title: string; level: string; text: string }[] = [
+interface Tool {
+  id: string;
+  icon: IconName;
+  title: string;
+  level: string;
+  text: string;
+}
+
+/** Order = build order. Focus is Supply (decided 2026-09-17); Digital tools wait for a paying Digital client. */
+const nextTools: Tool[] = [
   {
-    id: "cek-google",
-    icon: "search",
-    title: "Cek Google",
+    id: "vendor",
+    icon: "vendor",
+    title: "Registrasi Vendor",
     level: "Sederhana",
-    text: "Masukkan nama dan lokasi usaha, dapatkan laporan satu halaman: ada di Maps atau tidak, jumlah ulasan, website, Instagram, dan kata kunci yang memunculkannya. Bahan sebelum bertemu calon klien.",
+    text: "Status pendaftaran vendor per perusahaan target: dokumen yang diminta, tenggat, PIC, dan portal vendornya.",
   },
   {
-    id: "laporan",
-    icon: "report",
-    title: "Laporan Bulanan",
+    id: "po-email",
+    icon: "inbox",
+    title: "PO dari Email",
     level: "Menengah",
-    text: "Tarik angka profil Google tiap klien, susun teks laporan dalam bahasa pemilik usaha, kirim via WhatsApp. Manual dulu, otomatis kemudian.",
-  },
-  {
-    id: "portal",
-    icon: "portal",
-    title: "Portal Klien",
-    level: "Menengah",
-    text: "portal.zynergy.co.id: klien melihat laporan, langganan, dan mengedit isi website mereka sendiri dari HP.",
+    text: "PO yang masuk ke email PT otomatis terdeteksi, dibaca oleh impor PDF yang sudah ada, dan menunggu Anda periksa sebelum tersimpan.",
   },
   {
     id: "rfq",
     icon: "rfq",
     title: "RFQ Supply",
     level: "Kompleks",
-    text: "Email RFQ yang masuk ke sales@ jadi kartu dengan tenggat, template penawaran dengan riwayat harga part number, dan tindak lanjut otomatis. Dirancang bersama Pak Rizal.",
+    text: "Email RFQ jadi kartu dengan tenggat, template penawaran dengan riwayat harga part number, dan tindak lanjut. Dirancang bersama Pak Rizal.",
   },
 ];
+
+const deferredTools: Tool[] = [
+  {
+    id: "cek-google",
+    icon: "search",
+    title: "Cek Google",
+    level: "Ditunda",
+    text: "Laporan satu halaman tentang profil Google, ulasan, website, dan Instagram calon klien Digital.",
+  },
+  {
+    id: "laporan",
+    icon: "report",
+    title: "Laporan Bulanan",
+    level: "Ditunda",
+    text: "Angka profil Google tiap klien Digital jadi laporan bulanan yang dikirim lewat WhatsApp.",
+  },
+  {
+    id: "portal",
+    icon: "portal",
+    title: "Portal Klien",
+    level: "Ditunda",
+    text: "Klien Digital melihat laporan dan langganannya sendiri di Hub.",
+  },
+];
+
+function ToolCard({ t, muted = false }: { t: Tool; muted?: boolean }) {
+  return (
+    <li id={t.id} className={`rounded-2xl border border-line bg-white p-5 ${muted ? "opacity-70" : ""}`}>
+      <div className="flex items-center gap-3">
+        <span className={`grid size-10 place-items-center rounded-xl ${muted ? "bg-surface-soft text-muted" : "bg-primary-soft text-primary"}`}>
+          <NavIcon name={t.icon} className="size-5" />
+        </span>
+        <div>
+          <h2 className="font-bold">{t.title}</h2>
+          <p className="text-xs text-muted">{t.level}{muted ? "" : " · Segera"}</p>
+        </div>
+      </div>
+      <p className="mt-3 text-sm leading-relaxed text-muted">{t.text}</p>
+    </li>
+  );
+}
 
 export default async function AlatPage() {
   const user = await getSessionUser();
@@ -66,7 +109,7 @@ export default async function AlatPage() {
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">Alat</h1>
-        <p className="text-sm text-muted">Impor PDF PO sudah jalan di halaman PO baru. Yang lain urut dari yang paling sederhana, masih dalam rencana.</p>
+        <p className="text-sm text-muted">Sudah jalan: impor PDF PO (halaman PO baru), Outreach dengan tindak lanjut, dan Brankas Dokumen. Urutan di bawah adalah urutan pembangunan berikutnya, mengikuti fokus Supply.</p>
       </div>
       {spend && (
         <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
@@ -79,22 +122,18 @@ export default async function AlatPage() {
           />
         </div>
       )}
-      <ul className="grid gap-3 sm:grid-cols-2">
-        {tools.map((t) => (
-          <li key={t.id} id={t.id} className="rounded-2xl border border-line bg-white p-5">
-            <div className="flex items-center gap-3">
-              <span className="grid size-10 place-items-center rounded-xl bg-primary-soft text-primary">
-                <NavIcon name={t.icon} className="size-5" />
-              </span>
-              <div>
-                <h2 className="font-bold">{t.title}</h2>
-                <p className="text-xs text-muted">{t.level} · Segera</p>
-              </div>
-            </div>
-            <p className="mt-3 text-sm leading-relaxed text-muted">{t.text}</p>
-          </li>
-        ))}
-      </ul>
+      <div className="space-y-3">
+        <h2 className="text-sm font-bold uppercase tracking-wider text-muted">Berikutnya, fokus Supply</h2>
+        <ul className="grid gap-3 sm:grid-cols-2">
+          {nextTools.map((t) => <ToolCard key={t.id} t={t} />)}
+        </ul>
+      </div>
+      <div className="space-y-3">
+        <h2 className="text-sm font-bold uppercase tracking-wider text-muted">Ditunda sampai ada klien Digital</h2>
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {deferredTools.map((t) => <ToolCard key={t.id} t={t} muted />)}
+        </ul>
+      </div>
     </div>
   );
 }
