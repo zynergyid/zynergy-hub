@@ -46,7 +46,9 @@
   2026-09-11 malam, deploy pertama dari commit 3e5c90c; deploy kedua
   (impor PDF, buyer per PO, laporan Excel) dari commit 7f4991a larut malam;
   deploy ketiga 2026-09-17 (Ingat saya 90 hari/4 jam, perbaikan tabel di HP,
-  akun lokal admin) dari commit fced6b2. Semua atas perintah "deploy". Repo privat `danish-deepskill/zynergy-hub`, Vercel project
+  akun lokal admin) dari commit fced6b2; deploy keempat 2026-09-18 (roadmap
+  Supply, Outreach + kunci API + skill, Brankas Dokumen) dari commit 5ae97a3.
+  Semua atas perintah "deploy". Repo privat `danish-deepskill/zynergy-hub`, Vercel project
   `zynergy-hub` (scope `devdanzen-projects`). Neon `zynergy-hub` (paket
   gratis) dan Blob store `zynergy-hub-files` (region sin1) dibuat lewat
   CLI (`vercel integration add neon`, `vercel blob create-store`) dengan
