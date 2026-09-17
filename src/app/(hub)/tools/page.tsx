@@ -69,7 +69,7 @@ export default async function AlatPage() {
         <p className="text-sm text-muted">Impor PDF PO sudah jalan di halaman PO baru. Yang lain urut dari yang paling sederhana, masih dalam rencana.</p>
       </div>
       {spend && (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
           <KpiCard
             icon={Sparkles}
             label={`Biaya AI ${formatMonthLong(new Date())}`}

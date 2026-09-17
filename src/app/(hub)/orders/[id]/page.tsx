@@ -95,7 +95,7 @@ export default async function OrderDetailPage({ params, searchParams }: { params
       </div>
 
       {money ? (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
           <KpiCard icon={FileText} label="Nilai PO" value={formatIDR(total)} hint="belum termasuk PPN" tone="primary" />
           <KpiCard icon={ArrowDownLeft} label="Sudah dibayar" value={formatIDR(payments.paid)} hint={payments.cost ? `biaya terkait ${formatIDR(payments.cost)}` : undefined} tone="in" />
           <KpiCard icon={Wallet} label="Sisa tagihan" value={formatIDR(remaining)} tone={remaining ? "out" : "neutral"} hint={order.invoiceNumber ? `invoice ${order.invoiceNumber}` : "belum ada invoice"} />

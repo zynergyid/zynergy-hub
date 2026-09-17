@@ -57,7 +57,7 @@
   tidak dipakai di prod. Deploy berikutnya: `vercel deploy --prod` dari repo
   ini, hanya atas perintah "deploy".
 - Lokal: Postgres docker `zynergy-pg` database `zynergy_hub`, dev admin
-  dev@zynergy.local / zynergy-dev-only via `pnpm seed`. Port 3011.
+  admin@zynergy.local / admin via `pnpm seed`. Port 3011.
 
 - Panel Payload DIMATIKAN (`admin.disable: true`); `/admin` 404, file
   panelnya dihapus. Payload hanya jadi lapisan data, auth, dan REST API.
@@ -112,6 +112,55 @@
   halaman; lembar kedua "Per Kategori". Angka dari `getLedger`, sama dengan
   layar. CSV mentah tetap ada sebagai tautan kecil untuk impor ke software
   akuntansi.
+
+## Layar HP: tabel tidak boleh melebarkan halaman (2026-09-17)
+
+- Gejala di prod (Chrome DevTools iPhone 16 Pro Max, 440px): header dan kartu
+  atas lebih sempit dari bar bawah. Penyebab: kartu "Transaksi terbaru" di
+  Ringkasan memakai `<table>` auto-layout; keterangan panjang plus nominal
+  besar membuat tabel lebih lebar dari layar dan mendorong seluruh dokumen
+  (scrollWidth > viewport). Data seed lokal pendek, jadi tidak pernah muncul.
+- Obat: sel pertama `max-w-0` (kolom itu mengambil sisa lebar dan `truncate`
+  bekerja), sel nominal `whitespace-nowrap`. Diterapkan di Ringkasan dan tabel
+  desktop Arus Kas. Aturan ke depan: setiap `<table className="w-full">`
+  yang punya teks bebas harus memakai pola ini, atau pakai daftar flex
+  (`min-w-0` + `truncate`) seperti TxList.
+- Sekalian: BarChart punya gutter kanan (`padR`) untuk label sumbu, dan label
+  unit di tabel Arus Kas memakai `unitLabel` (sebelumnya ternary dua unit yang
+  menampilkan Apps sebagai "Digital").
+- Laptop kecil (lg, 1024px, sidebar terbuka, isi sekitar 700px): tabel Arus
+  Kas hanya menampilkan Transaksi, Tanggal, Nominal, Saldo; kolom Klien,
+  Metode, Bukti muncul mulai xl (1280px). Baris empat kartu KPI (Ringkasan,
+  Arus Kas, detail PO, Alat) jadi empat kolom mulai xl, di bawahnya dua kolom,
+  supaya nominal besar tidak patah baris.
+- Cara cek cepat: di DevTools mode HP, `document.documentElement.scrollWidth`
+  harus sama dengan `window.innerWidth`.
+
+## Sesi login dan "Ingat saya" (2026-09-17)
+
+- Sebelumnya `auth: true` memakai bawaan Payload: token 2 jam, jadi tim
+  harus login ulang beberapa kali sehari. Konstanta di
+  `src/lib/auth-cookie.ts`: token maksimal 90 hari
+  (`SESSION_MAX_AGE_SECONDS`, dipakai `tokenExpiration` Users), login biasa
+  4 jam (`SHORT_SESSION_SECONDS`), perpanjangan saat token lebih tua dari
+  1 hari (`REFRESH_AFTER_SECONDS`).
+- Form login memanggil `/api/auth/login` (route Hub), bukan
+  `/api/users/login`: `payload.login` lalu menulis cookie `payload-token`
+  sendiri. Kotak "Ingat saya di perangkat ini" (default tercentang):
+  cookie 90 hari plus cookie penanda `hub-remember` (bisa dibaca browser);
+  tanpa centang cookie 4 jam dan penanda dihapus.
+- Perpanjangan geser: `SessionKeepAlive` (dipasang di layout) memanggil
+  `POST /api/auth/refresh` sekali per tab kalau penanda ada; route itu
+  memakai `refreshOperation` Payload (token baru + `sessions.expiresAt`
+  diperpanjang) hanya bila token lebih tua dari sehari, selain itu 204.
+  Hasilnya: perangkat yang dipakai minimal sekali per 90 hari tidak pernah
+  login ulang; perangkat yang ditinggalkan mati sendiri setelah 90 hari;
+  menghapus akun dari Tim memutus akses seketika.
+- Pesan salah password dan akun terkunci (5 kali gagal, 10 menit)
+  diterjemahkan. Logout tetap `/api/users/logout` (menghapus sesi server).
+- Catatan: token JWT tetap berlaku sampai `exp` walau cookie 4 jam sudah
+  hilang; untuk alat internal ini diterima. "Keluar dari semua perangkat"
+  (hapus `sessions` user) bisa ditambah nanti kalau perlu.
 
 ## Impor PDF PO dengan OpenAI (2026-09-11 malam)
 
@@ -200,11 +249,10 @@
   hukum, NPWP, nomor vendor, termin, alamat penagihan) dan WhatsApp opsional;
   form klien menampilkan bagian itu saat unit = supply dan menyembunyikan
   paket/perpanjangan (lihat bagian Pesanan).
-- Seed lokal: dev@zynergy.local (admin), finance.digital@zynergy.local
+- Seed lokal: admin@zynergy.local (admin), finance.digital@zynergy.local
   (finance, unit digital), pengawas@zynergy.local (viewer),
   member@zynergy.local (anggota, digital), member.supply@zynergy.local
-  (anggota, supply), staf.supply@zynergy.local (staf, supply), semua
-  password zynergy-dev-only.
+  (anggota, supply), staf.supply@zynergy.local (staf, supply), semua password "admin" (hanya lokal; diganti 2026-09-17 agar mudah).
 
 ## Pesanan (PO Supply), 2026-09-11 malam
 

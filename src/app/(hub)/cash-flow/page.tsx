@@ -136,7 +136,7 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <KpiCard icon={ArrowDownLeft} label="Masuk" value={formatIDR(ledger.masuk)} delta={pctChange(um.masuk, um.masukPrev)} tone="in" hint={fundingHint(ledger.fundingMasuk)} />
         <KpiCard icon={ArrowUpRight} label="Keluar" value={formatIDR(ledger.keluar)} delta={pctChange(um.keluar, um.keluarPrev)} upIsGood={false} tone="out" hint={fundingHint(ledger.fundingKeluar)} />
         <KpiCard icon={Scale} label="Selisih" value={formatIDR(ledger.masuk - ledger.keluar)} tone={ledger.masuk - ledger.keluar >= 0 ? "in" : "out"} hint="operasional bulan ini" />
@@ -176,16 +176,16 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
         />
       ) : (
         <>
-          {/* Desktop: table with running balance */}
-          <div className="hidden overflow-hidden rounded-2xl border border-line bg-white shadow-[0_1px_2px_rgba(15,27,51,0.04)] md:block">
+          {/* Wide screens: table with running balance. Narrower than lg, the per-day list below is used. */}
+          <div className="hidden overflow-x-auto rounded-2xl border border-line bg-white shadow-[0_1px_2px_rgba(15,27,51,0.04)] lg:block">
             <table className="w-full text-sm">
               <thead className="bg-surface-soft text-left text-[11px] uppercase tracking-wider text-muted">
                 <tr>
-                  <th className="px-4 py-2.5 font-bold">Transaksi</th>
-                  <th className="px-3 py-2.5 font-bold">Klien</th>
+                  <th className="w-full px-4 py-2.5 font-bold">Transaksi</th>
+                  <th className="hidden px-3 py-2.5 font-bold xl:table-cell">Klien</th>
                   <th className="px-3 py-2.5 font-bold">Tanggal</th>
-                  <th className="px-3 py-2.5 font-bold">Metode</th>
-                  <th className="px-3 py-2.5 font-bold">Bukti</th>
+                  <th className="hidden px-3 py-2.5 font-bold xl:table-cell">Metode</th>
+                  <th className="hidden px-3 py-2.5 font-bold xl:table-cell">Bukti</th>
                   <th className="px-3 py-2.5 text-right font-bold">Nominal</th>
                   {!ledger.filtered && <th className="px-4 py-2.5 text-right font-bold">Saldo</th>}
                 </tr>
@@ -196,7 +196,7 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
                   const hasReceipt = Boolean(tx.receipt);
                   return (
                     <tr key={tx.id} className="hover:bg-surface-soft/60">
-                      <td className="px-4 py-3">
+                      <td className="w-full max-w-0 px-4 py-3">
                         <Link href={editable ? href(base, { edit: String(tx.id) }) : "#"} aria-disabled={!editable} className={cn("flex items-center gap-3", !editable && "pointer-events-none")}>
                           <span className={cn("grid size-8 shrink-0 place-items-center rounded-full text-sm font-extrabold", tx.type === "masuk" ? "bg-secondary-soft text-secondary-dark" : "bg-red-50 text-red-600")}>
                             {tx.type === "masuk" ? "+" : "-"}
@@ -204,24 +204,24 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
                           <span className="min-w-0">
                             <span className="block truncate font-semibold hover:text-primary">{tx.reference || categoryLabel.get(tx.category)}</span>
                             <span className="block truncate text-xs text-muted">
-                              {categoryLabel.get(tx.category)}{unit === "semua" ? ` · ${tx.unit === "supply" ? "Supply" : "Digital"}` : ""}
+                              {categoryLabel.get(tx.category)}{unit === "semua" ? ` · ${unitLabel.get(tx.unit) ?? tx.unit}` : ""}
                             </span>
                           </span>
                         </Link>
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="hidden px-3 py-3 xl:table-cell">
                         {clientName ? (
                           <span className="inline-flex items-center gap-2"><Avatar name={clientName} className="size-7 text-[10px]" /><span className="truncate">{clientName}</span></span>
                         ) : <span className="text-muted">-</span>}
                       </td>
-                      <td className="px-3 py-3 text-muted">{formatDate(tx.date)}</td>
-                      <td className="px-3 py-3 capitalize text-muted">{tx.method ?? "-"}</td>
-                      <td className="px-3 py-3">
+                      <td className="whitespace-nowrap px-3 py-3 text-muted">{formatDate(tx.date)}</td>
+                      <td className="hidden px-3 py-3 capitalize text-muted xl:table-cell">{tx.method ?? "-"}</td>
+                      <td className="hidden px-3 py-3 xl:table-cell">
                         <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-bold", hasReceipt ? "bg-secondary-soft text-secondary-dark" : "bg-surface-soft text-muted")}>
                           {hasReceipt ? "Ada" : "Belum"}
                         </span>
                       </td>
-                      <td className={cn("px-3 py-3 text-right font-extrabold", tx.type === "masuk" ? "text-secondary-dark" : "text-red-600")}>
+                      <td className={cn("whitespace-nowrap px-3 py-3 text-right font-extrabold", tx.type === "masuk" ? "text-secondary-dark" : "text-red-600")}>
                         {tx.type === "masuk" ? "+" : "-"}{formatIDR(tx.amount)}
                       </td>
                       {!ledger.filtered && <td className="px-4 py-3 text-right text-muted">{formatIDR(balance)}</td>}
@@ -233,7 +233,7 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
           </div>
 
           {/* Mobile: grouped by day */}
-          <div className="overflow-hidden rounded-2xl border border-line bg-white md:hidden">
+          <div className="overflow-hidden rounded-2xl border border-line bg-white lg:hidden">
             {[...groups.entries()].map(([day, rows]) => (
               <section key={day}>
                 <h2 className="border-b border-line bg-surface-soft px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted">

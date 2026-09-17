@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { ErrorText, Input, Label } from "@/components/hub/form";
 
-/** Signs in through Payload's REST endpoint, which sets the auth cookie. */
+/** Signs in through the Hub's login route: 90 days renewed on use with "Ingat saya", otherwise 4 hours. */
 export function LoginForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -16,14 +16,15 @@ export function LoginForm() {
     setPending(true);
     setError(null);
     const fd = new FormData(e.currentTarget);
-    const res = await fetch("/api/users/login", {
+    const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: fd.get("email"), password: fd.get("password") }),
+      body: JSON.stringify({ email: fd.get("email"), password: fd.get("password"), remember: fd.get("remember") === "on" }),
     });
     setPending(false);
     if (!res.ok) {
-      setError("Email atau password salah.");
+      const data = (await res.json().catch(() => ({}))) as { message?: string };
+      setError(data.message ?? "Email atau password salah.");
       return;
     }
     router.push("/");
@@ -40,6 +41,13 @@ export function LoginForm() {
         <Label htmlFor="login-password">Password</Label>
         <Input id="login-password" name="password" type="password" autoComplete="current-password" required />
       </div>
+      <label htmlFor="login-remember" className="flex cursor-pointer items-start gap-2.5 text-sm">
+        <input id="login-remember" name="remember" type="checkbox" defaultChecked className="mt-0.5 size-4 shrink-0 rounded border-line accent-primary" />
+        <span>
+          <span className="font-semibold">Ingat saya di perangkat ini</span>
+          <span className="block text-xs text-muted">Tetap masuk selama Hub masih dipakai. Tanpa ini, login berakhir setelah 4 jam. Matikan di komputer bersama.</span>
+        </span>
+      </label>
       <ErrorText>{error}</ErrorText>
       <button
         type="submit"

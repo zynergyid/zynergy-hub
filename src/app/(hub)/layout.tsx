@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { getSessionUser } from "@/lib/session";
 import { Sidebar } from "@/components/hub/Sidebar";
 import { MobileTabs } from "@/components/hub/MobileTabs";
+import { SessionKeepAlive } from "@/components/hub/SessionKeepAlive";
 import { BrandMark } from "@/components/ui/BrandMark";
 import Link from "next/link";
 import { LogoutButton } from "@/components/hub/LogoutButton";
@@ -45,6 +46,7 @@ export default async function HubLayout({ children }: LayoutProps<"/">) {
               </main>
             </div>
             <MobileTabs role={user.role} />
+            <SessionKeepAlive />
           </div>
         ) : (
           children

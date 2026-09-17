@@ -1,12 +1,17 @@
 import type { CollectionConfig } from "payload";
 import { hasRoleField, isAdmin, isLoggedIn } from "@/lib/access";
 import { jobTitles, roles, units } from "@/lib/options";
+import { SESSION_MAX_AGE_SECONDS } from "@/lib/auth-cookie";
 
 /** Team accounts. Role = access level, units = scope, title = descriptive only. */
 export const Users: CollectionConfig = {
   slug: "users",
   labels: { singular: "Anggota Tim", plural: "Anggota Tim" },
-  auth: true,
+  auth: {
+    // Longest a token may live. The login route gives remembered devices this
+    // much (renewed on use) and other devices four hours.
+    tokenExpiration: SESSION_MAX_AGE_SECONDS,
+  },
   admin: { useAsTitle: "name" },
   access: {
     read: isLoggedIn,

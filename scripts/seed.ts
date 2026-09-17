@@ -1,19 +1,20 @@
 /**
  * Dev seed: admin user + sample clients, transactions, and one Supply PO. Idempotent.
- * Login: dev@zynergy.local / zynergy-dev-only (LOCAL ONLY).
+ * Login: admin@zynergy.local / admin (LOCAL ONLY; every seeded account uses the password "admin").
  */
 import { getPayload } from "payload";
 import config from "@payload-config";
 
 const payload = await getPayload({ config });
 
-const users = await payload.find({ collection: "users", where: { email: { equals: "dev@zynergy.local" } }, limit: 1 });
+const LOCAL_PASSWORD = "admin";
+const users = await payload.find({ collection: "users", where: { email: { equals: "admin@zynergy.local" } }, limit: 1 });
 if (users.totalDocs === 0) {
   await payload.create({
     collection: "users",
-    data: { email: "dev@zynergy.local", password: "zynergy-dev-only", name: "Dev Admin", role: "admin", title: "Lead" },
+    data: { email: "admin@zynergy.local", password: LOCAL_PASSWORD, name: "Admin Lokal", role: "admin", title: "Lead" },
   });
-  payload.logger.info("Seeded dev admin");
+  payload.logger.info("Seeded local admin");
 }
 
 const existing = await payload.find({ collection: "clients", limit: 1 });
@@ -106,7 +107,7 @@ for (const u of [
 ] as const) {
   const found = await payload.find({ collection: "users", where: { email: { equals: u.email } }, limit: 1 });
   if (found.totalDocs === 0) {
-    await payload.create({ collection: "users", data: { ...u, units: [...u.units], password: "zynergy-dev-only" } });
+    await payload.create({ collection: "users", data: { ...u, units: [...u.units], password: LOCAL_PASSWORD } });
     payload.logger.info(`Seeded ${u.email}`);
   }
 }

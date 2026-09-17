@@ -6,12 +6,13 @@ export function BarChart({ points }: { points: MonthPoint[] }) {
   const W = 720;
   const H = 220;
   const padL = 8;
+  const padR = 44;
   const padB = 26;
   const padT = 10;
   const max = Math.max(1, ...points.flatMap((p) => [p.masuk, p.keluar]));
   const nice = Math.pow(10, Math.floor(Math.log10(max)));
   const top = Math.ceil(max / nice) * nice;
-  const slot = (W - padL) / points.length;
+  const slot = (W - padL - padR) / points.length;
   const barW = Math.min(18, slot * 0.28);
   const y = (v: number) => padT + (H - padT - padB) * (1 - v / top);
   const short = (v: number) =>
@@ -26,7 +27,7 @@ export function BarChart({ points }: { points: MonthPoint[] }) {
       <svg viewBox={`0 0 ${W} ${H}`} className="h-48 w-full" role="img" aria-label="Grafik arus kas 12 bulan">
         {[0, 0.25, 0.5, 0.75, 1].map((f) => (
           <g key={f}>
-            <line x1={padL} x2={W} y1={y(top * f)} y2={y(top * f)} className="stroke-line" strokeWidth="1" />
+            <line x1={padL} x2={W - padR + 4} y1={y(top * f)} y2={y(top * f)} className="stroke-line" strokeWidth="1" />
             <text x={W - 2} y={y(top * f) - 3} textAnchor="end" className="fill-muted" fontSize="10">
               {short(top * f)}
             </text>

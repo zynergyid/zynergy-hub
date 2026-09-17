@@ -102,7 +102,7 @@ export default async function HubHome({ searchParams }: { searchParams: Promise<
               : "semua waktu";
           return (
             <>
-              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
                 <KpiCard icon={Wallet} label="Saldo" value={formatIDR(m.balance)} hint={saldoHint} tone="primary" />
                 <KpiCard icon={ArrowDownLeft} label="Masuk bulan ini" value={formatIDR(m.masuk)} delta={pctChange(m.masuk, m.masukPrev)} tone="in" hint={fundingHint(m.fundingMasuk)} />
                 <KpiCard icon={ArrowUpRight} label="Keluar bulan ini" value={formatIDR(m.keluar)} delta={pctChange(m.keluar, m.keluarPrev)} upIsGood={false} tone="out" hint={fundingHint(m.fundingKeluar)} />
@@ -137,7 +137,7 @@ export default async function HubHome({ searchParams }: { searchParams: Promise<
                     <table className="w-full text-sm">
                       <thead className="text-left text-[11px] uppercase tracking-wider text-muted">
                         <tr>
-                          <th className="pb-2 font-bold">Transaksi</th>
+                          <th className="w-full pb-2 font-bold">Transaksi</th>
                           <th className="hidden pb-2 font-bold sm:table-cell">Tanggal</th>
                           <th className="hidden pb-2 font-bold md:table-cell">Bukti</th>
                           <th className="pb-2 text-right font-bold">Nominal</th>
@@ -149,7 +149,7 @@ export default async function HubHome({ searchParams }: { searchParams: Promise<
                           const hasReceipt = Boolean(typeof tx.receipt === "object" ? tx.receipt : tx.receipt);
                           return (
                             <tr key={tx.id}>
-                              <td className="py-2.5 pr-3">
+                              <td className="w-full max-w-0 py-2.5 pr-3">
                                 <div className="flex items-center gap-3">
                                   <Avatar name={clientName ?? categoryLabel.get(tx.category) ?? "?"} className="size-8 text-[10px]" />
                                   <div className="min-w-0">
@@ -164,7 +164,7 @@ export default async function HubHome({ searchParams }: { searchParams: Promise<
                                   {hasReceipt ? "Ada bukti" : "Tanpa bukti"}
                                 </span>
                               </td>
-                              <td className={cn("py-2.5 text-right font-extrabold", tx.type === "masuk" ? "text-secondary-dark" : "text-red-600")}>
+                              <td className={cn("whitespace-nowrap py-2.5 text-right font-extrabold", tx.type === "masuk" ? "text-secondary-dark" : "text-red-600")}>
                                 {tx.type === "masuk" ? "+" : "-"}{formatIDR(tx.amount)}
                               </td>
                             </tr>
