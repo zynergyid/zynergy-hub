@@ -72,7 +72,16 @@
   `main` tidak membangun apa pun dan "deploy" = `git push origin
   main:production` (pantau `vercel ls zynergy-hub --scope
   devdanzen-projects`; CLI `vercel deploy --prod --scope devdanzen-projects`
-  tetap cadangan). Vercel project
+  tetap cadangan). Deploy ketujuh 2026-09-19 dini hari adalah uji jalur
+  Git ini (commit 71a24a1, isi sama dengan deploy keenam): build antre di
+  status INITIALIZING sekitar 3 menit (Hobby), build 1 menit, lalu READY
+  dengan substate STAGED sekitar 1 sampai 2 menit sebelum otomatis
+  PROMOTED ke hub.zynergy.co.id; jangan panik dan jangan `vercel promote`
+  (menjawab 409 "promotion already pending"). `vercel ls` TIDAK
+  menampilkan deployment Git yang masih antre; pakai API
+  `GET /v6/deployments?projectId=...` atau dashboard. Push ke `main`
+  memunculkan deployment CANCELED (dilewati ignored build step), itu
+  normal. Vercel project
   `zynergy-hub` (scope `devdanzen-projects`). Neon `zynergy-hub` (paket
   gratis) dan Blob store `zynergy-hub-files` (region sin1) dibuat lewat
   CLI (`vercel integration add neon`, `vercel blob create-store`) dengan
