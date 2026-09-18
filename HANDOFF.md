@@ -55,7 +55,11 @@
   item PO) dari commit a1c51f9, dua migrasi (`projects`, `project_brief`)
   jalan di Neon saat build; catatan: `vercel deploy --prod` pertama kali
   menjawab "Not authorized", ulang dengan `--scope devdanzen-projects`
-  berhasil. Semua atas perintah "deploy". Repo privat `danish-deepskill/zynergy-hub`, Vercel project
+  berhasil. Semua atas perintah "deploy". Repo privat `zynergyid/zynergy-hub`
+  (dipindah 2026-09-19 dari akun pribadi danish-deepskill ke organisasi
+  GitHub `zynergyid` bersama repo situs; alamat lama dialihkan GitHub,
+  remote lokal sudah diganti; Vercel tidak terpengaruh karena deploy lewat
+  CLI), Vercel project
   `zynergy-hub` (scope `devdanzen-projects`). Neon `zynergy-hub` (paket
   gratis) dan Blob store `zynergy-hub-files` (region sin1) dibuat lewat
   CLI (`vercel integration add neon`, `vercel blob create-store`) dengan
