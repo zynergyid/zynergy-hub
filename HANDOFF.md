@@ -2,7 +2,8 @@
 
 > Aplikasi internal tim Zynergy. Baca penuh sebelum mengubah. Ikuti hard rules
 > yang sama dengan repo `zynergy` (tanpa em dash, jangan deploy tanpa perintah
-> "deploy", commit dan push biasa).
+> "deploy", commit dan push biasa). Repo ini PUBLIK sejak 2026-09-19: jangan
+> tulis ekonomi klien, nomor legal, nama orang, atau kunci di sini.
 
 ## State 2026-09-11 (malam)
 
@@ -58,12 +59,20 @@
   berhasil. Semua atas perintah "deploy". Repo privat `zynergyid/zynergy-hub`
   (dipindah 2026-09-19 dari akun pribadi danish-deepskill ke organisasi
   GitHub `zynergyid` bersama repo situs; alamat lama dialihkan GitHub,
-  remote lokal sudah diganti). Integrasi Git Vercel untuk repo ini TIDAK
-  bisa: Vercel Hobby menolak repo privat milik organisasi (409 "Upgrade to
-  Pro"), jadi hub tetap deploy lewat CLI `vercel deploy --prod --scope
-  devdanzen-projects` atas perintah "deploy"; kalau nanti pindah ke Vercel
-  Pro (berbayar, perlu persetujuan Danish), pakai pola yang sama dengan
-  repo situs: produksi dari cabang `production`. Vercel project
+  remote lokal sudah diganti). Repo dibuat PUBLIK 2026-09-19 atas
+  keputusan Danish, karena Vercel Hobby menolak integrasi Git untuk repo
+  privat milik organisasi (409 "Upgrade to Pro"); sebelum publik, nama
+  klien dan angka PO asli dibersihkan dari HANDOFF dan seed (commit
+  ed257b0), dan Danish memilih TIDAK menulis ulang riwayat, jadi commit
+  lama 309488a masih memuat harga satuan PO pembeli di seed. Aturan repo
+  publik berlaku mulai sekarang: tidak ada ekonomi klien, nomor legal,
+  nama orang, atau kunci di repo ini. Sejak itu project Vercel
+  Git-connected ke github.com/zynergyid/zynergy-hub: produksi dari cabang
+  `production`, ignored build step melewati cabang lain, sehingga push
+  `main` tidak membangun apa pun dan "deploy" = `git push origin
+  main:production` (pantau `vercel ls zynergy-hub --scope
+  devdanzen-projects`; CLI `vercel deploy --prod --scope devdanzen-projects`
+  tetap cadangan). Vercel project
   `zynergy-hub` (scope `devdanzen-projects`). Neon `zynergy-hub` (paket
   gratis) dan Blob store `zynergy-hub-files` (region sin1) dibuat lewat
   CLI (`vercel integration add neon`, `vercel blob create-store`) dengan
