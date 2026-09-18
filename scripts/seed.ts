@@ -91,7 +91,7 @@ if (orders.totalDocs === 0) {
       incoterm: "DDP",
       paymentTermsDays: 30,
       status: "sourcing",
-      items: [{ material: "40400001", partNumber: "SGX5150202ES", description: "Device server 1 Ethernet, 2 serial, 1 USB", qty: 12, uom: "each", unitPrice: 13719000 }],
+      items: [{ material: "MAT-000123", partNumber: "SFP-10G-CONTOH", description: "Transceiver SFP+ 10G (contoh)", qty: 12, uom: "each", unitPrice: 2500000 }],
       notes: "Contoh PO dari seed lokal.",
     },
   });

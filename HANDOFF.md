@@ -217,7 +217,7 @@ memakai versi "agensi kecil", bukan versi enterprise.
 
 - Di halaman detail PO form hanya 3/5 lebar, jadi delapan kolom item dalam
   satu baris terpotong (qty, satuan, harga tidak terbaca; terlihat di prod
-  setelah impor PO Freeport). OrderForm memakai container query Tailwind v4:
+  setelah impor PO pembeli nyata). OrderForm memakai container query Tailwind v4:
   section item `@container`; di bawah `@3xl` (48rem) tiap item dua baris
   dengan label kecil per kolom (`ItemField`), di atasnya satu baris dengan
   header kolom. Halaman PO baru (max-w-4xl) memakai satu baris, halaman
@@ -476,7 +476,7 @@ memakai versi "agensi kecil", bukan versi enterprise.
   - `staff` (Staf, ditambah 2026-09-11 malam atas permintaan Danish): untuk
     SEMENTARA haknya sama persis dengan finance (`seesMoney`/`editsMoney` di
     access.ts). Dibuat karena orang yang menjalankan Supply sehari-hari
-    (Pak Rizal) butuh akses uang tanpa disebut "Finance". Dibedakan nanti
+    (rekan Supply) butuh akses uang tanpa disebut "Finance". Dibedakan nanti
     kalau kebutuhannya berbeda.
   - `member` (Anggota): klien dan alat di unitnya, tanpa uang. Sejak
     2026-09-11 malam juga bisa membuka Pesanan di unitnya TANPA harga
@@ -587,7 +587,7 @@ tidak pernah ke skrip seed; data nyata diisi lewat UI di prod.
 ## Roadmap modul (disinkronkan 2026-09-17 dengan keputusan strategis Danish)
 
 Kerangka (dari rangkuman Danish sendiri, percakapan lain, dibagikan
-2026-09-17): fokus **Supply** (PT sejak 2008, PO Freeport nyata); **Digital
+2026-09-17): fokus **Supply** (PT sejak 2008, PO nyata dari pembeli tambang besar); **Digital
 pasif** (terima kalau datang sendiri, tidak dikejar); **Apps/ERP ditunda 1
 sampai 3 tahun**. Cara kerja: outreach personal ("silaturahmi", bukan cold
 outreach), pertanyaan gaya Mom Test, AI menyusun riset dan draf, manusia yang
@@ -604,7 +604,7 @@ terhubung `transactions.order`) sudah terpenuhi.
 Berikutnya, urut prioritas:
 
 1. **Antrean Outreach.** Target = perusahaan + kontak (klien lama untuk
-   reaktivasi: Trakindo, Hyundai E&C, Merdeka Copper, Sorikmas; klien baru:
+   reaktivasi: klien lama era 2010-an (daftarnya ada di Hub, bukan di sini); klien baru:
    tambang/EPC menengah, IMA, Kadin, LinkedIn). Alur: riset AI (profil
    perusahaan, kebutuhan pengadaan, kontak) -> draf pesan perkenalan
    personal -> antrean periksa -> Danish edit dan setujui -> kirim MANUAL
@@ -619,14 +619,14 @@ Berikutnya, urut prioritas:
    company profile, referensi) dengan tanggal kedaluwarsa dan pengingat;
    koleksi upload terpisah, akses admin dan staf.
 5. **PO dari email.** Sumber yang benar adalah Gmail lama PT (alamat vendor
-   yang tercetak di PO Freeport adalah Gmail), BUKAN Zoho; Zoho hanya email
+   yang tercetak di PO pembeli adalah Gmail), BUKAN Zoho; Zoho hanya email
    brand. Gmail API baca email masuk -> deteksi PO (pola subjek/lampiran) ->
    impor PDF yang sudah ada -> draf PO -> Danish periksa dan simpan. Tetap
    ada tahap periksa (risiko salah baca angka).
 6. **Invoice cetak dari PO** (menunggu contoh invoice lama yang diterima
    pembeli), lalu PO keluar ke distributor dan margin per PO.
 7. **RFQ Supply** (kartu RFQ dari email, tenggat, template penawaran)
-   setelah sesi 30 menit dengan Pak Rizal.
+   setelah sesi 30 menit dengan rekan Supply.
 8. **WhatsApp:** tetap level 1 (tombol wa.me). Business API + draf AI dengan
    review hanya nanti; balasan otomatis penuh tidak dibangun (risiko
    reputasi, budaya butuh sentuhan personal).
