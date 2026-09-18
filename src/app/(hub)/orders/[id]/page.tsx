@@ -8,13 +8,15 @@ import { getPayloadClient } from "@/lib/payload";
 import { clientOf, getClientOptions, getOrderPayments, nextDate, orderTotal } from "@/lib/orders";
 import { daysLabel, formatDate, formatIDR } from "@/lib/format";
 import { first, type Search } from "@/lib/search";
+import { documentKinds } from "@/lib/options";
 import { Card } from "@/components/hub/Card";
+import { DocumentsCard } from "@/components/hub/DocumentsCard";
 import { KpiCard } from "@/components/hub/KpiCard";
 import { OrderStatusPill } from "@/components/hub/OrderStatusPill";
 import { TxList } from "@/components/hub/TxList";
-import { DocumentsCard } from "../DocumentsCard";
 import { OrderForm } from "../OrderForm";
 import { StatusCard } from "../StatusCard";
+import { addDocument, removeDocument } from "../actions";
 
 export const metadata: Metadata = { title: "Detail PO" };
 export const dynamic = "force-dynamic";
@@ -114,7 +116,18 @@ export default async function OrderDetailPage({ params, searchParams }: { params
         </div>
         <div className="space-y-5 lg:col-span-2">
           {canTouch && !editable && <StatusCard order={order} />}
-          <DocumentsCard order={order} editable={canTouch} error={first(sp.error)} />
+          <DocumentsCard
+            rows={order.documents ?? []}
+            kinds={documentKinds}
+            defaultKind="po"
+            editable={canTouch}
+            error={first(sp.error)}
+            ownerField="orderId"
+            ownerId={order.id}
+            addAction={addDocument}
+            removeAction={removeDocument}
+            empty="Belum ada dokumen. Unggah PDF PO dari pembeli dulu."
+          />
           {money && (
             <Card title="Transaksi PO ini" action={canPay ? { label: "Catat pembayaran", href: addPaymentHref } : undefined}>
               <TxList rows={payments.rows} editable={editable} empty="Belum ada uang masuk atau biaya yang ditautkan ke PO ini." />

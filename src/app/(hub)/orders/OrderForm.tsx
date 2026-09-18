@@ -38,8 +38,18 @@ const rowsOf = (draft: OrderDraft): ItemRow[] =>
     unitPrice: i.unitPrice === null ? "" : groupDigits(String(i.unitPrice)),
   }));
 const itemClass = `${fieldClass} px-2.5 py-2`;
-const itemGrid = "sm:grid-cols-[minmax(0,2.4fr)_1fr_1fr_0.55fr_0.65fr_1.1fr_1.1fr_auto]";
-const itemGridNoMoney = "sm:grid-cols-[minmax(0,2.4fr)_1fr_1fr_0.55fr_0.65fr_auto]";
+const itemGrid = "@3xl:grid-cols-[minmax(0,2.4fr)_1fr_1fr_0.55fr_0.65fr_1.1fr_1.1fr_auto]";
+const itemGridNoMoney = "@3xl:grid-cols-[minmax(0,2.4fr)_1fr_1fr_0.55fr_0.65fr_auto]";
+
+/** One cell of an item row: shows its own label when the row wraps to two lines. */
+function ItemField({ label, className, children }: { label: string; className: string; children: React.ReactNode }) {
+  return (
+    <div className={className}>
+      <span className="mb-0.5 block text-[10px] font-bold uppercase tracking-wider text-muted @3xl:hidden">{label}</span>
+      {children}
+    </div>
+  );
+}
 
 export function OrderForm({
   order,
@@ -204,7 +214,7 @@ export function OrderForm({
             </div>
           </section>
 
-          <section className="space-y-2">
+          <section className="@container space-y-2">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-bold uppercase tracking-wider text-muted">Item</h2>
               {!readOnly && (
@@ -214,8 +224,9 @@ export function OrderForm({
                 </button>
               )}
             </div>
+            {/* Wide container: one row per item with a header row. Narrow (the detail page): two rows with inline labels. */}
             {items.length > 0 && (
-              <div className={`hidden gap-2 px-1 text-[10px] font-bold uppercase tracking-wider text-muted sm:grid ${grid}`}>
+              <div className={`hidden gap-2 px-1 text-[10px] font-bold uppercase tracking-wider text-muted @3xl:grid ${grid}`}>
                 <span>Deskripsi</span>
                 <span>No. material</span>
                 <span>Part number</span>
@@ -227,18 +238,35 @@ export function OrderForm({
               </div>
             )}
             {items.map((r) => (
-              <div key={r.key} className={`grid grid-cols-2 gap-2 rounded-xl border border-line p-2 sm:items-center sm:border-0 sm:p-0 ${grid}`}>
-                <input aria-label="Deskripsi" required className={`${itemClass} col-span-2 sm:col-span-1`} placeholder="Deskripsi barang" value={r.description} onChange={(e) => update(r.key, { description: e.target.value })} />
-                <input aria-label="Nomor material" className={itemClass} placeholder="No. material" value={r.material} onChange={(e) => update(r.key, { material: e.target.value })} />
-                <input aria-label="Part number" className={itemClass} placeholder="Part number" value={r.partNumber} onChange={(e) => update(r.key, { partNumber: e.target.value })} />
-                <input aria-label="Qty" type="number" min={0} step="any" required className={itemClass} placeholder="Qty" value={r.qty} onChange={(e) => update(r.key, { qty: e.target.value })} />
-                <input aria-label="Satuan" className={itemClass} placeholder="Satuan" value={r.uom} onChange={(e) => update(r.key, { uom: e.target.value })} />
+              <div key={r.key} className={`grid grid-cols-6 gap-2 rounded-xl border border-line p-2 @3xl:items-center @3xl:border-0 @3xl:p-0 ${grid}`}>
+                <ItemField label="Deskripsi" className="col-span-6 @3xl:col-auto">
+                  <input aria-label="Deskripsi" required className={itemClass} placeholder="Deskripsi barang" value={r.description} onChange={(e) => update(r.key, { description: e.target.value })} />
+                </ItemField>
+                <ItemField label="No. material" className="col-span-3 @3xl:col-auto">
+                  <input aria-label="Nomor material" className={itemClass} placeholder="No. material" value={r.material} onChange={(e) => update(r.key, { material: e.target.value })} />
+                </ItemField>
+                <ItemField label="Part number" className="col-span-3 @3xl:col-auto">
+                  <input aria-label="Part number" className={itemClass} placeholder="Part number" value={r.partNumber} onChange={(e) => update(r.key, { partNumber: e.target.value })} />
+                </ItemField>
+                <ItemField label="Qty" className="col-span-2 @3xl:col-auto">
+                  <input aria-label="Qty" type="number" min={0} step="any" required className={itemClass} placeholder="Qty" value={r.qty} onChange={(e) => update(r.key, { qty: e.target.value })} />
+                </ItemField>
+                <ItemField label="Satuan" className="col-span-2 @3xl:col-auto">
+                  <input aria-label="Satuan" className={itemClass} placeholder="Satuan" value={r.uom} onChange={(e) => update(r.key, { uom: e.target.value })} />
+                </ItemField>
                 {showMoney && (
-                  <input aria-label="Harga satuan" inputMode="numeric" className={itemClass} placeholder="Harga satuan" value={r.unitPrice} onChange={(e) => update(r.key, { unitPrice: groupDigits(e.target.value.replace(/\D/g, "")) })} />
+                  <ItemField label="Harga satuan" className="col-span-2 @3xl:col-auto">
+                    <input aria-label="Harga satuan" inputMode="numeric" className={itemClass} placeholder="Harga satuan" value={r.unitPrice} onChange={(e) => update(r.key, { unitPrice: groupDigits(e.target.value.replace(/\D/g, "")) })} />
+                  </ItemField>
                 )}
-                {showMoney && <p className="self-center text-right text-sm font-bold">{formatIDR((Number(r.qty) || 0) * num(r.unitPrice))}</p>}
+                {showMoney && (
+                  <p className="col-span-5 self-center text-right text-sm font-bold @3xl:col-auto">
+                    <span className="mr-1.5 text-[10px] font-bold uppercase tracking-wider text-muted @3xl:hidden">Subtotal</span>
+                    {formatIDR((Number(r.qty) || 0) * num(r.unitPrice))}
+                  </p>
+                )}
                 {!readOnly && (
-                  <button type="button" onClick={() => remove(r.key)} aria-label="Hapus item" className="justify-self-end rounded-lg p-1.5 text-muted hover:bg-red-50 hover:text-red-600">
+                  <button type="button" onClick={() => remove(r.key)} aria-label="Hapus item" className={`${showMoney ? "col-span-1" : "col-span-2"} justify-self-end self-center rounded-lg p-1.5 text-muted hover:bg-red-50 hover:text-red-600 @3xl:col-auto`}>
                     <Trash2 className="size-4" />
                   </button>
                 )}

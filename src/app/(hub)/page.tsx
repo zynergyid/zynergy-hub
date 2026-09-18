@@ -17,6 +17,7 @@ import {
 } from "@/lib/finance";
 import { daysLabel, formatDate, formatIDR, formatMonthLong } from "@/lib/format";
 import { getOrderSummary } from "@/lib/orders";
+import { getProjectSummary, projectUnitsOf } from "@/lib/projects";
 import { getOutreachSummary } from "@/lib/outreach";
 import { getVaultSummary } from "@/lib/vault";
 import { first, type Search } from "@/lib/search";
@@ -28,6 +29,7 @@ import { Card } from "@/components/hub/Card";
 import { CategoryBars } from "@/components/hub/CategoryBars";
 import { KpiCard } from "@/components/hub/KpiCard";
 import { OrdersCard } from "@/components/hub/OrdersCard";
+import { ProjectsCard } from "@/components/hub/ProjectsCard";
 import { OutreachCard } from "@/components/hub/OutreachCard";
 import { VaultCard } from "@/components/hub/VaultCard";
 import { PageHeader } from "@/components/hub/PageHeader";
@@ -67,15 +69,18 @@ export default async function HubHome({ searchParams }: { searchParams: Promise<
   const unit = resolveUnit(first(sp.unit), allowed);
   const now = new Date();
   const hasSupply = unit === "supply" || (unit === "semua" && allowed.includes("supply"));
+  const hasProjects = unit === "semua" ? projectUnitsOf(allowed).length > 0 : projectUnitsOf([unit]).length > 0;
 
-  const [counts, renewals, orderSummary, outreach, vault] = await Promise.all([
+  const [counts, renewals, orderSummary, projectSummary, outreach, vault] = await Promise.all([
     getClientCounts(allowed),
     getRenewals(allowed, 30),
     hasSupply ? getOrderSummary(unit, allowed) : null,
+    hasProjects ? getProjectSummary(unit, allowed) : null,
     getOutreachSummary(unit, allowed),
     getVaultSummary(canEditMoney(user)),
   ]);
   const ordersHref = unit === "semua" ? "/orders" : `/orders?unit=${unit}`;
+  const projectsHref = unit === "semua" ? "/projects" : `/projects?unit=${unit}`;
   const outreachHref = unit === "semua" ? "/outreach" : `/outreach?unit=${unit}`;
   const money = canSeeMoney(user)
     ? await Promise.all([
@@ -118,6 +123,7 @@ export default async function HubHome({ searchParams }: { searchParams: Promise<
 
               <OutreachCard summary={outreach} href={outreachHref} />
               {orderSummary && <OrdersCard summary={orderSummary} href={ordersHref} />}
+              {projectSummary && <ProjectsCard summary={projectSummary} href={projectsHref} />}
               <VaultCard docs={vault.expiring} total={vault.total} />
 
               <div className="grid gap-4 lg:grid-cols-5">
@@ -196,6 +202,7 @@ export default async function HubHome({ searchParams }: { searchParams: Promise<
           </div>
           <OutreachCard summary={outreach} href={outreachHref} />
           {orderSummary && <OrdersCard summary={orderSummary} href={ordersHref} showMoney={false} />}
+          {projectSummary && <ProjectsCard summary={projectSummary} href={projectsHref} showMoney={false} />}
           <VaultCard docs={vault.expiring} total={vault.total} />
           <Card title="Perpanjangan terdekat" action={{ label: "Semua klien", href: "/clients" }}>
             {renewals.length === 0 ? <p className="text-sm text-muted">Tidak ada perpanjangan dalam 30 hari.</p> : (

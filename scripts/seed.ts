@@ -117,6 +117,58 @@ if (prospects.totalDocs === 0) {
   payload.logger.info("Seeded sample prospect");
 }
 
+const projects = await payload.find({ collection: "projects", limit: 1 });
+if (projects.totalDocs === 0) {
+  const klinik = await payload.find({ collection: "clients", where: { name: { contains: "Klinik Gigi" } }, limit: 1 });
+  const admin = await payload.find({ collection: "users", where: { email: { equals: "admin@zynergy.local" } }, limit: 1 });
+  if (klinik.totalDocs > 0) {
+    const today = new Date();
+    const shift = (n: number) => new Date(today.getTime() + n * 86400000).toISOString();
+    await payload.create({
+      collection: "projects",
+      data: {
+        unit: "digital",
+        name: "Website klinik + booking WhatsApp",
+        client: klinik.docs[0].id,
+        owner: admin.docs[0]?.id,
+        stage: "build",
+        health: "berisiko",
+        value: 4500000,
+        dpPercent: 50,
+        startDate: shift(-21),
+        targetDate: shift(14),
+        nextAction: "Kirim link staging untuk review",
+        nextActionAt: shift(2),
+        blocker: "Foto ruang praktik dari klien",
+        brief: {
+          goals: "Pasien baru menemukan klinik lewat Google dan langsung booking lewat WhatsApp tanpa telepon.",
+          users: "Pasien (HP), resepsionis yang menerima booking, drg. Sari yang memeriksa jadwal.",
+          currentFlow: "Pasien cari di Google, telepon klinik, resepsionis catat di buku, sering bentrok jadwal.",
+          targetFlow: "Pasien buka website, lihat layanan dan harga, tekan tombol WhatsApp dengan pesan terisi, resepsionis balas dan catat.",
+          successMeasure: "Minimal 10 booking lewat WhatsApp per bulan setelah 3 bulan.",
+          constraints: "Foto ruang praktik belum ada. Domain lama masih di penyedia lain.",
+          confirmedAt: shift(-19),
+        },
+        deliverables: [
+          { title: "Struktur halaman disetujui", done: true, doneAt: shift(-14) },
+          { title: "Desain halaman utama disetujui", done: true, doneAt: shift(-7) },
+          { title: "Halaman layanan dan harga", done: false },
+          { title: "Tombol booking WhatsApp", done: false },
+          { title: "Google Business Profile terhubung", done: false },
+        ],
+        log: [
+          { date: shift(-21), type: "tahap", note: "Proyek dibuat, mulai di Discovery" },
+          { date: shift(-18), type: "keputusan", note: "Klien pilih paket Business, DP 50% masuk" },
+          { date: shift(-7), type: "klien", note: "Minta warna lebih terang di halaman utama" },
+          { date: shift(-1), type: "status", note: "Berisiko, menunggu foto ruang praktik dari klien" },
+        ],
+        notes: "Contoh proyek dari seed lokal.",
+      },
+    });
+    payload.logger.info("Seeded sample project");
+  }
+}
+
 for (const u of [
   { email: "finance.digital@zynergy.local", name: "Finance Digital", role: "finance", units: ["digital"], title: "Finance" },
   { email: "pengawas@zynergy.local", name: "Pengawas Test", role: "viewer", units: [], title: "Komisaris" },

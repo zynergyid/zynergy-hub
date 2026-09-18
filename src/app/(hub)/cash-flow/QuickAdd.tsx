@@ -11,6 +11,7 @@ import { ConfirmButton } from "@/components/hub/ConfirmButton";
 import { Select } from "@/components/hub/Select";
 import { paymentMethods, transactionCategories, units, type Unit } from "@/lib/options";
 import type { ClientOption, OrderOption } from "@/lib/orders";
+import type { ProjectOption } from "@/lib/projects";
 import { deleteTransaction, saveTransaction, type QuickAddState } from "./actions";
 
 /** Plain, serializable subset of a transaction for the edit sheet. */
@@ -24,6 +25,7 @@ export interface EditingTx {
   method: string | null;
   client: number | null;
   order: number | null;
+  project: number | null;
   reference: string | null;
   notes: string | null;
   receiptUrl: string | null;
@@ -39,6 +41,7 @@ export function QuickAdd({
   units: allowedUnits,
   clients,
   orders = [],
+  projects = [],
   editing = null,
   prefill = null,
   closeHref = "/cash-flow",
@@ -47,6 +50,7 @@ export function QuickAdd({
   units: Unit[];
   clients: ClientOption[];
   orders?: OrderOption[];
+  projects?: ProjectOption[];
   editing?: EditingTx | null;
   prefill?: TxPreset | null;
   closeHref?: string;
@@ -170,6 +174,12 @@ export function QuickAdd({
                 <div>
                   <Label htmlFor="qa-order">PO terkait</Label>
                   <Select id="qa-order" name="order" defaultValue={seed?.order ? String(seed.order) : undefined} placeholder="Tanpa PO" options={orders.map((o) => ({ label: o.label, value: String(o.id) }))} />
+                </div>
+              )}
+              {projects.length > 0 && (
+                <div>
+                  <Label htmlFor="qa-project">Proyek terkait</Label>
+                  <Select id="qa-project" name="project" defaultValue={seed?.project ? String(seed.project) : undefined} placeholder="Tanpa proyek" options={projects.map((o) => ({ label: o.label, value: String(o.id) }))} />
                 </div>
               )}
 

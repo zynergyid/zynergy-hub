@@ -11,6 +11,8 @@ import * as migration_20260917_162501_outreach_prospects_api_keys from './202609
 import * as migration_20260917_163932_prospect_history from './20260917_163932_prospect_history';
 import * as migration_20260917_171115_vault from './20260917_171115_vault';
 import * as migration_20260917_173829_vault_thumbnail from './20260917_173829_vault_thumbnail';
+import * as migration_20260918_184010_projects from './20260918_184010_projects';
+import * as migration_20260918_191416_project_brief from './20260918_191416_project_brief';
 
 export const migrations = [
   {
@@ -76,6 +78,16 @@ export const migrations = [
   {
     up: migration_20260917_173829_vault_thumbnail.up,
     down: migration_20260917_173829_vault_thumbnail.down,
-    name: '20260917_173829_vault_thumbnail'
+    name: '20260917_173829_vault_thumbnail',
+  },
+  {
+    up: migration_20260918_184010_projects.up,
+    down: migration_20260918_184010_projects.down,
+    name: '20260918_184010_projects',
+  },
+  {
+    up: migration_20260918_191416_project_brief.up,
+    down: migration_20260918_191416_project_brief.down,
+    name: '20260918_191416_project_brief'
   },
 ];

@@ -7,8 +7,8 @@ import { Avatar } from "./Avatar";
 import { LogoutButton } from "./LogoutButton";
 import { cn } from "@/lib/cn";
 import type { Role } from "@/lib/access";
-import { roleLabel } from "@/lib/options";
-import { navSections, type NavItem } from "./nav";
+import { roleLabel, type Unit } from "@/lib/options";
+import { canSeeNav, navSections } from "./nav";
 import { NavIcon } from "./NavIcon";
 
 function isActive(pathname: string, href: string) {
@@ -17,11 +17,7 @@ function isActive(pathname: string, href: string) {
   return pathname === base || pathname.startsWith(base + "/");
 }
 
-function canSee(item: NavItem, role: Role) {
-  return !item.roles || item.roles.includes(role);
-}
-
-export function Sidebar({ role, userName }: { role: Role; userName: string }) {
+export function Sidebar({ role, units, userName }: { role: Role; units: Unit[]; userName: string }) {
   const pathname = usePathname();
   return (
     <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-line bg-white md:flex">
@@ -33,7 +29,7 @@ export function Sidebar({ role, userName }: { role: Role; userName: string }) {
       </div>
       <nav className="flex-1 overflow-y-auto px-3 py-4">
         {navSections.map((section) => {
-          const items = section.items.filter((i) => canSee(i, role));
+          const items = section.items.filter((i) => canSeeNav(i, role, units));
           if (items.length === 0) return null;
           return (
             <div key={section.title} className="mb-5">

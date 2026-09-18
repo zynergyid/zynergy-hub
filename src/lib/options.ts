@@ -177,6 +177,60 @@ export const usdToIdrApprox = 16500;
 
 export const aiFeatures = [{ label: "Impor PDF PO", value: "po-import" }] as const;
 
+/**
+ * Digital and Apps projects: the seven steps every agency runs (each ends with
+ * a written artifact and a client sign-off), then closed. The hint says what
+ * "done" means for the step; the project page shows it under the stepper.
+ */
+export const projectStages = [
+  { label: "Discovery", value: "discovery", hint: "Brief satu halaman: tujuan, pengguna, alur sekarang, ukuran sukses. Klien mengonfirmasi brief." },
+  { label: "Scope & DP", value: "scope", hint: "Scope tertulis: deliverable, milestone, harga, termin, kriteria terima, pengecualian. Ditandatangani, DP masuk." },
+  { label: "Kickoff", value: "kickoff", hint: "Rencana: siapa mengerjakan apa, checklist aset dengan tanggal, kanal komunikasi, jadwal check-in mingguan." },
+  { label: "Desain", value: "desain", hint: "Struktur lalu tampilan (aplikasi: layar dan model data). Persetujuan tertulis sebelum build; perubahan setelah ini paling mahal." },
+  { label: "Build", value: "build", hint: "Versi staging yang berjalan, konten dan aset terpasang, QA internal sebelum klien melihat." },
+  { label: "Review", value: "review", hint: "Klien menguji lewat satu kanal umpan balik; isu ditandai perbaiki sekarang atau setelah launch. Satu orang yang ditunjuk menandatangani serah terima; pelunasan jatuh tempo." },
+  { label: "Launch", value: "launch", hint: "Checklist launch, kredensial, pelatihan singkat, dokumen serah terima. Review 30 hari setelah launch." },
+  { label: "Selesai", value: "selesai", hint: "Proyek ditutup: review 30 hari selesai, catatan pelajaran ditulis." },
+  { label: "Batal", value: "batal", hint: "Dihentikan sebelum selesai." },
+] as const;
+export type ProjectStage = (typeof projectStages)[number]["value"];
+export const projectStageLabel = new Map<string, string>(projectStages.map((s) => [s.value, s.label]));
+export const projectStageHint = new Map<string, string>(projectStages.map((s) => [s.value, s.hint]));
+/** Stages a running project passes through, in order; the stepper shows these plus Selesai. */
+export const openProjectStages: readonly ProjectStage[] = ["discovery", "scope", "kickoff", "desain", "build", "review", "launch"];
+
+/** Weekly health flag, chosen by the owner, never computed. */
+export const projectHealth = [
+  { label: "Lancar", value: "lancar" },
+  { label: "Berisiko", value: "berisiko" },
+  { label: "Terhambat", value: "terhambat" },
+] as const;
+export type ProjectHealth = (typeof projectHealth)[number]["value"];
+export const projectHealthLabel = new Map<string, string>(projectHealth.map((h) => [h.value, h.label]));
+
+/** Dated entries on a project: the small-team version of a decision and change log. */
+export const projectLogTypes = [
+  { label: "Catatan", value: "catatan" },
+  { label: "Keputusan", value: "keputusan" },
+  { label: "Perubahan scope", value: "perubahan" },
+  { label: "Masukan klien", value: "klien" },
+  { label: "Tahap", value: "tahap" },
+  { label: "Status", value: "status" },
+] as const;
+export const projectLogLabel = new Map<string, string>(projectLogTypes.map((t) => [t.value, t.label]));
+
+/** Files that live on a project. */
+export const projectDocumentKinds = [
+  { label: "Brief", value: "brief" },
+  { label: "Scope / penawaran", value: "scope" },
+  { label: "Invoice", value: "invoice" },
+  { label: "Serah terima", value: "serah-terima" },
+  { label: "Lainnya", value: "lainnya" },
+] as const;
+
+/** Units whose unit of work is a project; Supply's is a PO. */
+export const projectUnits: readonly Unit[] = ["digital", "apps"];
+
 export const categoryLabel = new Map<string, string>(
   transactionCategories.map((c) => [c.value, c.label]),
 );

@@ -12,6 +12,7 @@ import { canEditMoney, getSessionUser } from "@/lib/session";
 import { canTouchOrder, canWriteUnit } from "@/lib/access";
 import { dateOrNull, digits, pick, text } from "@/lib/form-data";
 import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MESSAGE, uploadFile } from "@/lib/uploads";
+import { keepDocumentRows } from "@/lib/documents";
 import { documentKinds, orderStatuses, units } from "@/lib/options";
 
 export interface OrderFormState {
@@ -31,15 +32,6 @@ interface ItemInput {
   uom?: unknown;
   unitPrice?: unknown;
 }
-
-/** Existing document rows as plain data, so an update keeps them. */
-const keepDocuments = (order: Order | null) =>
-  (order?.documents ?? []).map((d) => ({
-    id: d.id ?? undefined,
-    kind: d.kind,
-    file: typeof d.file === "object" && d.file ? d.file.id : d.file,
-    note: d.note ?? null,
-  }));
 
 function revalidateOrders(id?: number) {
   revalidatePath("/orders");
@@ -105,7 +97,7 @@ export async function saveOrder(_prev: OrderFormState, formData: FormData): Prom
       if (!existing || !canWriteUnit(user, existing.unit, true)) return err("PO tidak ditemukan atau di luar unit Anda.");
     }
     const revision = Math.max(0, Math.floor(Number(text(formData, "revision")) || 0));
-    const documents = keepDocuments(existing);
+    const documents = keepDocumentRows(existing?.documents);
     if (poFile instanceof File && poFile.size > 0) {
       const uploaded = await uploadFile(payload, "documents", { unit }, poFile);
       documents.push({ id: undefined, kind: "po", file: uploaded.id, note: revision ? `Revisi ${revision}` : null });
@@ -231,7 +223,7 @@ export async function deleteOrder(formData: FormData) {
   const payload = await getPayloadClient();
   const existing = await payload.findByID({ collection: "orders", id, depth: 0, disableErrors: true });
   if (!existing || !canWriteUnit(user, existing.unit, true)) return;
-  for (const d of keepDocuments(existing)) {
+  for (const d of keepDocumentRows(existing.documents)) {
     await payload.delete({ collection: "documents", id: d.file }).catch(() => undefined);
   }
   await payload.delete({ collection: "orders", id });
@@ -274,7 +266,7 @@ export async function addDocument(formData: FormData) {
     await ctx.payload.update({
       collection: "orders",
       id: orderId,
-      data: { documents: [...keepDocuments(ctx.order), { id: undefined, kind, file: uploaded.id, note: text(formData, "note") || null }] },
+      data: { documents: [...keepDocumentRows(ctx.order.documents), { id: undefined, kind, file: uploaded.id, note: text(formData, "note") || null }] },
     });
   } catch (error) {
     console.error("addDocument failed:", error);
@@ -290,7 +282,7 @@ export async function removeDocument(formData: FormData) {
   if (!orderId || !rowId) return;
   const ctx = await loadTouchable(orderId);
   if (!ctx) return;
-  const rows = keepDocuments(ctx.order);
+  const rows = keepDocumentRows(ctx.order.documents);
   const gone = rows.find((r) => r.id === rowId);
   if (!gone) return;
   await ctx.payload.update({ collection: "orders", id: orderId, data: { documents: rows.filter((r) => r.id !== rowId) } });

@@ -3,6 +3,7 @@ import { getSessionUser } from "@/lib/session";
 import { Sidebar } from "@/components/hub/Sidebar";
 import { MobileTabs } from "@/components/hub/MobileTabs";
 import { SessionKeepAlive } from "@/components/hub/SessionKeepAlive";
+import { OverflowGuard } from "@/components/hub/OverflowGuard";
 import { BrandMark } from "@/components/ui/BrandMark";
 import Link from "next/link";
 import { LogoutButton } from "@/components/hub/LogoutButton";
@@ -29,7 +30,7 @@ export default async function HubLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-screen bg-surface text-ink antialiased">
         {user ? (
           <div className="flex min-h-screen">
-            <Sidebar role={user.role} userName={user.name} />
+            <Sidebar role={user.role} units={user.units} userName={user.name} />
             <div className="flex min-w-0 flex-1 flex-col">
               <header className="sticky top-0 z-30 flex h-14 items-center gap-2.5 border-b border-line bg-white px-4 md:hidden">
                 <BrandMark className="size-7 text-navy" />
@@ -41,12 +42,14 @@ export default async function HubLayout({ children }: LayoutProps<"/">) {
                 </Link>
                 <LogoutButton />
               </header>
-              <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-24 pt-5 sm:px-6 md:pb-10 md:pt-8">
+              {/* overflow-x-clip: nothing a page renders can widen the phone screen; see HANDOFF "Layar HP". */}
+              <main className="mx-auto w-full max-w-6xl flex-1 overflow-x-clip px-4 pb-24 pt-5 sm:px-6 md:pb-10 md:pt-8">
                 {children}
               </main>
             </div>
-            <MobileTabs role={user.role} />
+            <MobileTabs role={user.role} units={user.units} />
             <SessionKeepAlive />
+            {process.env.NODE_ENV !== "production" && <OverflowGuard />}
           </div>
         ) : (
           children

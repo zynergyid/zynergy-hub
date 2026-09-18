@@ -16,6 +16,7 @@ import { KpiCard } from "@/components/hub/KpiCard";
 import { PageHeader } from "@/components/hub/PageHeader";
 import { Avatar } from "@/components/hub/Avatar";
 import { clientOf, getOrderPayments, getOrders, orderTotal, toOrderOption } from "@/lib/orders";
+import { clientOfProject, getProjectPayments, getProjects, nextPayment, toProjectOption } from "@/lib/projects";
 import { QuickAdd, type EditingTx, type TxPreset } from "./QuickAdd";
 
 export const metadata: Metadata = { title: "Arus Kas" };
@@ -41,11 +42,12 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
   const base: Search = { unit, month: monthKey(month), q: q || undefined, category: category || undefined };
 
   const payload = await getPayloadClient();
-  const [ledger, clientsRes, um, openOrders] = await Promise.all([
+  const [ledger, clientsRes, um, openOrders, openProjects] = await Promise.all([
     getLedger({ unit, allowed, month, q, category }),
     payload.find({ collection: "clients", limit: 500, sort: "name", select: { name: true, unit: true } }),
     getUnitMonth(unit, allowed, month),
     getOrders({ unit, allowed, filter: "berjalan" }),
+    getProjects({ unit, allowed, filter: "berjalan" }),
   ]);
   const editId = editable ? Number(first(sp.edit) || 0) : 0;
   const clientOptions = clientsRes.docs
@@ -53,6 +55,7 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
     .map((c) => ({ id: c.id, name: c.name, unit: c.unit as Unit }));
   const quickAddUnit: Unit = unit === "semua" ? allowed[0] : unit;
   const orderOptions = openOrders.map(toOrderOption);
+  const projectOptions = openProjects.map(toProjectOption);
 
   let editing: EditingTx | null = null;
   if (editId) {
@@ -68,6 +71,7 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
         method: t.method ?? null,
         client: typeof t.client === "object" && t.client ? t.client.id : (t.client ?? null),
         order: typeof t.order === "object" && t.order ? t.order.id : (t.order ?? null),
+        project: typeof t.project === "object" && t.project ? t.project.id : (t.project ?? null),
         reference: t.reference ?? null,
         notes: t.notes ?? null,
         receiptUrl: typeof t.receipt === "object" && t.receipt ? (t.receipt.url ?? null) : null,
@@ -75,6 +79,8 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
       // A closed PO is not in the open list; keep its option so editing does not drop the link.
       const linked = t.order;
       if (typeof linked === "object" && linked && !orderOptions.some((o) => o.id === linked.id)) orderOptions.push(toOrderOption(linked));
+      const linkedProject = t.project;
+      if (typeof linkedProject === "object" && linkedProject && !projectOptions.some((o) => o.id === linkedProject.id)) projectOptions.push(toProjectOption(linkedProject));
     }
   }
 
@@ -99,6 +105,27 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
       if (c && !clientOptions.some((x) => x.id === c.id)) clientOptions.push({ id: c.id, name: c.name, unit: c.unit });
     }
   }
+  // "Catat DP" from a project page: the DP before any money came in, then the remainder.
+  const addProjectId = editable && !editing && !addOrderId && first(sp.add) ? Number(first(sp.project) || 0) : 0;
+  if (addProjectId) {
+    const p = await payload.findByID({ collection: "projects", id: addProjectId, depth: 1, disableErrors: true });
+    if (p && allowed.includes(p.unit)) {
+      const { paid } = await getProjectPayments(p.id);
+      const c = clientOfProject(p);
+      const due = nextPayment(p, paid);
+      prefill = {
+        unit: p.unit,
+        type: "masuk",
+        category: "pembayaran-klien",
+        client: c?.id ?? null,
+        project: p.id,
+        amount: due?.amount ?? 0,
+        reference: due ? `${due.label[0].toUpperCase()}${due.label.slice(1)} ${p.name}` : p.name,
+      };
+      if (!projectOptions.some((x) => x.id === p.id)) projectOptions.push(toProjectOption(p));
+      if (c && !clientOptions.some((x) => x.id === c.id)) clientOptions.push({ id: c.id, name: c.name, unit: c.unit });
+    }
+  }
   const closeHref = href(base, { edit: undefined });
 
   const groups = new Map<string, typeof ledger.rows>();
@@ -119,7 +146,7 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
           CSV
         </a>
         {editable && (
-          <QuickAdd key={editing?.id ?? (prefill ? `po-${prefill.order}` : "new")} unit={quickAddUnit} units={allowed} clients={clientOptions} orders={orderOptions} editing={editing} prefill={prefill} closeHref={closeHref} />
+          <QuickAdd key={editing?.id ?? (prefill ? `pre-${prefill.order ?? prefill.project}` : "new")} unit={quickAddUnit} units={allowed} clients={clientOptions} orders={orderOptions} projects={projectOptions} editing={editing} prefill={prefill} closeHref={closeHref} />
         )}
       </PageHeader>
 

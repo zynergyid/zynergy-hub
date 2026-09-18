@@ -4,12 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
 import type { Role } from "@/lib/access";
-import { mobileTabs } from "./nav";
+import type { Unit } from "@/lib/options";
+import { canSeeNav, mobileTabs } from "./nav";
 import { NavIcon } from "./NavIcon";
 
-export function MobileTabs({ role }: { role: Role }) {
+export function MobileTabs({ role, units }: { role: Role; units: Unit[] }) {
   const pathname = usePathname();
-  const tabs = mobileTabs.filter((t) => !t.roles || t.roles.includes(role));
+  const tabs = mobileTabs.filter((t) => canSeeNav(t, role, units));
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white/95 backdrop-blur md:hidden">
       <ul className="flex" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>

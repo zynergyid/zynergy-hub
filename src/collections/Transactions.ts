@@ -79,6 +79,7 @@ export const Transactions: CollectionConfig = {
     },
     { name: "client", type: "relationship", relationTo: "clients", label: "Klien" },
     { name: "order", type: "relationship", relationTo: "orders", label: "PO" },
+    { name: "project", type: "relationship", relationTo: "projects", label: "Proyek" },
     {
       name: "reference",
       type: "text",

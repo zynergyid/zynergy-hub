@@ -16,12 +16,16 @@ export interface QuickAddState {
   message?: string;
 }
 
-function revalidate(orderId?: number | null) {
+function revalidate(orderId?: number | null, projectId?: number | null) {
   revalidatePath("/cash-flow");
   revalidatePath("/");
   if (orderId) {
     revalidatePath("/orders");
     revalidatePath(`/orders/${orderId}`);
+  }
+  if (projectId) {
+    revalidatePath("/projects");
+    revalidatePath(`/projects/${projectId}`);
   }
 }
 
@@ -50,6 +54,7 @@ export async function saveTransaction(_prev: QuickAddState, formData: FormData):
   const method = pick(paymentMethods, text(formData, "method"));
   const clientId = Number(text(formData, "client")) || null;
   const orderId = Number(text(formData, "order")) || null;
+  const projectId = Number(text(formData, "project")) || null;
   const reference = text(formData, "reference");
   const notes = text(formData, "notes");
   const receipt = formData.get("receipt");
@@ -68,6 +73,10 @@ export async function saveTransaction(_prev: QuickAddState, formData: FormData):
       const order = await payload.findByID({ collection: "orders", id: orderId, depth: 0, disableErrors: true });
       if (!order || order.unit !== unit) return { status: "error", message: "PO tidak ditemukan atau bukan dari unit ini." };
     }
+    if (projectId) {
+      const project = await payload.findByID({ collection: "projects", id: projectId, depth: 0, disableErrors: true });
+      if (!project || project.unit !== unit) return { status: "error", message: "Proyek tidak ditemukan atau bukan dari unit ini." };
+    }
     let receiptId: number | undefined;
     if (receipt instanceof File && receipt.size > 0) {
       receiptId = (await uploadFile(payload, "receipts", { unit }, receipt)).id;
@@ -81,6 +90,7 @@ export async function saveTransaction(_prev: QuickAddState, formData: FormData):
       method: method ?? null,
       client: clientId,
       order: orderId,
+      project: projectId,
       reference: reference || null,
       notes: notes || null,
       ...(receiptId ? { receipt: receiptId } : {}),
@@ -100,7 +110,7 @@ export async function saveTransaction(_prev: QuickAddState, formData: FormData):
     return { status: "error", message: "Gagal menyimpan. Coba lagi." };
   }
 
-  revalidate(orderId);
+  revalidate(orderId, projectId);
   return { status: "success" };
 }
 
@@ -113,7 +123,7 @@ export async function deleteTransaction(formData: FormData) {
   const existing = await payload.findByID({ collection: "transactions", id, depth: 0, disableErrors: true });
   if (!existing || !canWriteUnit(user, existing.unit, true)) return;
   await payload.delete({ collection: "transactions", id });
-  revalidate(typeof existing.order === "number" ? existing.order : null);
+  revalidate(typeof existing.order === "number" ? existing.order : null, typeof existing.project === "number" ? existing.project : null);
   const back = String(formData.get("closeHref") || "/cash-flow");
   redirect(back);
 }

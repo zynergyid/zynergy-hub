@@ -87,6 +87,88 @@
   mengubah nama, email, dan password sendiri (wajib setelah login pertama
   dengan password sementara).
 
+## Proyek (Digital/Apps), 2026-09-19
+
+Pemicu: klien Digital pertama (aplikasi asesmen ergonomi RULA, berbasis web)
+dan pertanyaan Danish "kalau ada 6 proyek, bagaimana tahu status masing-
+masing?". Aplikasi kliennya sendiri TIDAK dibangun di Hub (repo dan deploy
+terpisah, pengguna luar); yang masuk Hub hanya sisi bisnisnya. Riset praktik
+agensi/konsultan (ybug, Teamwork, PMBOK, RAID log) dirangkum jadi tujuh
+tahap yang tiap tahap ditutup artefak tertulis dan persetujuan klien; Hub
+memakai versi "agensi kecil", bukan versi enterprise.
+
+- Koleksi `projects` (migrasi `20260918_184010_projects`): unit, name,
+  client, stage (discovery, scope, kickoff, desain, build, review, launch,
+  selesai, batal), health (lancar/berisiko/terhambat; dipilih PJ tiap minggu,
+  tidak dihitung), owner, stageChangedAt (diisi hook saat stage berubah),
+  value + dpPercent (field uang, akses level field seperti PO), startDate,
+  targetDate, nextAction + nextActionAt, blocker ("menunggu apa"),
+  deliverables[] (title, done, doneAt), log[] (date, type, note),
+  documents[] (kind, file -> koleksi `documents`, note), links (repo,
+  staging, live), notes. `transactions.project` menautkan DP dan pelunasan.
+- Akses = aturan Pesanan: baca dan sentuh (tahap, status, deliverable,
+  riwayat, dokumen) siapa pun di unit itu; buat/hapus dan data uang hanya
+  peran uang; pengawas hanya melihat. Pilihan tahap, kesehatan, jenis
+  riwayat, jenis dokumen, dan `projectUnits` ada di `lib/options.ts`;
+  helper di `lib/projects.ts` (getProjects dengan urutan: berjalan dulu,
+  lewat tenggat dulu, lalu terhambat > berisiko > lancar, lalu tenggat
+  terdekat; getProjectSummary; getProjectPayments; nextPayment = DP sebelum
+  ada uang masuk, lalu sisa).
+- Layar: /projects (filter Berjalan/Selesai/Semua, tab unit hanya
+  Digital/Apps), /projects/new (klien bisa diprefill `?client=`),
+  /projects/[id] dengan kartu Tahap (stepper 7 langkah + Selesai, tombol
+  "Lanjut ke ..." dengan catatan, select untuk mundur/batal), Status
+  mingguan (kesehatan, menunggu apa, langkah berikutnya + tenggat),
+  Deliverable (centang, progres), Riwayat (catatan/keputusan/perubahan
+  scope/masukan klien; tahap dan status dicatat otomatis), form data,
+  Dokumen, Transaksi proyek. Tombol "Catat DP"/"Catat pelunasan" membuka
+  Arus Kas dengan nominal terisi (`/cash-flow?add=1&project=ID`).
+- Ringkasan: kartu "Proyek berjalan" (jumlah + nilai, perlu perhatian,
+  lewat tenggat, 5 teratas). Detail klien Digital/Apps: kartu "Proyek klien
+  ini" + tombol "Proyek baru". Sidebar dan tab HP: Pesanan hanya untuk unit
+  Supply, Proyek hanya Digital/Apps (`NavItem.units`, `canSeeNav`); admin
+  melihat keduanya (6 tab di HP, muat di 375px).
+- DRY: `components/hub/DocumentsCard.tsx` sekarang generik (dipakai PO dan
+  proyek, menerima action dan nama field pemilik); `lib/documents.ts`
+  `keepDocumentRows` dipakai kedua action.
+- **Brief** (migrasi `20260918_191416_project_brief`, grup `brief` di
+  proyek): tujuan bisnis, pengguna, alur sekarang, alur yang diinginkan,
+  ukuran sukses, batasan, `confirmedAt`. Ini analisis bisnis satu halaman
+  dari sesi discovery, ditulis di Hub (kartu Brief di halaman proyek) supaya
+  bisa dijadikan syarat: `setStage` menolak meninggalkan Discovery (kecuali
+  ke Batal) kalau tiga kolom wajib (tujuan, pengguna, alur sekarang) kosong,
+  dengan pesan lewat `?error=brief`. Centang "klien sudah mengonfirmasi"
+  mengisi `confirmedAt` dan mencatat riwayat "Brief dikonfirmasi klien".
+  Keputusan Danish 2026-09-19 ("your choice"): perencanaan dibuat
+  proporsional, kira-kira satu hari per minggu build; brief plus scope,
+  bukan dokumen panjang. Draf brief RULA dan 15 pertanyaan discovery
+  dikirim ke Danish sebagai file terpisah (bukan di repo, data klien).
+- **Skill `/brief`** di `~/.claude/skills/brief/SKILL.md` (di luar repo,
+  seat Claude Code Danish, pola sama dengan /outreach): dari catatan
+  pertemuan dan dokumen klien (PDF, xlsx lewat openpyxl) menulis enam kolom
+  brief lewat `PATCH /api/projects/<id>` (grup `brief` dikirim utuh,
+  `confirmedAt` dipertahankan, `log` ditambah satu entri "Brief disusun
+  /brief ..., perlu diperiksa"); mode `pertanyaan` menyusun pertanyaan
+  discovery; mode `arsitektur` menulis ARCHITECTURE.md di repo aplikasi
+  klien. Tidak pernah mencentang konfirmasi atau mengubah tahap. Baru bisa
+  dipakai ke prod setelah modul Proyek di-deploy; untuk lokal buat
+  `~/.config/zynergy-hub/env.local` (HUB_URL=http://localhost:3011 + kunci
+  dari /profile lokal) dan bilang "lokal". Diputuskan 2026-09-19 setelah
+  membandingkan dengan pola Charlie (tombol di Hub + antrean + worker di
+  mesin Danish): skill dulu karena hanya Danish yang menulis brief;
+  antrean dan worker (satu hari kerja) ditambahkan kalau orang kedua perlu
+  menekan tombolnya, dan skill ini yang jadi otaknya.
+- Seed lokal: satu proyek contoh (Klinik Gigi, tahap Build, berisiko,
+  brief terisi dan dikonfirmasi).
+- Jebakan migrasi: `payload migrate` bertanya "run in dev mode ... data
+  loss will occur? (y/N)" karena server dev pernah push schema; jawab y
+  (`printf 'y\n' | npx payload migrate`), data lokal tetap ada selama
+  server dev dimatikan SEBELUM koleksi diubah. Dengan stdin kosong prompt
+  itu menggantung tanpa pesan.
+- Belum: laporan Excel keuangan belum memasukkan piutang proyek (baru PO);
+  pengingat mingguan untuk mengisi status; skill Claude Code untuk menyusun
+  brief/scope dari catatan discovery.
+
 ## Laporan Keuangan Ringkas untuk komisaris (2026-09-11 malam)
 
 - Tombol "Laporan Excel" di Ringkasan (peran uang, termasuk Pengawas)
@@ -117,6 +199,28 @@
   halaman; lembar kedua "Per Kategori". Angka dari `getLedger`, sama dengan
   layar. CSV mentah tetap ada sebagai tautan kecil untuk impor ke software
   akuntansi.
+
+## Baris item PO menyesuaikan lebar (2026-09-18)
+
+- Di halaman detail PO form hanya 3/5 lebar, jadi delapan kolom item dalam
+  satu baris terpotong (qty, satuan, harga tidak terbaca; terlihat di prod
+  setelah impor PO Freeport). OrderForm memakai container query Tailwind v4:
+  section item `@container`; di bawah `@3xl` (48rem) tiap item dua baris
+  dengan label kecil per kolom (`ItemField`), di atasnya satu baris dengan
+  header kolom. Halaman PO baru (max-w-4xl) memakai satu baris, halaman
+  detail dua baris.
+
+## Umpan balik navigasi (2026-09-18)
+
+- Keluhan: tab (Semua/Digital/..., filter status) "kadang tidak terklik".
+  Penyebab: navigasi klien memuat halaman dinamis dari server (fungsi
+  Vercel + query Neon, 1 sampai 3 detik saat dingin) tanpa tanda apa pun.
+- Obat: `src/app/(hub)/loading.tsx` (kerangka abu-abu langsung tampil saat
+  navigasi mulai, berlaku untuk semua halaman Hub) dan `SegmentedLinks`
+  jadi client component dengan `useLinkStatus` (spinner kecil di tab yang
+  diklik selama permintaannya berjalan). Kalau masih terasa lambat, langkah
+  berikutnya adalah mempercepat query (Ringkasan memuat semua transaksi
+  untuk KPI) atau menambah cache per request.
 
 ## Batas unggahan (2026-09-18, bug prod pertama Brankas)
 
@@ -252,8 +356,28 @@
   Metode, Bukti muncul mulai xl (1280px). Baris empat kartu KPI (Ringkasan,
   Arus Kas, detail PO, Alat) jadi empat kolom mulai xl, di bawahnya dua kolom,
   supaya nominal besar tidak patah baris.
-- Cara cek cepat: di DevTools mode HP, `document.documentElement.scrollWidth`
-  harus sama dengan `window.innerWidth`.
+- Kasus kedua (2026-09-18, Klien dan Outreach di prod): `SegmentedLinks`
+  adalah `inline-flex` tanpa wrap; enam pil status ("Aktif ... Semua") lebar
+  454px, lima pil Klien 408px = pas sekali di 440px, lalu lewat batas begitu
+  fontnya Segoe UI (Windows) atau layarnya 390px. Obat di akar, bukan per
+  halaman:
+  1. `SegmentedLinks` sekarang `max-w-full flex-wrap` dengan label
+     `whitespace-nowrap`: pil turun ke baris kedua, halaman tidak pernah
+     ikut melebar. Berlaku untuk semua pemakainya (UnitTabs, filter status).
+  2. `<main>` di `(hub)/layout.tsx` memakai `overflow-x-clip`: apa pun yang
+     dirender halaman tidak bisa lagi mendorong dokumen lebih lebar dari
+     layar HP. Konten yang terlalu lebar terpotong di tepi, bukan menggeser
+     bar bawah.
+  3. `OverflowGuard` (hanya `NODE_ENV !== "production"`) dipasang di layout:
+     setelah tiap navigasi dan saat resize, `console.warn` menyebut elemen di
+     dalam `<main>` yang lebih lebar dari layar, kecuali yang berada di dalam
+     pembungkus `overflow-x-auto` (tabel yang memang boleh di-scroll). Jadi
+     halaman baru yang melebar langsung ketahuan di console dev, tanpa harus
+     menunggu laporan dari HP.
+- Cara cek cepat yang benar: buka halaman di DevTools mode HP dan lihat
+  console; jangan andalkan `scrollWidth == innerWidth`, karena emulasi HP
+  Chrome ikut memperlebar `innerWidth` saat konten meluap (di sana 470 saat
+  layar 440), sehingga perbandingan itu selalu tampak "sama".
 
 ## Sesi login dan "Ingat saya" (2026-09-17)
 
@@ -494,9 +618,11 @@ Berikutnya, urut prioritas:
    review hanya nanti; balasan otomatis penuh tidak dibangun (risiko
    reputasi, budaya butuh sentuhan personal).
 
-Ditunda (Digital; dibangun hanya kalau ada klien Digital yang membayar): Cek
-Google, Laporan bulanan via WA, Portal klien. Dicatat di halaman Alat sebagai
-"Ditunda", tidak lagi di sidebar.
+Digital: klien pertama datang 2026-09-19 (aplikasi asesmen RULA berbasis web;
+aplikasinya dibangun di repo terpisah, bukan di Hub). Yang dibangun di Hub:
+modul Proyek (lihat bagian "Proyek"). Masih ditunda sampai ada kebutuhan
+nyata: Cek Google, Laporan bulanan via WA, Portal klien. Dicatat di halaman
+Alat sebagai "Ditunda", tidak lagi di sidebar.
 
 Apps/ERP (visi Odoo + agen AI): tidak ada pekerjaan; visi jangka panjang.
 

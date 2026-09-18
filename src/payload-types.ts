@@ -69,6 +69,7 @@ export interface Config {
   collections: {
     clients: Client;
     orders: Order;
+    projects: Project;
     documents: Document;
     transactions: Transaction;
     receipts: Receipt;
@@ -86,6 +87,7 @@ export interface Config {
   collectionsSelect: {
     clients: ClientsSelect<false> | ClientsSelect<true>;
     orders: OrdersSelect<false> | OrdersSelect<true>;
+    projects: ProjectsSelect<false> | ProjectsSelect<true>;
     documents: DocumentsSelect<false> | DocumentsSelect<true>;
     transactions: TransactionsSelect<false> | TransactionsSelect<true>;
     receipts: ReceiptsSelect<false> | ReceiptsSelect<true>;
@@ -239,6 +241,108 @@ export interface Document {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "projects".
+ */
+export interface Project {
+  id: number;
+  unit: 'digital' | 'apps' | 'supply';
+  name: string;
+  client: number | Client;
+  stage: 'discovery' | 'scope' | 'kickoff' | 'desain' | 'build' | 'review' | 'launch' | 'selesai' | 'batal';
+  health: 'lancar' | 'berisiko' | 'terhambat';
+  owner?: (number | null) | User;
+  stageChangedAt?: string | null;
+  value?: number | null;
+  dpPercent?: number | null;
+  startDate?: string | null;
+  targetDate?: string | null;
+  nextAction?: string | null;
+  nextActionAt?: string | null;
+  /**
+   * Biasanya sesuatu dari klien: aset, jawaban, pembayaran.
+   */
+  blocker?: string | null;
+  brief?: {
+    goals?: string | null;
+    users?: string | null;
+    currentFlow?: string | null;
+    targetFlow?: string | null;
+    successMeasure?: string | null;
+    constraints?: string | null;
+    confirmedAt?: string | null;
+  };
+  deliverables?:
+    | {
+        title: string;
+        done?: boolean | null;
+        doneAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  log?:
+    | {
+        date: string;
+        type: 'catatan' | 'keputusan' | 'perubahan' | 'klien' | 'tahap' | 'status';
+        note?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  documents?:
+    | {
+        kind: 'brief' | 'scope' | 'invoice' | 'serah-terima' | 'lainnya';
+        file: number | Document;
+        note?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  links?: {
+    repo?: string | null;
+    staging?: string | null;
+    live?: string | null;
+  };
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users".
+ */
+export interface User {
+  id: number;
+  name: string;
+  role: 'admin' | 'finance' | 'staff' | 'member' | 'viewer';
+  /**
+   * Ruang lingkup finance dan anggota. Admin dan pengawas otomatis semua unit.
+   */
+  units?: ('digital' | 'apps' | 'supply')[] | null;
+  title?:
+    | ('Lead' | 'Developer' | 'Designer' | 'Marketing' | 'Business' | 'Staf' | 'Finance' | 'Komisaris' | 'Lainnya')
+    | null;
+  updatedAt: string;
+  createdAt: string;
+  enableAPIKey?: boolean | null;
+  apiKey?: string | null;
+  apiKeyIndex?: string | null;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+  collection: 'users';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "transactions".
  */
 export interface Transaction {
@@ -269,6 +373,7 @@ export interface Transaction {
   method?: ('transfer' | 'qris' | 'tunai') | null;
   client?: (number | null) | Client;
   order?: (number | null) | Order;
+  project?: (number | null) | Project;
   /**
    * Nomor invoice, nomor referensi transfer, atau keterangan singkat.
    */
@@ -348,43 +453,6 @@ export interface Prospect {
   notes?: string | null;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
- */
-export interface User {
-  id: number;
-  name: string;
-  role: 'admin' | 'finance' | 'staff' | 'member' | 'viewer';
-  /**
-   * Ruang lingkup finance dan anggota. Admin dan pengawas otomatis semua unit.
-   */
-  units?: ('digital' | 'apps' | 'supply')[] | null;
-  title?:
-    | ('Lead' | 'Developer' | 'Designer' | 'Marketing' | 'Business' | 'Staf' | 'Finance' | 'Komisaris' | 'Lainnya')
-    | null;
-  updatedAt: string;
-  createdAt: string;
-  enableAPIKey?: boolean | null;
-  apiKey?: string | null;
-  apiKeyIndex?: string | null;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  sessions?:
-    | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
-      }[]
-    | null;
-  password?: string | null;
-  collection: 'users';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -488,6 +556,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'orders';
         value: number | Order;
+      } | null)
+    | ({
+        relationTo: 'projects';
+        value: number | Project;
       } | null)
     | ({
         relationTo: 'documents';
@@ -646,6 +718,71 @@ export interface OrdersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "projects_select".
+ */
+export interface ProjectsSelect<T extends boolean = true> {
+  unit?: T;
+  name?: T;
+  client?: T;
+  stage?: T;
+  health?: T;
+  owner?: T;
+  stageChangedAt?: T;
+  value?: T;
+  dpPercent?: T;
+  startDate?: T;
+  targetDate?: T;
+  nextAction?: T;
+  nextActionAt?: T;
+  blocker?: T;
+  brief?:
+    | T
+    | {
+        goals?: T;
+        users?: T;
+        currentFlow?: T;
+        targetFlow?: T;
+        successMeasure?: T;
+        constraints?: T;
+        confirmedAt?: T;
+      };
+  deliverables?:
+    | T
+    | {
+        title?: T;
+        done?: T;
+        doneAt?: T;
+        id?: T;
+      };
+  log?:
+    | T
+    | {
+        date?: T;
+        type?: T;
+        note?: T;
+        id?: T;
+      };
+  documents?:
+    | T
+    | {
+        kind?: T;
+        file?: T;
+        note?: T;
+        id?: T;
+      };
+  links?:
+    | T
+    | {
+        repo?: T;
+        staging?: T;
+        live?: T;
+      };
+  notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "documents_select".
  */
 export interface DocumentsSelect<T extends boolean = true> {
@@ -675,6 +812,7 @@ export interface TransactionsSelect<T extends boolean = true> {
   method?: T;
   client?: T;
   order?: T;
+  project?: T;
   reference?: T;
   receipt?: T;
   notes?: T;

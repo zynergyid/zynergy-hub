@@ -5,6 +5,7 @@ import { ArrowLeft, MessageCircle, Plus } from "lucide-react";
 import { canEditClients, canEditMoney, canSeeMoney, getSessionUser } from "@/lib/session";
 import { getPayloadClient } from "@/lib/payload";
 import { getOrders, nextDate, orderTotal } from "@/lib/orders";
+import { getProjects } from "@/lib/projects";
 import { nextAction } from "@/lib/outreach";
 import { openProspectStatuses } from "@/lib/options";
 import { daysLabel, formatDate, formatIDR } from "@/lib/format";
@@ -15,6 +16,7 @@ import { Card } from "@/components/hub/Card";
 import { ErrorText } from "@/components/hub/form";
 import { OrderStatusPill } from "@/components/hub/OrderStatusPill";
 import { ProspectStatusPill } from "@/components/hub/ProspectStatusPill";
+import { HealthPill, ProjectStagePill } from "@/components/hub/ProjectPills";
 import { buttonOutline } from "@/components/hub/form";
 import { startOutreachFromClient } from "../../outreach/actions";
 import { TxList } from "@/components/hub/TxList";
@@ -36,9 +38,10 @@ export default async function KlienDetailPage({ params, searchParams }: { params
   if (!client || !user.units.includes(client.unit)) notFound();
   const money = canSeeMoney(user);
   const isSupply = client.unit === "supply";
-  const [tx, orders, prospects] = await Promise.all([
+  const [tx, orders, projects, prospects] = await Promise.all([
     money ? payload.find({ collection: "transactions", where: { client: { equals: clientId } }, sort: "-date", limit: 8 }) : null,
     money && isSupply ? getOrders({ unit: client.unit, allowed: user.units, filter: "semua", clientId }) : null,
+    isSupply ? null : getProjects({ unit: client.unit, allowed: user.units, filter: "semua", clientId }),
     payload.find({ collection: "prospects", where: { client: { equals: clientId } }, sort: "-updatedAt", limit: 5, depth: 0 }),
   ]);
   const hasOpenOutreach = prospects.docs.some((p) => openProspectStatuses.includes(p.status));
@@ -67,6 +70,12 @@ export default async function KlienDetailPage({ params, searchParams }: { params
             <Link href={`/orders/new?client=${client.id}`} className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white hover:bg-primary-dark">
               <Plus className="size-4" />
               PO baru
+            </Link>
+          )}
+          {!isSupply && canEditMoney(user) && (
+            <Link href={`/projects/new?client=${client.id}`} className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white hover:bg-primary-dark">
+              <Plus className="size-4" />
+              Proyek baru
             </Link>
           )}
           {client.whatsapp && (
@@ -109,6 +118,28 @@ export default async function KlienDetailPage({ params, searchParams }: { params
               </form>
             )}
           </Card>
+          {projects && (
+            <Card title="Proyek klien ini" action={projects.length ? { label: "Semua proyek", href: `/projects?unit=${client.unit}&filter=semua&q=${encodeURIComponent(client.name)}` } : undefined}>
+              {projects.length === 0 ? (
+                <p className="text-sm text-muted">Belum ada proyek.</p>
+              ) : (
+                <ul className="divide-y divide-line">
+                  {projects.slice(0, 6).map((p) => (
+                    <li key={p.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+                      <div className="min-w-0">
+                        <Link href={`/projects/${p.id}`} className="block truncate font-semibold hover:text-primary">{p.name}</Link>
+                        <p className="truncate text-xs text-muted">{p.nextAction || (p.targetDate ? `target ${formatDate(p.targetDate)}` : "belum ada langkah berikutnya")}</p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <HealthPill health={p.health} />
+                        <ProjectStagePill stage={p.stage} />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          )}
           {orders && (
             <Card title="PO klien ini" action={{ label: "Semua pesanan", href: `/orders?unit=${client.unit}&filter=semua&q=${encodeURIComponent(client.name)}` }}>
               {orders.length === 0 ? (
