@@ -50,7 +50,12 @@
   Supply, Outreach + kunci API + skill, Brankas Dokumen) dari commit 5ae97a3;
   deploy kelima 2026-09-18 (batas unggahan 4 MB, pratinjau dokumen, pesan
   error OpenAI, plus OPENAI_API_KEY yang diperbaiki Danish di Vercel) dari
-  commit d83b391. Semua atas perintah "deploy". Repo privat `danish-deepskill/zynergy-hub`, Vercel project
+  commit d83b391; deploy keenam 2026-09-19 dini hari (modul Proyek + Brief,
+  menu per unit, akar perbaikan geser samping, umpan balik navigasi, baris
+  item PO) dari commit a1c51f9, dua migrasi (`projects`, `project_brief`)
+  jalan di Neon saat build; catatan: `vercel deploy --prod` pertama kali
+  menjawab "Not authorized", ulang dengan `--scope devdanzen-projects`
+  berhasil. Semua atas perintah "deploy". Repo privat `danish-deepskill/zynergy-hub`, Vercel project
   `zynergy-hub` (scope `devdanzen-projects`). Neon `zynergy-hub` (paket
   gratis) dan Blob store `zynergy-hub-files` (region sin1) dibuat lewat
   CLI (`vercel integration add neon`, `vercel blob create-store`) dengan
