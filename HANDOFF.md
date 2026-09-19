@@ -81,7 +81,13 @@
   menampilkan deployment Git yang masih antre; pakai API
   `GET /v6/deployments?projectId=...` atau dashboard. Push ke `main`
   memunculkan deployment CANCELED (dilewati ignored build step), itu
-  normal. Vercel project
+  normal. Deploy kedelapan 2026-09-19 sore (commit 4f2ec1a: dokumen klien
+  format Office, tautan Klien baru, berkas di form Proyek baru, jenis
+  dokumen Presentasi) lewat jalur Git: build 49 detik, migrasi
+  `project_document_presentasi` jalan di Neon, promosi otomatis;
+  catatan: token CLI Vercel di auth.json diperbarui sendiri oleh CLI,
+  skrip yang membaca token lama sempat 403, sedangkan `vercel ls` dan
+  status commit "Vercel" di GitHub tetap jadi bukti yang cukup. Vercel project
   `zynergy-hub` (scope `devdanzen-projects`). Neon `zynergy-hub` (paket
   gratis) dan Blob store `zynergy-hub-files` (region sin1) dibuat lewat
   CLI (`vercel integration add neon`, `vercel blob create-store`) dengan
