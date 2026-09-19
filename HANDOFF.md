@@ -185,10 +185,12 @@ berikutnya (laporan bulanan untuk klien UMKM jadi bahan yang sudah ada).
   per hari, halaman teratas, sumber, tombol WhatsApp per tempat, negara,
   periode 7 atau 30 hari, tombol "Buka Umami". Kartu "Web zynergy.co.id"
   di Ringkasan. Jenis metrik Umami v3 memakai `path` (bukan `url`).
-- **Belum:** Google Search Console (klik dari pencarian Google dan kata
-  kunci) butuh verifikasi domain oleh Danish di akun Google-nya (TXT DNS
-  bisa saya tambahkan di Vercel) dan akun layanan untuk API; laporan
-  bulanan PDF untuk klien Digital; halaman /web per klien.
+- **Google Search Console:** record TXT verifikasi
+  (`google-site-verification=...`) dipasang di DNS zynergy.co.id lewat
+  `vercel dns add` pada 2026-09-20 dini hari; Danish menekan Verifikasi di
+  akun Google-nya. Belum: akun layanan Google Cloud untuk membaca API
+  Search Console dari Hub (klik dan kata kunci), laporan bulanan PDF untuk
+  klien Digital, halaman /web per klien.
 
 ## Proyek (Digital/Apps), 2026-09-19
 
