@@ -164,8 +164,15 @@ berikutnya (laporan bulanan untuk klien UMKM jadi bahan yang sudah ada).
   API; user `hub` (role user) memiliki website `zynergy.co.id` dan kunci
   API "Zynergy Hub". Semua kredensial ada di `~/.config/zynergy-umami/env`
   di laptop Danish (bukan repo); Danish sebaiknya mengganti password admin
-  lewat UI. Untuk situs klien berikutnya: buat website baru sebagai user
-  `hub` (POST /api/websites) supaya kunci yang sama bisa membacanya.
+  lewat UI. Website tidak dimiliki per user melainkan oleh **team
+  "Zynergy"** (id di env file, admin = team-owner, hub = team-member),
+  dipindahkan 2026-09-20 karena daftar Websites admin kosong saat website
+  masih milik user hub (Umami v3 menampilkan website milik sendiri atau
+  team). Di UI Umami, pilih team "Zynergy" di pemilih kiri atas. Untuk
+  situs klien berikutnya: buat website di dalam team itu (POST
+  /api/websites dengan `teamId`) supaya admin dan kunci API hub sama-sama
+  melihatnya. Transfer website ke team harus dilakukan admin (member
+  biasa mendapat 401).
 - **Situs:** `(site)/layout.tsx` memuat `<Script src=NEXT_PUBLIC_UMAMI_SRC
   data-website-id=NEXT_PUBLIC_UMAMI_WEBSITE_ID>` hanya kalau keduanya terisi
   (prod: https://stats.zynergy.co.id/z dan id website). Setiap tombol
