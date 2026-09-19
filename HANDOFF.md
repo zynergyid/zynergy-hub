@@ -100,7 +100,15 @@
   lewat Git, migrasi `project_log_pertemuan` jalan, build 57 detik,
   promosi otomatis. Deploy kedua belas 2026-09-19 malam (commit 2f1d7a6:
   halaman Web dan kartu Web dari Umami, env UMAMI_* ditambahkan) lewat
-  Git, tanpa migrasi, promosi otomatis. Vercel project
+  Git, tanpa migrasi, promosi otomatis. Deploy ketiga belas 2026-09-20 dini
+  hari (commit 6cb6202, berisi 992a48c: halaman SEO dengan skor dan editor,
+  koleksi `seo-audits`, cron harian, anggota hanya-lihat dengan uang
+  sementara, sidebar Situs/Arsip, label grafik Web) lewat Git, migrasi
+  `seo_audits` jalan, build 63 detik, promosi otomatis; env prod baru
+  SITE_API_URL, SITE_API_KEY (Sensitive), CRON_SECRET (Sensitive, salinan
+  di ~/.config/zynergy-hub/env); audit SEO prod pertama dijalankan lewat
+  rute cron dengan secret itu (9 halaman). Urutannya situs dulu (commit
+  ec88fcd, dua migrasi), lalu user hub di CMS situs, lalu Hub. Vercel project
   `zynergy-hub` (scope `devdanzen-projects`). Neon `zynergy-hub` (paket
   gratis) dan Blob store `zynergy-hub-files` (region sin1) dibuat lewat
   CLI (`vercel integration add neon`, `vercel blob create-store`) dengan
