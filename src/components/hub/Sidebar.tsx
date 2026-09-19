@@ -20,7 +20,7 @@ function isActive(pathname: string, href: string) {
 export function Sidebar({ role, units, userName }: { role: Role; units: Unit[]; userName: string }) {
   const pathname = usePathname();
   return (
-    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-line bg-white md:flex">
+    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-line bg-white print:hidden md:flex">
       <div className="flex h-14 items-center gap-2.5 border-b border-line px-5">
         <BrandMark className="size-7 text-navy" />
         <span className="text-base font-extrabold tracking-tight">

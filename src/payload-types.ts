@@ -286,7 +286,7 @@ export interface Project {
   log?:
     | {
         date: string;
-        type: 'catatan' | 'keputusan' | 'perubahan' | 'klien' | 'tahap' | 'status';
+        type: 'pertemuan' | 'catatan' | 'keputusan' | 'perubahan' | 'klien' | 'tahap' | 'status';
         note?: string | null;
         id?: string | null;
       }[]

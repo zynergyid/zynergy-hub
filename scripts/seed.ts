@@ -159,6 +159,7 @@ if (projects.totalDocs === 0) {
         ],
         log: [
           { date: shift(-21), type: "tahap", note: "Proyek dibuat, mulai di Discovery" },
+          { date: shift(-20), type: "pertemuan", note: "Bertemu drg. Sari di klinik. Pasien baru rata-rata 3 per hari, hampir semua dari Google lalu telepon. Resepsionis mencatat di buku, dua kali seminggu jadwal bentrok. Ingin booking lewat WhatsApp tanpa telepon." },
           { date: shift(-18), type: "keputusan", note: "Klien pilih paket Business, DP 50% masuk" },
           { date: shift(-7), type: "klien", note: "Minta warna lebih terang di halaman utama" },
           { date: shift(-1), type: "status", note: "Berisiko, menunggu foto ruang praktik dari klien" },

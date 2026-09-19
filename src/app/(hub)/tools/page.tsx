@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { Sparkles } from "lucide-react";
+import { Sparkles, TerminalSquare } from "lucide-react";
 import { canSeeMoney, getSessionUser } from "@/lib/session";
 import { getPayloadClient } from "@/lib/payload";
 import { formatIDR, formatMonthLong } from "@/lib/format";
 import { usdToIdrApprox } from "@/lib/options";
+import { hubSkills, skillEnvExample, skillEnvPath } from "@/lib/skills";
 import { KpiCard } from "@/components/hub/KpiCard";
 import { NavIcon } from "@/components/hub/NavIcon";
 import type { IconName } from "@/components/hub/nav";
@@ -109,7 +110,7 @@ export default async function AlatPage() {
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">Alat</h1>
-        <p className="text-sm text-muted">Sudah jalan: impor PDF PO (halaman PO baru), Outreach dengan tindak lanjut, dan Brankas Dokumen. Urutan di bawah adalah urutan pembangunan berikutnya, mengikuti fokus Supply.</p>
+        <p className="text-sm text-muted">Sudah jalan: impor PDF PO (halaman PO baru), Outreach dengan tindak lanjut, Brankas Dokumen, dan Proyek dengan Brief. Urutan di bawah adalah urutan pembangunan berikutnya, mengikuti fokus Supply.</p>
       </div>
       {spend && (
         <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
@@ -122,6 +123,34 @@ export default async function AlatPage() {
           />
         </div>
       )}
+      <div className="space-y-3">
+        <h2 className="text-sm font-bold uppercase tracking-wider text-muted">Skill Claude Code</h2>
+        <p className="text-sm text-muted">
+          Pekerjaan AI di Hub berjalan di Claude Code milik masing-masing developer, bukan di server. Skill-nya ada di repo (<code className="rounded bg-surface-soft px-1">.claude/skills</code>) dan dipasang dengan <code className="rounded bg-surface-soft px-1">pnpm skills:install</code>. Tiap orang memakai kunci API-nya sendiri dari halaman Profil, disimpan di <code className="rounded bg-surface-soft px-1">{skillEnvPath}</code>:
+        </p>
+        <pre className="overflow-x-auto rounded-xl border border-line bg-white p-3 text-xs">{skillEnvExample}</pre>
+        <ul className="grid gap-3 sm:grid-cols-2">
+          {hubSkills.map((sk) => (
+            <li key={sk.command} className="rounded-2xl border border-line bg-white p-4">
+              <div className="flex items-center gap-2">
+                <span className="grid size-8 place-items-center rounded-lg bg-primary-soft text-primary"><TerminalSquare className="size-4" aria-hidden /></span>
+                <div className="min-w-0">
+                  <p className="font-mono text-sm font-bold">{sk.command}</p>
+                  <p className="truncate text-xs text-muted">{sk.title}</p>
+                </div>
+              </div>
+              <p className="mt-3 text-sm">{sk.what}</p>
+              <p className="mt-1 text-xs text-muted"><span className="font-semibold text-ink">Kapan:</span> {sk.when}</p>
+              {sk.modes && (
+                <ul className="mt-2 space-y-0.5 text-xs text-muted">
+                  {sk.modes.map((m) => <li key={m} className="font-mono">{m}</li>)}
+                </ul>
+              )}
+              <p className="mt-2 text-xs text-muted">{sk.never}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
       <div className="space-y-3">
         <h2 className="text-sm font-bold uppercase tracking-wider text-muted">Berikutnya, fokus Supply</h2>
         <ul className="grid gap-3 sm:grid-cols-2">

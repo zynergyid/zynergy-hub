@@ -32,7 +32,7 @@ export default async function HubLayout({ children }: LayoutProps<"/">) {
           <div className="flex min-h-screen">
             <Sidebar role={user.role} units={user.units} userName={user.name} />
             <div className="flex min-w-0 flex-1 flex-col">
-              <header className="sticky top-0 z-30 flex h-14 items-center gap-2.5 border-b border-line bg-white px-4 md:hidden">
+              <header className="sticky top-0 z-30 flex h-14 items-center gap-2.5 border-b border-line bg-white px-4 print:hidden md:hidden">
                 <BrandMark className="size-7 text-navy" />
                 <span className="flex-1 text-base font-extrabold tracking-tight">
                   Zynergy <span className="text-muted">Hub</span>
@@ -43,7 +43,7 @@ export default async function HubLayout({ children }: LayoutProps<"/">) {
                 <LogoutButton />
               </header>
               {/* overflow-x-clip: nothing a page renders can widen the phone screen; see HANDOFF "Layar HP". */}
-              <main className="mx-auto w-full max-w-6xl flex-1 overflow-x-clip px-4 pb-24 pt-5 sm:px-6 md:pb-10 md:pt-8">
+              <main className="mx-auto w-full max-w-6xl flex-1 overflow-x-clip px-4 pb-24 pt-5 print:max-w-none print:p-0 sm:px-6 md:pb-10 md:pt-8">
                 {children}
               </main>
             </div>

@@ -1,12 +1,13 @@
 import type { Project } from "@/payload-types";
-import { formatDate } from "@/lib/format";
+import { formatDate, todayLocal } from "@/lib/format";
 import { projectLogLabel, projectLogTypes } from "@/lib/options";
+import { AutoTextarea } from "@/components/hub/AutoTextarea";
 import { Card } from "@/components/hub/Card";
 import { Select } from "@/components/hub/Select";
-import { buttonOutline, fieldClass } from "@/components/hub/form";
+import { Label, buttonOutline, fieldClass } from "@/components/hub/form";
 import { addProjectLog } from "./actions";
 
-/** Dated decisions, change requests, and client feedback: the flow written as it happens. */
+/** Dated meetings, decisions, change requests, and client feedback: the flow written as it happens. Meeting notes feed /brief. */
 export function LogCard({ project, editable }: { project: Project; editable: boolean }) {
   const log = [...(project.log ?? [])].reverse();
   const addable = projectLogTypes.filter((t) => t.value !== "tahap" && t.value !== "status");
@@ -28,11 +29,23 @@ export function LogCard({ project, editable }: { project: Project; editable: boo
         </ul>
       )}
       {editable && (
-        <form action={addProjectLog} className="mt-3 grid gap-2 border-t border-line pt-3 sm:grid-cols-[10rem_1fr_auto]">
+        <form action={addProjectLog} className="mt-3 space-y-2 border-t border-line pt-3">
           <input type="hidden" name="projectId" value={project.id} />
-          <Select name="type" defaultValue="catatan" options={addable} size="compact" />
-          <input name="note" required className={`${fieldClass} py-2`} placeholder="Keputusan, permintaan perubahan, masukan klien" />
-          <button type="submit" className={buttonOutline}>Catat</button>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label htmlFor="lg-type">Jenis</Label>
+              <Select id="lg-type" name="type" defaultValue="catatan" options={addable} size="compact" />
+            </div>
+            <div>
+              <Label htmlFor="lg-date">Tanggal</Label>
+              <input id="lg-date" name="date" type="date" max={todayLocal()} className={`${fieldClass} px-2.5 py-1.5 text-xs`} />
+            </div>
+          </div>
+          <AutoTextarea name="note" required rows={2} className={`${fieldClass} py-2`} placeholder="Catatan pertemuan (apa yang klien lakukan sekarang, siapa, berapa sering, apa yang sering salah), keputusan, permintaan perubahan, masukan klien" />
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs text-muted">Catatan berjenis Pertemuan dibaca /brief saat menyusun brief. Tanggal kosong = hari ini.</p>
+            <button type="submit" className={buttonOutline}>Catat</button>
+          </div>
         </form>
       )}
     </Card>

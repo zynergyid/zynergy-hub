@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil } from "lucide-react";
+import Link from "next/link";
+import { FileText, Pencil } from "lucide-react";
 import type { Project } from "@/payload-types";
 import { formatDate } from "@/lib/format";
 import { briefComplete } from "@/lib/project-rules";
@@ -44,12 +45,20 @@ export function BriefCard({ project, editable }: { project: Project; editable: b
         <p className="text-xs text-muted">
           Analisis bisnis satu halaman dari sesi discovery. <span className={cn("font-semibold", tone)}>{status}.</span>
         </p>
-        {editable && !editing && (
-          <button type="button" onClick={() => setEditing(true)} className={buttonOutline}>
-            <Pencil className="size-4" />
-            Ubah brief
-          </button>
-        )}
+        <div className="flex flex-wrap gap-2">
+          {complete && !editing && (
+            <Link href={`/projects/${project.id}/brief`} className={buttonOutline}>
+              <FileText className="size-4" />
+              Versi untuk klien
+            </Link>
+          )}
+          {editable && !editing && (
+            <button type="button" onClick={() => setEditing(true)} className={buttonOutline}>
+              <Pencil className="size-4" />
+              Ubah brief
+            </button>
+          )}
+        </div>
       </div>
       {editing ? (
         <form action={saveBrief} className="space-y-3">

@@ -12,7 +12,7 @@ export function MobileTabs({ role, units }: { role: Role; units: Unit[] }) {
   const pathname = usePathname();
   const tabs = mobileTabs.filter((t) => canSeeNav(t, role, units));
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white/95 backdrop-blur md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white/95 backdrop-blur print:hidden md:hidden">
       <ul className="flex" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         {tabs.map((t) => {
           const active = t.href === "/" ? pathname === "/" : pathname.startsWith(t.href);

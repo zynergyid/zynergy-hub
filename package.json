@@ -11,7 +11,8 @@
     "payload": "payload",
     "generate:types": "payload generate:types",
     "seed": "payload run scripts/seed.ts",
-    "postinstall": "node scripts/copy-pdf-worker.mjs"
+    "postinstall": "node scripts/copy-pdf-worker.mjs",
+    "skills:install": "node scripts/install-skills.mjs"
   },
   "dependencies": {
     "@payloadcms/db-postgres": "3.88.0",

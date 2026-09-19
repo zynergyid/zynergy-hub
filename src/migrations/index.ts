@@ -15,6 +15,7 @@ import * as migration_20260918_184010_projects from './20260918_184010_projects'
 import * as migration_20260918_191416_project_brief from './20260918_191416_project_brief';
 import * as migration_20260919_084628_project_document_presentasi from './20260919_084628_project_document_presentasi';
 import * as migration_20260919_093512_project_brief_references from './20260919_093512_project_brief_references';
+import * as migration_20260919_120410_project_log_pertemuan from './20260919_120410_project_log_pertemuan';
 
 export const migrations = [
   {
@@ -100,6 +101,11 @@ export const migrations = [
   {
     up: migration_20260919_093512_project_brief_references.up,
     down: migration_20260919_093512_project_brief_references.down,
-    name: '20260919_093512_project_brief_references'
+    name: '20260919_093512_project_brief_references',
+  },
+  {
+    up: migration_20260919_120410_project_log_pertemuan.up,
+    down: migration_20260919_120410_project_log_pertemuan.down,
+    name: '20260919_120410_project_log_pertemuan'
   },
 ];

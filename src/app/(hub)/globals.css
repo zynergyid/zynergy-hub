@@ -131,3 +131,28 @@ body {
   overflow-x: auto;
   padding: 1em;
 }
+
+/* Dokumen cetak (brief untuk klien): margin kertas dan tanpa warna latar layar */
+@page {
+  margin: 16mm 14mm 18mm;
+  @bottom-right {
+    content: "Halaman " counter(page) " dari " counter(pages);
+    font-family: var(--font-sans);
+    font-size: 9px;
+    color: #55617a;
+  }
+  @bottom-left {
+    content: "Zynergy Digital, PT Sinergi Mitra Abadi Jaya";
+    font-family: var(--font-sans);
+    font-size: 9px;
+    color: #55617a;
+  }
+}
+@media print {
+  body {
+    background: #fff;
+  }
+  a {
+    text-decoration: none;
+  }
+}

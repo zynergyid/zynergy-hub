@@ -210,6 +210,7 @@ export const projectHealthLabel = new Map<string, string>(projectHealth.map((h) 
 
 /** Dated entries on a project: the small-team version of a decision and change log. */
 export const projectLogTypes = [
+  { label: "Pertemuan", value: "pertemuan" },
   { label: "Catatan", value: "catatan" },
   { label: "Keputusan", value: "keputusan" },
   { label: "Perubahan scope", value: "perubahan" },

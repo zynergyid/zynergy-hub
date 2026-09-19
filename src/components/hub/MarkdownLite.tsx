@@ -46,9 +46,25 @@ function toBlocks(text: string): Block[] {
   return blocks;
 }
 
-/** Bold and links inside one line. */
-function Inline({ text }: { text: string }) {
+/** The "(?)" mark the /brief skill puts after a guess, shown as a chip for clients. */
+const MARK = "(?)";
+
+/** Bold and links inside one line; "(?)" becomes a chip when asked. */
+function Inline({ text, marks }: { text: string; marks: "raw" | "chip" }) {
   const chunks = text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean);
+  const plain = (value: string, key: number) => {
+    if (marks === "raw" || !value.includes(MARK)) return <span key={key}>{value}</span>;
+    return (
+      <span key={key}>
+        {value.split(MARK).map((piece, k, all) => (
+          <span key={k}>
+            {piece}
+            {k < all.length - 1 && <span className="mx-1 inline-block rounded-full bg-amber-50 px-1.5 py-px align-middle text-[10px] font-bold text-amber-700">perlu konfirmasi</span>}
+          </span>
+        ))}
+      </span>
+    );
+  };
   return (
     <>
       {chunks.map((chunk, i) => {
@@ -60,7 +76,7 @@ function Inline({ text }: { text: string }) {
               {shortUrl(part.value)}
             </a>
           ) : (
-            <span key={j}>{part.value}</span>
+            plain(part.value, j)
           ),
         );
         return bold ? <strong key={i} className="font-semibold text-ink">{nodes}</strong> : <span key={i}>{nodes}</span>;
@@ -69,7 +85,7 @@ function Inline({ text }: { text: string }) {
   );
 }
 
-export function MarkdownLite({ text, className }: { text: string; className?: string }) {
+export function MarkdownLite({ text, className, marks = "raw" }: { text: string; className?: string; marks?: "raw" | "chip" }) {
   const blocks = toBlocks(text);
   if (blocks.length === 0) return null;
   return (
@@ -79,7 +95,7 @@ export function MarkdownLite({ text, className }: { text: string; className?: st
           return (
             <ul key={i} className="list-disc space-y-1 pl-5">
               {b.items.map((it, j) => (
-                <li key={j}><Inline text={it} /></li>
+                <li key={j}><Inline text={it} marks={marks} /></li>
               ))}
             </ul>
           );
@@ -88,7 +104,7 @@ export function MarkdownLite({ text, className }: { text: string; className?: st
           return (
             <ol key={i} start={b.start} className="list-decimal space-y-1 pl-5">
               {b.items.map((it, j) => (
-                <li key={j}><Inline text={it} /></li>
+                <li key={j}><Inline text={it} marks={marks} /></li>
               ))}
             </ol>
           );
@@ -98,7 +114,7 @@ export function MarkdownLite({ text, className }: { text: string; className?: st
             {b.lines.map((l, j) => (
               <span key={j}>
                 {j > 0 && <br />}
-                <Inline text={l} />
+                <Inline text={l} marks={marks} />
               </span>
             ))}
           </p>

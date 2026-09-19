@@ -32,9 +32,9 @@ const isUrl = (v: string) => /^https?:\/\//i.test(v);
 
 type LogEntry = NonNullable<Project["log"]>[number];
 const keepLog = (p: Project): LogEntry[] => (p.log ?? []).map((l) => ({ id: l.id ?? undefined, date: l.date, type: l.type, note: l.note ?? null }));
-const withLog = (p: Project, type: LogEntry["type"], note?: string | null): LogEntry[] => [
+const withLog = (p: Project, type: LogEntry["type"], note?: string | null, date?: string | null): LogEntry[] => [
   ...keepLog(p),
-  { id: undefined, date: new Date().toISOString(), type, note: note || null },
+  { id: undefined, date: date ?? new Date().toISOString(), type, note: note || null },
 ];
 
 type DeliverableRow = NonNullable<Project["deliverables"]>[number];
@@ -277,7 +277,9 @@ export async function addProjectLog(formData: FormData) {
   const note = text(formData, "note");
   if (note) {
     const type = pick(projectLogTypes, text(formData, "type")) ?? "catatan";
-    await ctx.payload.update({ collection: "projects", id, data: { log: withLog(ctx.project, type, note) } });
+    // A meeting written up the next day keeps the day it happened.
+    const date = dateOrNull(text(formData, "date"));
+    await ctx.payload.update({ collection: "projects", id, data: { log: withLog(ctx.project, type, note, date) } });
     revalidateProjects(id);
   }
   back(id);

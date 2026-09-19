@@ -244,6 +244,58 @@ memakai versi "agensi kecil", bukan versi enterprise.
   tanggal itu. Tanggal di masa depan diabaikan. Hook koleksi hanya mengisi
   `stageChangedAt` otomatis kalau action tidak mengirimnya. Untuk proyek
   yang dimasukkan ke Hub setelah berjalan beberapa hari.
+- **Brief untuk klien (2026-09-19 malam):** `/projects/[id]/brief`
+  merender brief sebagai dokumen: kop Zynergy Digital, judul, untuk siapa,
+  disusun oleh, tanggal, status draf atau dikonfirmasi, paragraf pengantar
+  ke klien, tiap bagian dengan judul bahasa klien (`lib/brief-doc.ts`
+  `briefSections`), tanda `(?)` dirender sebagai chip "perlu konfirmasi"
+  (`MarkdownLite marks="chip"`) dan dikumpulkan jadi daftar bernomor "Hal
+  yang perlu Anda konfirmasi" (`confirmationItems`, per kalimat), blok
+  tanda tangan, footer. Tombol "Simpan sebagai PDF" memanggil
+  `window.print()`; sidebar, header HP, tab HP `print:hidden`, `main`
+  tanpa padding saat cetak, `@page` margin di globals.css. Tautan "Versi
+  untuk klien" di kartu Brief muncul setelah brief lengkap. `@page` di
+  globals.css memberi nomor halaman ("Halaman 1 dari 5") dan nama PT di
+  kaki tiap halaman lewat margin box (Chrome). Judul bagian tidak boleh
+  menggantung di bawah halaman (`break-after-avoid` pada blok judul), isi
+  bagian boleh terpotong ke halaman berikutnya. `confirmationItems` memecah
+  per kalimat dan mengabaikan "(" milik tanda "(?)", supaya tanda yang
+  ditaruh setelah titik tetap terhitung (bug awal: hanya 5 dari 19 butir).
+  Dua gaya (`lib/brief-doc.ts` `BriefStyle`, sakelar di halaman,
+  parameter `?gaya=ringkas|lengkap`, bawaan dari `businessType` klien: b2b
+  dan industri = lengkap, lainnya = ringkas): **lengkap** untuk perusahaan
+  (semua bagian, "Brief Proyek", tanda tangan dengan jabatan, nama PT di
+  kop), **ringkas** untuk perorangan dan usaha kecil ("Ringkasan Rencana",
+  hanya Tujuan, Cara kerja setelah aplikasi ada, Hal yang perlu diputuskan
+  bersama; sapaan "Pak/Bu <nama>"; daftar "Tolong dicek" tanpa label
+  bagian; konfirmasi cukup balas "Setuju" di WhatsApp, tanda tangan tanpa
+  jabatan). Contoh 2026-09-19: brief RULA lengkap 5 halaman, ringkas 2
+  halaman; brief klinik (seed) ringkas 1 halaman. Belum ada PDF
+  server-side; kalau nanti perlu unduhan langsung tanpa dialog cetak,
+  tambahkan @react-pdf/renderer. Cara membuat contoh PDF dari
+  terminal (dipakai 2026-09-19 untuk menilai hasilnya): jalankan Chrome
+  headless dengan `--remote-debugging-port` dan `--remote-allow-origins=*`,
+  lewat CDP set cookie `payload-token` (dari POST /api/users/login),
+  `Emulation.setEmulatedMedia print`, buka halaman, lalu
+  `Page.printToPDF`; curl saja tidak cukup karena halaman dikirim bertahap
+  dan HTML awalnya hanya kerangka loading.
+- **Skill di repo (2026-09-19 malam):** `.claude/skills/{brief,outreach}/
+  SKILL.md` adalah sumber kebenaran (ikut git); `pnpm skills:install`
+  (`scripts/install-skills.mjs`) menyalinnya ke `~/.claude/skills` supaya
+  berlaku dari folder mana pun; jalankan lagi setelah pull; sesi Claude
+  Code baru diperlukan agar skill terbaca. Halaman Alat punya bagian "Skill
+  Claude Code" (`lib/skills.ts`): perintah, kapan dipakai, mode, batas, dan
+  contoh berkas env. Aturan Danish untuk semua skill: simpan langsung ke Hub
+  tanpa bertanya, dan tanpa em dash di teks yang ditulis.
+- **Catatan pertemuan di Hub (2026-09-19 malam, ide nomor 1 dari daftar
+  "supaya lebih perfect", dipilih Danish "your call"):** jenis riwayat
+  `pertemuan` (migrasi `20260919_120410_project_log_pertemuan`), form
+  Riwayat sekarang punya jenis, tanggal (opsional, maksimal hari ini,
+  untuk pertemuan yang dicatat keesokan harinya), dan kotak catatan yang
+  membesar. `/brief` membaca entri `pertemuan` (juga `klien`, `keputusan`)
+  dari log proyek sebagai bahan utama dan hanya meminta tempelan di chat
+  kalau tidak ada; jadi alurnya: catat pertemuan di Hub (boleh dari HP),
+  lalu `/brief <proyek>`.
 - **Baris KPI proyek:** angka uang (nilai, dibayar, sisa) hanya tampil
   setelah Nilai proyek terisi; sebelum itu baris "Rp 0" tiga kali terasa
   seperti dashboard kosong (keluhan Danish 2026-09-19 malam), jadi yang
