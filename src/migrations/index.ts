@@ -13,6 +13,7 @@ import * as migration_20260917_171115_vault from './20260917_171115_vault';
 import * as migration_20260917_173829_vault_thumbnail from './20260917_173829_vault_thumbnail';
 import * as migration_20260918_184010_projects from './20260918_184010_projects';
 import * as migration_20260918_191416_project_brief from './20260918_191416_project_brief';
+import * as migration_20260919_084628_project_document_presentasi from './20260919_084628_project_document_presentasi';
 
 export const migrations = [
   {
@@ -88,6 +89,11 @@ export const migrations = [
   {
     up: migration_20260918_191416_project_brief.up,
     down: migration_20260918_191416_project_brief.down,
-    name: '20260918_191416_project_brief'
+    name: '20260918_191416_project_brief',
+  },
+  {
+    up: migration_20260919_084628_project_document_presentasi.up,
+    down: migration_20260919_084628_project_document_presentasi.down,
+    name: '20260919_084628_project_document_presentasi'
   },
 ];

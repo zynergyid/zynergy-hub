@@ -18,10 +18,19 @@ export function FileInput({ hint = true, ...props }: React.ComponentProps<"input
         {...props}
         className={props.className ?? fileInputClass}
         onChange={(e) => {
-          const file = e.target.files?.[0];
-          const tooBig = Boolean(file && file.size > MAX_UPLOAD_BYTES);
-          e.target.setCustomValidity(tooBig ? MAX_UPLOAD_MESSAGE : "");
-          setError(tooBig ? `${MAX_UPLOAD_MESSAGE} (berkas ini ${(file!.size / 1024 / 1024).toFixed(1)} MB)` : null);
+          // One request carries every selected file, so the total counts too.
+          const files = [...(e.target.files ?? [])];
+          const biggest = files.reduce((m, f) => Math.max(m, f.size), 0);
+          const total = files.reduce((sum, f) => sum + f.size, 0);
+          const mb = (n: number) => (n / 1024 / 1024).toFixed(1);
+          const message =
+            biggest > MAX_UPLOAD_BYTES
+              ? `${MAX_UPLOAD_MESSAGE} (berkas terbesar ${mb(biggest)} MB)`
+              : total > MAX_UPLOAD_BYTES
+                ? `Total berkas ${mb(total)} MB melebihi ${MAX_UPLOAD_MB} MB sekali unggah. Pilih lebih sedikit, sisanya unggah setelah tersimpan.`
+                : null;
+          e.target.setCustomValidity(message ? MAX_UPLOAD_MESSAGE : "");
+          setError(message);
           props.onChange?.(e);
         }}
       />

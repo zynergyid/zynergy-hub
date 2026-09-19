@@ -189,6 +189,30 @@ memakai versi "agensi kecil", bukan versi enterprise.
   mesin Danish): skill dulu karena hanya Danish yang menulis brief;
   antrean dan worker (satu hari kerja) ditambahkan kalau orang kedua perlu
   menekan tombolnya, dan skill ini yang jadi otaknya.
+- **Dokumen klien, klien baru, klien potensial (2026-09-19 siang, tiga
+  pertanyaan Danish):** (1) koleksi `documents` (dipakai PO dan proyek)
+  sekarang menerima PDF, gambar, Excel, Word, PowerPoint, CSV, dan teks;
+  daftarnya satu sumber di `lib/limits.ts` (`DOCUMENT_MIME_TYPES`,
+  `DOCUMENT_ACCEPT`, `DOCUMENT_TYPES_LABEL`) yang dibaca koleksi dan kartu
+  Dokumen; batas tetap 4 MB, berkas lebih besar lewat tautan Drive di
+  keterangan; jenis lain (zip) ditolak dengan pesan yang menyebut jenis
+  yang diterima. Form Proyek baru punya kotak "Dokumen dari klien
+  (opsional)": beberapa berkas sekaligus dengan satu jenis (default
+  Brief), diunggah oleh `saveProject` sebelum proyek dibuat; `FileInput`
+  sekarang memeriksa berkas terbesar DAN total semua berkas terhadap 4 MB,
+  karena satu request membawa semuanya (batas body server action).
+  (2) Tautan "Klien baru" di samping kolom Klien pada form
+  Proyek baru dan PO baru (`components/hub/NewClientLink.tsx`): membuka
+  `/clients/new?unit=<unit>&next=<path>`; halaman klien baru hanya
+  menerima `next` berupa path Hub (regex, tanpa `//`), dan setelah simpan
+  ClientForm kembali ke `next?client=<id>` sehingga klien langsung
+  terpilih. Tidak ada form bersarang, supaya data klien tetap lengkap.
+  (3) Klien potensial: belum pernah bicara = Outreach (sudah menerima unit
+  Digital/Apps lewat tab unit); sudah bicara tapi belum deal = klien
+  berstatus Prospek + proyek di tahap Discovery, materi presentasi masuk
+  Dokumen dengan jenis baru "Presentasi / materi" (migrasi
+  `20260919_084628_project_document_presentasi`, ADD VALUE enum), rencana
+  di Brief dan Riwayat; kalau tidak jadi, proyek Batal dan riwayat tetap.
 - Seed lokal: satu proyek contoh (Klinik Gigi, tahap Build, berisiko,
   brief terisi dan dikonfirmasi).
 - Jebakan migrasi: `payload migrate` bertanya "run in dev mode ... data

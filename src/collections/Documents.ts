@@ -1,8 +1,9 @@
 import type { CollectionConfig } from "payload";
 import { clientCreate, clientRead, clientWrite, enforceUnit } from "@/lib/access";
 import { units } from "@/lib/options";
+import { DOCUMENT_MIME_TYPES } from "@/lib/limits";
 
-/** Files that belong to orders: buyer PO, invoice, delivery note. Visible to everyone in the unit. */
+/** Files that belong to orders and projects: buyer PO, invoice, briefs, decks. Visible to everyone in the unit. */
 export const Documents: CollectionConfig = {
   slug: "documents",
   labels: { singular: "Dokumen", plural: "Dokumen" },
@@ -15,7 +16,7 @@ export const Documents: CollectionConfig = {
   },
   hooks: { beforeChange: [enforceUnit] },
   upload: {
-    mimeTypes: ["image/*", "application/pdf"],
+    mimeTypes: [...DOCUMENT_MIME_TYPES],
   },
   fields: [
     {

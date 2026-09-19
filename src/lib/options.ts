@@ -222,6 +222,7 @@ export const projectLogLabel = new Map<string, string>(projectLogTypes.map((t) =
 /** Files that live on a project. */
 export const projectDocumentKinds = [
   { label: "Brief", value: "brief" },
+  { label: "Presentasi / materi", value: "presentasi" },
   { label: "Scope / penawaran", value: "scope" },
   { label: "Invoice", value: "invoice" },
   { label: "Serah terima", value: "serah-terima" },

@@ -289,7 +289,7 @@ export interface Project {
     | null;
   documents?:
     | {
-        kind: 'brief' | 'scope' | 'invoice' | 'serah-terima' | 'lainnya';
+        kind: 'brief' | 'presentasi' | 'scope' | 'invoice' | 'serah-terima' | 'lainnya';
         file: number | Document;
         note?: string | null;
         id?: string | null;

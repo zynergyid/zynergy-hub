@@ -18,7 +18,7 @@ export default async function NewProjectPage({ searchParams }: { searchParams: P
   const [clients, owners] = await Promise.all([getClientOptions(allowed), getUserOptions()]);
   return (
     <div className="mx-auto max-w-4xl space-y-5">
-      <PageHeader title="Proyek baru" subtitle="Mulai di Discovery. Nilai dan DP bisa diisi setelah scope disepakati." />
+      <PageHeader title="Proyek baru" subtitle="Mulai di Discovery. Nilai dan DP diisi setelah scope disepakati." />
       <ProjectForm units={allowed} clients={clients} owners={owners} currentUserId={user.id} canDelete={false} defaultClientId={Number(first(sp.client) || 0) || undefined} />
     </div>
   );

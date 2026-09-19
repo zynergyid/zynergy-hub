@@ -70,6 +70,10 @@ export async function saveProject(_prev: ProjectFormState, formData: FormData): 
   for (const [key, link] of Object.entries(links)) {
     if (link && !isUrl(link)) return err(`Tautan ${key} harus diawali http:// atau https://.`);
   }
+  // Files sent with a new project; the request body itself is capped at the same size.
+  const files = id ? [] : formData.getAll("files").filter((f): f is File => f instanceof File && f.size > 0);
+  if (files.some((f) => f.size > MAX_UPLOAD_BYTES) || files.reduce((sum, f) => sum + f.size, 0) > MAX_UPLOAD_BYTES) return err(MAX_UPLOAD_MESSAGE);
+  const docKind = pick(projectDocumentKinds, text(formData, "docKind")) ?? "lainnya";
 
   try {
     const payload = await getPayloadClient();
@@ -91,11 +95,16 @@ export async function saveProject(_prev: ProjectFormState, formData: FormData): 
       links,
       notes: text(formData, "notes") || null,
     };
+    const documents = [];
+    for (const file of files) {
+      const uploaded = await uploadFile(payload, "documents", { unit }, file);
+      documents.push({ id: undefined, kind: docKind, file: uploaded.id, note: null });
+    }
     const doc = id
       ? await payload.update({ collection: "projects", id, data })
       : await payload.create({
           collection: "projects",
-          data: { ...data, stage: "discovery", health: "lancar", log: [{ date: new Date().toISOString(), type: "tahap", note: "Proyek dibuat, mulai di Discovery" }] },
+          data: { ...data, documents, stage: "discovery", health: "lancar", log: [{ date: new Date().toISOString(), type: "tahap", note: "Proyek dibuat, mulai di Discovery" }] },
         });
     revalidateProjects(doc.id);
     return { status: "success", id: doc.id };
@@ -273,7 +282,7 @@ export async function addProjectDocument(formData: FormData) {
       data: { documents: [...keepDocumentRows(ctx.project.documents), { id: undefined, kind, file: uploaded.id, note: text(formData, "note") || null }] },
     });
   } catch (error) {
-    console.error("addProjectDocument failed:", error, MAX_UPLOAD_MESSAGE);
+    console.error("addProjectDocument failed:", error);
     redirect(`/projects/${id}?error=berkas`);
   }
   revalidateProjects(id);

@@ -19,12 +19,15 @@ export function ClientForm({
   readOnly = false,
   units: allowedUnits,
   defaultUnit,
+  next,
 }: {
   client?: Client;
   canDelete: boolean;
   readOnly?: boolean;
   units: Unit[];
   defaultUnit?: Unit;
+  /** Hub path to return to after saving, with `?client=<id>` appended (used by "Klien baru" links). */
+  next?: string;
 }) {
   const router = useRouter();
   const [unit, setUnit] = useState<Unit>(client?.unit ?? defaultUnit ?? allowedUnits[0] ?? "digital");
@@ -32,7 +35,7 @@ export function ClientForm({
   const [state, formAction, pending] = useActionState(
     async (prev: ClientFormState, fd: FormData) => {
       const r = await saveClient(prev, fd);
-      if (r.status === "success" && r.id) router.push(`/clients/${r.id}`);
+      if (r.status === "success" && r.id) router.push(next ? `${next}?client=${r.id}` : `/clients/${r.id}`);
       return r;
     },
     initial,

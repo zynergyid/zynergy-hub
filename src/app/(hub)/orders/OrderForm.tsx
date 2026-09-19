@@ -12,6 +12,7 @@ import { ErrorText, Label, RupiahInput, buttonPrimary, fieldClass, groupDigits }
 import { FileInput } from "@/components/hub/FileInput";
 import { ConfirmButton } from "@/components/hub/ConfirmButton";
 import { Select } from "@/components/hub/Select";
+import { NewClientLink } from "@/components/hub/NewClientLink";
 import { deleteOrder, importOrderPdf, saveOrder, type ImportResult, type OrderFormState } from "./actions";
 
 interface ItemRow {
@@ -172,7 +173,10 @@ export function OrderForm({
                 <Select id="of-unit" name="unit" value={unit} onValueChange={(v) => setUnit(v as Unit)} options={units.filter((u) => allowedUnits.includes(u.value) || order?.unit === u.value)} />
               </div>
               <div>
-                <Label htmlFor="of-client">Klien (pembeli)</Label>
+                <div className="flex items-baseline justify-between">
+                  <Label htmlFor="of-client">Klien (pembeli)</Label>
+                  {!readOnly && !order && <NewClientLink unit={unit} next="/orders/new" />}
+                </div>
                 <Select key={unit} id="of-client" name="client" required defaultValue={draft.clientId ? String(draft.clientId) : undefined} placeholder={clientOptions.length ? "Pilih klien" : "Belum ada klien di unit ini"} options={clientOptions} />
               </div>
               <div>

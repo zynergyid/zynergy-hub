@@ -4,12 +4,15 @@ import { useActionState, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Trash2 } from "lucide-react";
 import type { Project } from "@/payload-types";
-import { units, type Unit } from "@/lib/options";
+import { projectDocumentKinds, units, type Unit } from "@/lib/options";
+import { DOCUMENT_ACCEPT, DOCUMENT_TYPES_LABEL, MAX_UPLOAD_MB } from "@/lib/limits";
 import type { ClientOption } from "@/lib/orders";
 import type { UserOption } from "@/lib/projects";
 import { ErrorText, Label, RupiahInput, buttonPrimary, fieldClass, groupDigits } from "@/components/hub/form";
 import { ConfirmButton } from "@/components/hub/ConfirmButton";
+import { FileInput } from "@/components/hub/FileInput";
 import { Select } from "@/components/hub/Select";
+import { NewClientLink } from "@/components/hub/NewClientLink";
 import { deleteProject, saveProject, type ProjectFormState } from "./actions";
 
 const initial: ProjectFormState = { status: "idle" };
@@ -66,7 +69,10 @@ export function ProjectForm({
             <Select id="pf-unit" name="unit" value={unit} onValueChange={(v) => setUnit(v as Unit)} options={units.filter((u) => allowedUnits.includes(u.value) || project?.unit === u.value)} />
           </div>
           <div>
-            <Label htmlFor="pf-client">Klien</Label>
+            <div className="flex items-baseline justify-between">
+              <Label htmlFor="pf-client">Klien</Label>
+              {!readOnly && !project && <NewClientLink unit={unit} next="/projects/new" />}
+            </div>
             <Select key={unit} id="pf-client" name="client" required defaultValue={project ? String(typeof project.client === "object" ? project.client.id : project.client) : defaultClient ? String(defaultClient.id) : undefined} placeholder={clientOptions.length ? "Pilih klien" : "Belum ada klien di unit ini"} options={clientOptions} />
           </div>
           <div className="sm:col-span-2">
@@ -121,6 +127,23 @@ export function ProjectForm({
           <Label htmlFor="pf-notes">Catatan</Label>
           <textarea id="pf-notes" name="notes" rows={3} defaultValue={project?.notes ?? ""} className={fieldClass} placeholder="Konteks yang perlu diketahui siapa pun yang membuka proyek ini." />
         </div>
+
+        {/* Files the client already sent (brief material, price lists, decks). Later uploads happen on the project page. */}
+        {!project && (
+          <section className="space-y-2 rounded-xl border border-dashed border-line bg-surface-soft/60 p-4">
+            <div className="flex flex-wrap items-end justify-between gap-2">
+              <div>
+                <h2 className="text-sm font-bold">Dokumen dari klien (opsional)</h2>
+                <p className="text-xs text-muted">Boleh beberapa berkas sekaligus. {DOCUMENT_TYPES_LABEL}, total maksimal {MAX_UPLOAD_MB} MB sekali unggah.</p>
+              </div>
+              <div className="w-44">
+                <Label htmlFor="pf-doc-kind">Jenis</Label>
+                <Select id="pf-doc-kind" name="docKind" defaultValue="brief" options={projectDocumentKinds} size="compact" />
+              </div>
+            </div>
+            <FileInput id="pf-files" name="files" multiple accept={DOCUMENT_ACCEPT} hint={false} />
+          </section>
+        )}
       </fieldset>
 
       <ErrorText>{state.status === "error" ? state.message : null}</ErrorText>

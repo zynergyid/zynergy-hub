@@ -1,4 +1,5 @@
 import { Trash2, Upload } from "lucide-react";
+import { DOCUMENT_ACCEPT, DOCUMENT_TYPES_LABEL, MAX_UPLOAD_MB } from "@/lib/limits";
 import { Card } from "./Card";
 import { ConfirmButton } from "./ConfirmButton";
 import { ErrorText, buttonOutline, fieldClass } from "./form";
@@ -82,8 +83,9 @@ export function DocumentsCard({
             <Select name="kind" defaultValue={defaultKind} options={kinds} size="compact" />
             <input name="note" placeholder="Keterangan (opsional)" className={`${fieldClass} px-2.5 py-1.5 text-xs`} />
           </div>
-          <FileInput name="file" required accept="application/pdf,image/*" hint={false} />
-          <ErrorText>{error === "berkas" ? "Berkas gagal diunggah. Pastikan PDF atau gambar yang utuh, maksimal 4 MB." : null}</ErrorText>
+          <FileInput name="file" required accept={DOCUMENT_ACCEPT} hint={false} />
+          <p className="text-xs text-muted">{DOCUMENT_TYPES_LABEL}, maksimal {MAX_UPLOAD_MB} MB. Berkas lebih besar: taruh tautan Drive di keterangan.</p>
+          <ErrorText>{error === "berkas" ? `Berkas gagal diunggah. Pastikan jenisnya ${DOCUMENT_TYPES_LABEL} dan ukurannya di bawah ${MAX_UPLOAD_MB} MB.` : null}</ErrorText>
           <button type="submit" className={buttonOutline}>
             <Upload className="size-4" />
             Unggah

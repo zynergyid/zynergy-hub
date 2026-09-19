@@ -12,12 +12,16 @@ export default async function KlienBaruPage({ searchParams }: { searchParams: Pr
   const user = await getSessionUser();
   if (!user) redirect("/login");
   if (user.role === "viewer") redirect("/clients");
-  const wanted = first((await searchParams).unit) as Unit | undefined;
+  const sp = await searchParams;
+  const wanted = first(sp.unit) as Unit | undefined;
   const defaultUnit = wanted && user.units.includes(wanted) && units.some((u) => u.value === wanted) ? wanted : undefined;
+  // Only a Hub path may be a return target, never a full URL.
+  const nextRaw = first(sp.next) ?? "";
+  const next = /^\/[a-z0-9/_-]*$/i.test(nextRaw) && !nextRaw.startsWith("//") ? nextRaw : undefined;
   return (
     <div className="mx-auto max-w-3xl space-y-5">
-      <PageHeader title="Klien baru" subtitle="Isi yang diketahui dulu, sisanya bisa dilengkapi nanti." />
-      <ClientForm canDelete={false} units={user.units} defaultUnit={defaultUnit} />
+      <PageHeader title="Klien baru" subtitle={next ? "Simpan, lalu Anda kembali ke form sebelumnya dengan klien ini terpilih." : "Isi yang diketahui dulu, sisanya bisa dilengkapi nanti."} />
+      <ClientForm canDelete={false} units={user.units} defaultUnit={defaultUnit} next={next} />
     </div>
   );
 }
