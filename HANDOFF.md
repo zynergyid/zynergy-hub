@@ -240,6 +240,27 @@ memakai versi "agensi kecil", bukan versi enterprise.
   tanggal itu. Tanggal di masa depan diabaikan. Hook koleksi hanya mengisi
   `stageChangedAt` otomatis kalau action tidak mengirimnya. Untuk proyek
   yang dimasukkan ke Hub setelah berjalan beberapa hari.
+- **Baris KPI proyek:** angka uang (nilai, dibayar, sisa) hanya tampil
+  setelah Nilai proyek terisi; sebelum itu baris "Rp 0" tiga kali terasa
+  seperti dashboard kosong (keluhan Danish 2026-09-19 malam), jadi yang
+  tampil hanya Deliverable dan Target launch.
+- **Baca dulu, ubah kalau perlu (2026-09-19 malam, dua keluhan Danish:
+  brief sulit dibaca dan kolom kanan membuat brief sempit):**
+  `components/hub/MarkdownLite.tsx` merender subset Markdown yang dipakai
+  orang dan skill (paragraf, "- " bullet, "1. " nomor, **tebal**, URL jadi
+  tautan; tanpa HTML, tanpa dependensi). `BriefCard` sekarang client:
+  mode baca dengan MarkdownLite, tombol "Ubah brief" membuka form (form
+  langsung terbuka selama brief belum lengkap). `ProjectInfoCard` (client)
+  menggantikan form panjang di kolom kanan: kartu fakta (klien, unit, PJ,
+  nilai, DP, mulai, target launch, tautan, catatan) dengan tombol "Ubah
+  data" yang membuka `ProjectForm` (prop `onCancel`/`onSaved`); pengawas
+  hanya melihat fakta. Tata letak detail proyek: baris 1 = Tahap + Status
+  mingguan | Data proyek; lalu Brief selebar penuh; baris 2 = Deliverable
+  + Riwayat | Dokumen + Transaksi. Helper murni proyek dipindah ke
+  `lib/project-rules.ts` (aman untuk client; `lib/projects.ts`
+  mengekspor ulang) karena komponen client yang mengimpor
+  `lib/projects.ts` menarik Payload ke bundle browser dan halaman 500
+  ("Can't resolve fs/promises"); pola sama dengan `order-draft.ts`.
 - Seed lokal: satu proyek contoh (Klinik Gigi, tahap Build, berisiko,
   brief terisi dan dikonfirmasi, dua referensi).
 - Jebakan migrasi: `payload migrate` bertanya "run in dev mode ... data
@@ -456,6 +477,16 @@ memakai versi "agensi kecil", bukan versi enterprise.
      pembungkus `overflow-x-auto` (tabel yang memang boleh di-scroll). Jadi
      halaman baru yang melebar langsung ketahuan di console dev, tanpa harus
      menunggu laporan dari HP.
+- Kasus ketiga (2026-09-19 malam, ditemukan OverflowGuard dan sempat saya
+  abaikan sebagai "transien": jangan diulang, peringatan guard selalu
+  nyata): nama berkas panjang di kartu Dokumen. Teks `truncate` (nowrap)
+  tetap menyumbang lebar penuhnya ke ukuran min-content kolom grid, dan di
+  HP grid satu kolom ikut melebar (terpotong oleh clip, tetapi isi kartu
+  terpotong). `min-w-0` pada flex item saja tidak cukup; yang menentukan
+  adalah item GRID: semua pembungkus kolom `lg:col-span-*` di halaman
+  detail (proyek, PO, klien, outreach) dan kartu grid Ringkasan sekarang
+  `min-w-0`. Aturan: setiap item grid yang memuat teks nowrap atau nama
+  berkas harus `min-w-0`.
 - Cara cek cepat yang benar: buka halaman di DevTools mode HP dan lihat
   console; jangan andalkan `scrollWidth == innerWidth`, karena emulasi HP
   Chrome ikut memperlebar `innerWidth` saat konten meluap (di sana 470 saat

@@ -111,10 +111,10 @@ export default async function OrderDetailPage({ params, searchParams }: { params
       )}
 
       <div className="grid gap-5 lg:grid-cols-5">
-        <div className="space-y-5 lg:col-span-3">
+        <div className="min-w-0 space-y-5 lg:col-span-3">
           <OrderForm order={order} units={user.units} clients={clients} canDelete={editable} readOnly={!editable} showMoney={money} />
         </div>
-        <div className="space-y-5 lg:col-span-2">
+        <div className="min-w-0 space-y-5 lg:col-span-2">
           {canTouch && !editable && <StatusCard order={order} />}
           <DocumentsCard
             rows={order.documents ?? []}

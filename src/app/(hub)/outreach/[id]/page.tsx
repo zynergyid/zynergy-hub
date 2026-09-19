@@ -85,7 +85,7 @@ export default async function ProspectDetailPage({ params }: { params: Promise<{
       </div>
 
       <div className="grid gap-5 lg:grid-cols-5">
-        <div className="space-y-5 lg:col-span-3">
+        <div className="min-w-0 space-y-5 lg:col-span-3">
           <Card title="Draf pesan">
             {editable ? (
               <form action={saveDraft} className="space-y-3">
@@ -250,7 +250,7 @@ export default async function ProspectDetailPage({ params }: { params: Promise<{
           </Card>
         </div>
 
-        <div className="space-y-5 lg:col-span-2">
+        <div className="min-w-0 space-y-5 lg:col-span-2">
           {client && (
             <Card title="Klien terkait" action={{ label: "Buka klien", href: `/clients/${client.id}` }}>
               <p className="text-sm">

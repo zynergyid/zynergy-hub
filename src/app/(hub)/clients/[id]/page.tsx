@@ -90,10 +90,10 @@ export default async function KlienDetailPage({ params, searchParams }: { params
       <ErrorText>{blocked ? `Klien ini punya ${blocked} PO, jadi tidak bisa dihapus. Hapus atau pindahkan PO-nya dulu.` : null}</ErrorText>
 
       <div className="grid gap-5 lg:grid-cols-5">
-        <div className="lg:col-span-3">
+        <div className="min-w-0 lg:col-span-3">
           <ClientForm client={client} canDelete={user.role === "admin"} readOnly={!canEditClients(user)} units={user.units} />
         </div>
-        <div className="space-y-5 lg:col-span-2">
+        <div className="min-w-0 space-y-5 lg:col-span-2">
           <Card title="Outreach" action={prospects.docs.length ? { label: "Semua outreach", href: `/outreach?status=semua&q=${encodeURIComponent(client.name)}` } : undefined}>
             {prospects.docs.length === 0 ? (
               <p className="text-sm text-muted">Belum pernah didekati lewat Outreach.</p>

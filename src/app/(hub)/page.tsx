@@ -127,16 +127,16 @@ export default async function HubHome({ searchParams }: { searchParams: Promise<
               <VaultCard docs={vault.expiring} total={vault.total} />
 
               <div className="grid gap-4 lg:grid-cols-5">
-                <Card title="Arus kas 12 bulan" action={{ label: "Buka arus kas", href: `/cash-flow?unit=${unit}` }} className="lg:col-span-3">
+                <Card title="Arus kas 12 bulan" action={{ label: "Buka arus kas", href: `/cash-flow?unit=${unit}` }} className="min-w-0 lg:col-span-3">
                   <BarChart points={last12} />
                 </Card>
-                <Card title="Pengeluaran bulan ini" className="lg:col-span-2">
+                <Card title="Pengeluaran bulan ini" className="min-w-0 lg:col-span-2">
                   <CategoryBars items={categories} />
                 </Card>
               </div>
 
               <div className="grid gap-4 lg:grid-cols-5">
-                <Card title="Perpanjangan terdekat" action={{ label: "Semua klien", href: "/clients" }} className="lg:col-span-2">
+                <Card title="Perpanjangan terdekat" action={{ label: "Semua klien", href: "/clients" }} className="min-w-0 lg:col-span-2">
                   {renewals.length === 0 ? (
                     <p className="text-sm text-muted">Tidak ada perpanjangan dalam 30 hari.</p>
                   ) : (
@@ -145,7 +145,7 @@ export default async function HubHome({ searchParams }: { searchParams: Promise<
                     </ul>
                   )}
                 </Card>
-                <Card title="Transaksi terbaru" action={{ label: "Semua", href: `/cash-flow?unit=${unit}` }} className="lg:col-span-3">
+                <Card title="Transaksi terbaru" action={{ label: "Semua", href: `/cash-flow?unit=${unit}` }} className="min-w-0 lg:col-span-3">
                   {ledger.rows.length === 0 ? (
                     <p className="text-sm text-muted">Belum ada transaksi bulan ini.</p>
                   ) : (

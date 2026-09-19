@@ -8,7 +8,7 @@ import { projectDocumentKinds, units, type Unit } from "@/lib/options";
 import { DOCUMENT_ACCEPT, DOCUMENT_TYPES_LABEL, MAX_UPLOAD_MB } from "@/lib/limits";
 import type { ClientOption } from "@/lib/orders";
 import type { UserOption } from "@/lib/projects";
-import { ErrorText, Label, RupiahInput, buttonPrimary, fieldClass, groupDigits } from "@/components/hub/form";
+import { ErrorText, Label, RupiahInput, buttonOutline, buttonPrimary, fieldClass, groupDigits } from "@/components/hub/form";
 import { ConfirmButton } from "@/components/hub/ConfirmButton";
 import { FileInput } from "@/components/hub/FileInput";
 import { Select } from "@/components/hub/Select";
@@ -29,6 +29,8 @@ export function ProjectForm({
   readOnly = false,
   showMoney = true,
   defaultClientId,
+  onCancel,
+  onSaved,
 }: {
   project?: Project;
   /** Units the person may see that work in projects (Digital, Apps). */
@@ -40,6 +42,9 @@ export function ProjectForm({
   readOnly?: boolean;
   showMoney?: boolean;
   defaultClientId?: number;
+  /** Rendered inside a card that toggles between facts and form. */
+  onCancel?: () => void;
+  onSaved?: () => void;
 }) {
   const router = useRouter();
   const defaultClient = defaultClientId ? clients.find((c) => c.id === defaultClientId) : undefined;
@@ -49,6 +54,7 @@ export function ProjectForm({
     async (prev: ProjectFormState, fd: FormData) => {
       const r = await saveProject(prev, fd);
       if (r.status === "success" && r.id) {
+        onSaved?.();
         router.push(`/projects/${r.id}`);
         router.refresh();
       }
@@ -150,10 +156,15 @@ export function ProjectForm({
 
       {!readOnly && (
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
-          <button type="submit" disabled={pending} className={buttonPrimary}>
-            {pending && <Loader2 className="size-4 animate-spin" />}
-            {project ? "Simpan perubahan" : "Simpan proyek"}
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button type="submit" disabled={pending} className={buttonPrimary}>
+              {pending && <Loader2 className="size-4 animate-spin" />}
+              {project ? "Simpan perubahan" : "Simpan proyek"}
+            </button>
+            {onCancel && (
+              <button type="button" onClick={onCancel} className={buttonOutline}>Batal</button>
+            )}
+          </div>
           {project && canDelete && (
             <ConfirmButton
               message={`Hapus proyek ${project.name} beserta dokumennya? Transaksi terkait tetap tersimpan.`}

@@ -2,7 +2,7 @@ import { ArrowRight, Check } from "lucide-react";
 import type { Project } from "@/payload-types";
 import { daysLabel, daysUntil, formatDate, todayLocal } from "@/lib/format";
 import { openProjectStages, projectHealth, projectStageHint, projectStageLabel, projectStages } from "@/lib/options";
-import { actionOverdue, isOpenProject } from "@/lib/projects";
+import { actionOverdue, isOpenProject } from "@/lib/project-rules";
 import { cn } from "@/lib/cn";
 import { Card } from "@/components/hub/Card";
 import { HealthPill } from "@/components/hub/ProjectPills";

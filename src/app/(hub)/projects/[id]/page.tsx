@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowDownLeft, ArrowLeft, CalendarClock, ExternalLink, FileText, ListChecks, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowLeft, CalendarClock, FileText, ListChecks, Wallet } from "lucide-react";
 import { canEditMoney, canSeeMoney, getSessionUser } from "@/lib/session";
 import { canWriteUnit } from "@/lib/access";
 import { getPayloadClient } from "@/lib/payload";
@@ -19,7 +19,7 @@ import { BriefCard } from "../BriefCard";
 import { DeliverablesCard } from "../DeliverablesCard";
 import { LogCard } from "../LogCard";
 import { HealthCard, StageCard } from "../ProgressCards";
-import { ProjectForm } from "../ProjectForm";
+import { ProjectInfoCard } from "../ProjectInfoCard";
 import { addProjectDocument, removeProjectDocument } from "../actions";
 
 export const metadata: Metadata = { title: "Detail proyek" };
@@ -53,11 +53,6 @@ export default async function ProjectDetailPage({ params, searchParams }: { para
   const progress = deliverableProgress(project);
   const addPaymentHref = `/cash-flow?unit=${project.unit}&add=1&project=${project.id}`;
   const canPay = editable && open && due !== null;
-  const links = [
-    { label: "Repo", href: project.links?.repo },
-    { label: "Staging", href: project.links?.staging },
-    { label: "Live", href: project.links?.live },
-  ].filter((l): l is { label: string; href: string } => Boolean(l.href));
   const targetCard = (
     <KpiCard
       icon={CalendarClock}
@@ -92,15 +87,6 @@ export default async function ProjectDetailPage({ params, searchParams }: { para
             {owner ? ` · PJ ${owner.name}` : ""}
             {project.startDate ? ` · mulai ${formatDate(project.startDate)}` : ""}
           </p>
-          {links.length > 0 && (
-            <p className="mt-1 flex flex-wrap gap-3 text-sm">
-              {links.map((l) => (
-                <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold text-primary hover:underline">
-                  {l.label} <ExternalLink className="size-3" />
-                </a>
-              ))}
-            </p>
-          )}
         </div>
         {canPay && (
           <Link href={addPaymentHref} className="inline-flex items-center gap-1.5 rounded-xl bg-secondary px-4 py-2.5 text-sm font-bold text-white hover:bg-secondary-dark">
@@ -110,9 +96,10 @@ export default async function ProjectDetailPage({ params, searchParams }: { para
         )}
       </div>
 
-      {money ? (
+      {/* Money figures only once there is a price; before that they are three zeros. */}
+      {money && value > 0 ? (
         <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-          <KpiCard icon={FileText} label="Nilai proyek" value={value ? formatIDR(value) : "-"} hint={value ? `DP ${project.dpPercent ?? 0}%` : "isi setelah scope disepakati"} tone="primary" />
+          <KpiCard icon={FileText} label="Nilai proyek" value={formatIDR(value)} hint={`DP ${project.dpPercent ?? 0}%`} tone="primary" />
           <KpiCard icon={ArrowDownLeft} label="Sudah dibayar" value={formatIDR(payments.paid)} hint={payments.cost ? `biaya terkait ${formatIDR(payments.cost)}` : undefined} tone="in" />
           <KpiCard icon={Wallet} label="Sisa tagihan" value={formatIDR(remaining)} tone={remaining ? "out" : "neutral"} hint={due ? `berikutnya ${due.label} ${formatIDR(due.amount)}` : value ? "lunas" : undefined} />
           {deliverableCard}
@@ -125,16 +112,24 @@ export default async function ProjectDetailPage({ params, searchParams }: { para
       )}
 
       <div className="grid gap-5 lg:grid-cols-5">
-        <div className="space-y-5 lg:col-span-3">
+        <div className="min-w-0 space-y-5 lg:col-span-3">
           <StageCard project={project} editable={canTouch} error={first(sp.error)} />
-          <BriefCard project={project} editable={canTouch} />
           <HealthCard project={project} editable={canTouch} />
+        </div>
+        <div className="min-w-0 lg:col-span-2">
+          <ProjectInfoCard project={project} open={open} units={projectUnitsOf(user.units)} clients={clients} owners={owners} currentUserId={user.id} editable={editable} showMoney={money} />
+        </div>
+      </div>
+
+      {/* The brief is the longest text on the page, so it gets the full width. */}
+      <BriefCard project={project} editable={canTouch} />
+
+      <div className="grid gap-5 lg:grid-cols-5">
+        <div className="min-w-0 space-y-5 lg:col-span-3">
           <DeliverablesCard project={project} editable={canTouch} />
           <LogCard project={project} editable={canTouch} />
         </div>
-        <div className="space-y-5 lg:col-span-2">
-          {money && targetCard}
-          <ProjectForm project={project} units={projectUnitsOf(user.units)} clients={clients} owners={owners} currentUserId={user.id} canDelete={editable} readOnly={!editable} showMoney={money} />
+        <div className="min-w-0 space-y-5 lg:col-span-2">
           <DocumentsCard
             rows={project.documents ?? []}
             kinds={projectDocumentKinds}

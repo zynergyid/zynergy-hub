@@ -1,7 +1,7 @@
 import { Plus, Square, SquareCheckBig, Trash2 } from "lucide-react";
 import type { Project } from "@/payload-types";
 import { formatDate } from "@/lib/format";
-import { deliverableProgress } from "@/lib/projects";
+import { deliverableProgress } from "@/lib/project-rules";
 import { cn } from "@/lib/cn";
 import { Card } from "@/components/hub/Card";
 import { ConfirmButton } from "@/components/hub/ConfirmButton";
