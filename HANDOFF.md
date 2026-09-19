@@ -219,8 +219,26 @@ memakai versi "agensi kecil", bukan versi enterprise.
   Dokumen dengan jenis baru "Presentasi / materi" (migrasi
   `20260919_084628_project_document_presentasi`, ADD VALUE enum), rencana
   di Brief dan Riwayat; kalau tidak jadi, proyek Batal dan riwayat tetap.
+- **Referensi dan kotak teks yang membesar (2026-09-19 sore):** kolom
+  `brief.references` (migrasi `20260919_093512_project_brief_references`)
+  untuk aplikasi pembanding, standar atau metode, contoh laporan; satu per
+  baris dengan tautan, tampil sebagai tautan yang bisa diklik lewat
+  `Linkify` saat hanya-baca. Skill `/brief` boleh mencari referensi lewat
+  WebSearch dan mengisinya. Semua kotak teks Brief memakai
+  `components/hub/AutoTextarea.tsx` (client): tinggi mengikuti isi
+  (`scrollHeight`) saat dimuat, diketik, dan saat jendela berubah; `rows`
+  tetap jadi tinggi minimum; kelas `field-sizing-content` untuk browser
+  yang mendukung. Pakai komponen ini untuk textarea panjang lain kalau
+  dikeluhkan.
+- **Tanggal mulai tahap bisa dimundurkan (2026-09-19 sore):** form "Ubah
+  tahap" punya kolom "Sejak (opsional)" (max hari ini). Tahap sama + tanggal
+  = hanya `stageChangedAt` yang berubah, dicatat di riwayat "Tanggal mulai
+  tahap X diubah ke ..."; tahap berbeda + tanggal = pindah tahap dengan
+  tanggal itu. Tanggal di masa depan diabaikan. Hook koleksi hanya mengisi
+  `stageChangedAt` otomatis kalau action tidak mengirimnya. Untuk proyek
+  yang dimasukkan ke Hub setelah berjalan beberapa hari.
 - Seed lokal: satu proyek contoh (Klinik Gigi, tahap Build, berisiko,
-  brief terisi dan dikonfirmasi).
+  brief terisi dan dikonfirmasi, dua referensi).
 - Jebakan migrasi: `payload migrate` bertanya "run in dev mode ... data
   loss will occur? (y/N)" karena server dev pernah push schema; jawab y
   (`printf 'y\n' | npx payload migrate`), data lokal tetap ada selama

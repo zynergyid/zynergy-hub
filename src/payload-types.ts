@@ -269,6 +269,10 @@ export interface Project {
     targetFlow?: string | null;
     successMeasure?: string | null;
     constraints?: string | null;
+    /**
+     * Aplikasi pembanding, standar atau metode, contoh laporan. Nama, tautan, satu baris pelajaran.
+     */
+    references?: string | null;
     confirmedAt?: string | null;
   };
   deliverables?:
@@ -744,6 +748,7 @@ export interface ProjectsSelect<T extends boolean = true> {
         targetFlow?: T;
         successMeasure?: T;
         constraints?: T;
+        references?: T;
         confirmedAt?: T;
       };
   deliverables?:

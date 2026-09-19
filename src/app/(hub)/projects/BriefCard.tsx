@@ -2,6 +2,8 @@ import type { Project } from "@/payload-types";
 import { formatDate } from "@/lib/format";
 import { briefComplete } from "@/lib/projects";
 import { Card } from "@/components/hub/Card";
+import { AutoTextarea } from "@/components/hub/AutoTextarea";
+import { Linkify } from "@/components/hub/Linkify";
 import { Label, buttonPrimary, fieldClass } from "@/components/hub/form";
 import { saveBrief } from "./actions";
 
@@ -12,7 +14,9 @@ const lines: { name: keyof NonNullable<Project["brief"]>; label: string; placeho
   { name: "targetFlow", label: "Alur yang diinginkan", placeholder: "Langkah demi langkah setelah aplikasi ada." },
   { name: "successMeasure", label: "Ukuran sukses", placeholder: "Angka atau kejadian yang bisa dicek 3 bulan setelah launch." },
   { name: "constraints", label: "Batasan", placeholder: "Tenggat, anggaran, data pribadi, sistem lain yang harus dipakai." },
+  { name: "references", label: "Referensi", placeholder: "Aplikasi pembanding, standar atau metode, contoh laporan. Satu per baris: nama, tautan, apa yang bisa dipelajari." },
 ];
+const wide = new Set<string>(["currentFlow", "targetFlow", "references"]);
 
 /**
  * The Discovery artifact: business analysis on one page, written in the Hub
@@ -33,12 +37,12 @@ export function BriefCard({ project, editable }: { project: Project; editable: b
           <input type="hidden" name="projectId" value={project.id} />
           <div className="grid gap-3 sm:grid-cols-2">
             {lines.map((l) => (
-              <div key={l.name} className={l.name === "currentFlow" || l.name === "targetFlow" ? "sm:col-span-2" : undefined}>
+              <div key={l.name} className={wide.has(l.name) ? "sm:col-span-2" : undefined}>
                 <Label htmlFor={`br-${l.name}`}>
                   {l.label}
                   {l.required ? " *" : ""}
                 </Label>
-                <textarea id={`br-${l.name}`} name={l.name} rows={l.name === "currentFlow" || l.name === "targetFlow" ? 4 : 2} defaultValue={(brief[l.name] as string | null | undefined) ?? ""} className={fieldClass} placeholder={l.placeholder} />
+                <AutoTextarea id={`br-${l.name}`} name={l.name} rows={wide.has(l.name) ? 4 : 2} defaultValue={(brief[l.name] as string | null | undefined) ?? ""} className={fieldClass} placeholder={l.placeholder} />
               </div>
             ))}
           </div>
@@ -54,7 +58,7 @@ export function BriefCard({ project, editable }: { project: Project; editable: b
           {lines.map((l) => (
             <div key={l.name}>
               <dt className="text-xs text-muted">{l.label}</dt>
-              <dd className="whitespace-pre-wrap">{(brief[l.name] as string | null | undefined) || "-"}</dd>
+              <dd>{(brief[l.name] as string | null | undefined) ? <Linkify text={brief[l.name] as string} className="whitespace-pre-wrap text-sm" /> : "-"}</dd>
             </div>
           ))}
         </dl>

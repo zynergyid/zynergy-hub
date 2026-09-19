@@ -24,7 +24,8 @@ export const Projects: CollectionConfig = {
       enforceUnit,
       ({ data, originalDoc, operation }) => {
         // When the stage changed, so the page can say how long the project has sat in it.
-        if (operation === "create" || (data?.stage && data.stage !== originalDoc?.stage)) {
+        // An action may pass its own date (a project entered into the Hub late).
+        if ((operation === "create" || (data?.stage && data.stage !== originalDoc?.stage)) && !data?.stageChangedAt) {
           data.stageChangedAt = new Date().toISOString();
         }
         return data;
@@ -79,6 +80,7 @@ export const Projects: CollectionConfig = {
         { name: "targetFlow", type: "textarea", label: "Alur yang diinginkan" },
         { name: "successMeasure", type: "textarea", label: "Ukuran sukses" },
         { name: "constraints", type: "textarea", label: "Batasan" },
+        { name: "references", type: "textarea", label: "Referensi", admin: { description: "Aplikasi pembanding, standar atau metode, contoh laporan. Nama, tautan, satu baris pelajaran." } },
         { name: "confirmedAt", type: "date", label: "Dikonfirmasi klien pada" },
       ],
     },

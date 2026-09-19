@@ -1,6 +1,6 @@
 import { ArrowRight, Check } from "lucide-react";
 import type { Project } from "@/payload-types";
-import { daysLabel, daysUntil, formatDate } from "@/lib/format";
+import { daysLabel, daysUntil, formatDate, todayLocal } from "@/lib/format";
 import { openProjectStages, projectHealth, projectStageHint, projectStageLabel, projectStages } from "@/lib/options";
 import { actionOverdue, isOpenProject } from "@/lib/projects";
 import { cn } from "@/lib/cn";
@@ -73,8 +73,13 @@ export function StageCard({ project, editable, error }: { project: Project; edit
               <Label htmlFor="ps-stage">Ubah tahap</Label>
               <Select id="ps-stage" name="stage" defaultValue={project.stage} options={projectStages.map(({ label, value }) => ({ label, value }))} size="compact" />
             </div>
+            <div>
+              <Label htmlFor="ps-since">Sejak (opsional)</Label>
+              <input id="ps-since" name="since" type="date" max={todayLocal()} className={`${fieldClass} py-1.5 text-xs`} />
+            </div>
             <button type="submit" className={buttonOutline}>Simpan tahap</button>
           </form>
+          <p className="text-xs text-muted">Tahap yang sama dengan tanggal terisi hanya memundurkan tanggal mulainya, untuk proyek yang dimasukkan ke Hub setelah berjalan.</p>
         </div>
       )}
     </Card>

@@ -147,6 +147,7 @@ if (projects.totalDocs === 0) {
           targetFlow: "Pasien buka website, lihat layanan dan harga, tekan tombol WhatsApp dengan pesan terisi, resepsionis balas dan catat.",
           successMeasure: "Minimal 10 booking lewat WhatsApp per bulan setelah 3 bulan.",
           constraints: "Foto ruang praktik belum ada. Domain lama masih di penyedia lain.",
+          references: "- Situs klinik gigi sejenis di kota lain (contoh): https://contoh.local/klinik, alur booking WhatsApp di halaman depan.\n- Google Business Profile: https://business.google.com, syarat verifikasi alamat.",
           confirmedAt: shift(-19),
         },
         deliverables: [

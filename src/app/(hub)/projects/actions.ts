@@ -149,18 +149,33 @@ export async function setStage(formData: FormData) {
   const ctx = id ? await loadTouchable(id) : null;
   if (!ctx) return;
   const stage = pick(projectStages, text(formData, "stage"));
-  if (!stage || stage === ctx.project.stage) back(id);
+  if (!stage) back(id);
+  // "Sejak": the real date the stage began, for projects entered into the Hub late. Never in the future.
+  const sinceRaw = dateOrNull(text(formData, "since"));
+  const since = sinceRaw && new Date(sinceRaw) < new Date() ? sinceRaw : null;
+  const note = text(formData, "note");
+  if (stage === ctx.project.stage) {
+    if (since && since !== ctx.project.stageChangedAt) {
+      await ctx.payload.update({
+        collection: "projects",
+        id,
+        data: { stageChangedAt: since, log: withLog(ctx.project, "tahap", `Tanggal mulai tahap ${projectStageLabel.get(stage)} diubah ke ${since.slice(0, 10)}${note ? `: ${note}` : ""}`) },
+      });
+      revalidateProjects(id);
+    }
+    back(id);
+  }
   // Discovery ends with a written brief; without one the next stages are guesses.
   if (ctx.project.stage === "discovery" && stage !== "batal" && !briefComplete(ctx.project)) redirect(`/projects/${id}?error=brief`);
-  const note = text(formData, "note");
   const closed = stage === "selesai" || stage === "batal";
   await ctx.payload.update({
     collection: "projects",
     id,
     data: {
       stage,
+      ...(since ? { stageChangedAt: since } : {}),
       ...(closed ? { nextAction: null, nextActionAt: null, blocker: null } : {}),
-      log: withLog(ctx.project, "tahap", `Dari ${projectStageLabel.get(ctx.project.stage)} ke ${projectStageLabel.get(stage)}${note ? `: ${note}` : ""}`),
+      log: withLog(ctx.project, "tahap", `Dari ${projectStageLabel.get(ctx.project.stage)} ke ${projectStageLabel.get(stage)}${since ? ` (sejak ${since.slice(0, 10)})` : ""}${note ? `: ${note}` : ""}`),
     },
   });
   revalidateProjects(id);
@@ -208,6 +223,7 @@ export async function saveBrief(formData: FormData) {
         targetFlow: text(formData, "targetFlow") || null,
         successMeasure: text(formData, "successMeasure") || null,
         constraints: text(formData, "constraints") || null,
+        references: text(formData, "references") || null,
         confirmedAt: confirmed ? (ctx.project.brief?.confirmedAt ?? new Date().toISOString()) : null,
       },
       ...(confirmed && !wasConfirmed ? { log: withLog(ctx.project, "klien", "Brief dikonfirmasi klien") } : {}),
