@@ -91,7 +91,7 @@ export function ProspectForm({
                 <button type="button" onClick={() => setClientId(String(suggestion.id))} className="font-semibold text-primary hover:underline">Tautkan</button>
               </p>
             )}
-            {clientId && <p className="mt-1 text-xs text-muted">Riwayat PO klien ini ikut dibaca skill /outreach, dan halaman klien menampilkan status outreach-nya.</p>}
+            {clientId && !readOnly && <p className="mt-1 text-xs text-muted">Riwayat PO klien ini ikut dibaca skill /outreach, dan halaman klien menampilkan status outreach-nya.</p>}
           </div>
           <div>
             <Label htmlFor="pr-unit">Unit bisnis</Label>

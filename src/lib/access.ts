@@ -1,19 +1,18 @@
 import { APIError } from "payload";
 import type { Access, CollectionBeforeChangeHook, FieldAccess } from "payload";
-import { units, type Role, type Unit } from "@/lib/options";
+import { editorRoles, moneyRoles, units, type Role, type Unit } from "@/lib/options";
 
 export type { Role };
 
 /**
  * One access model for the whole Hub, in three questions:
  *
- *   who may CHANGE data?   admin, finance, staff (the "editor" roles)
- *   who may SEE money?     the editor roles plus viewer (komisaris)
+ *   who may CHANGE data?   `editorRoles` in options.ts (admin, finance, staff)
+ *   who may SEE money?     `moneyRoles` in options.ts
  *   which UNITS?           admin and viewer every unit, everyone else their `users.units`
  *
- * member (Anggota) and viewer (Pengawas) never write anything; member also
- * never sees money. Writes are an allow-list of roles, so a new role is
- * read-only until it is added here on purpose.
+ * member (Anggota) and viewer (Pengawas) never write anything. Writes are an
+ * allow-list of roles, so a new role is read-only until it is added on purpose.
  */
 
 interface SessionLike {
@@ -25,8 +24,8 @@ interface SessionLike {
 const asUser = (u: unknown) => (u ?? null) as SessionLike | null;
 export const allUnits: Unit[] = units.map((u) => u.value);
 
-export const edits = (role?: Role) => role === "admin" || role === "finance" || role === "staff";
-export const seesMoney = (role?: Role) => edits(role) || role === "viewer";
+export const edits = (role?: Role) => Boolean(role && editorRoles.includes(role));
+export const seesMoney = (role?: Role) => Boolean(role && moneyRoles.includes(role));
 const seesAllUnits = (role?: Role) => role === "admin" || role === "viewer";
 
 /** Units a person may see, expanded for the roles that see everything. */
@@ -79,8 +78,8 @@ export const hasRoleField =
     return Boolean(role && allowed.includes(role));
   };
 
-/** Field-level rule for prices and billing: hidden from member, who may read the rest of the record. */
-export const moneyFieldRead = hasRoleField("admin", "finance", "staff", "viewer");
+/** Field-level rule for prices and billing: roles outside `moneyRoles` still read the rest of the record. */
+export const moneyFieldRead: FieldAccess = ({ req }) => seesMoney(asUser(req.user)?.role);
 
 /**
  * REST safety net: a non-admin may only write documents in their own units.

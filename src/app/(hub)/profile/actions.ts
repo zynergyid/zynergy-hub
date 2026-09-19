@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getPayloadClient } from "@/lib/payload";
-import { getSessionUser } from "@/lib/session";
+import { canEdit, getSessionUser } from "@/lib/session";
 
 export interface ProfileState {
   status: "idle" | "success" | "error";
@@ -12,7 +12,7 @@ export interface ProfileState {
 /** Personal API key for the /outreach Claude Code skill. Shown on the profile page, never sent anywhere else. */
 export async function generateApiKey() {
   const user = await getSessionUser();
-  if (!user) return;
+  if (!user || !canEdit(user)) return;
   const payload = await getPayloadClient();
   await payload.update({ collection: "users", id: user.id, data: { enableAPIKey: true, apiKey: crypto.randomUUID() } });
   revalidatePath("/profile");
@@ -20,7 +20,7 @@ export async function generateApiKey() {
 
 export async function revokeApiKey() {
   const user = await getSessionUser();
-  if (!user) return;
+  if (!user || !canEdit(user)) return;
   const payload = await getPayloadClient();
   await payload.update({ collection: "users", id: user.id, data: { enableAPIKey: false, apiKey: null } });
   revalidatePath("/profile");

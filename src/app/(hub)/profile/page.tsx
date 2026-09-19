@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getSessionUser } from "@/lib/session";
+import { canEdit, getSessionUser } from "@/lib/session";
 import { getPayloadClient } from "@/lib/payload";
 import { roleLabel, unitLabel } from "@/lib/options";
 import { Avatar } from "@/components/hub/Avatar";
@@ -44,6 +44,7 @@ export default async function ProfilePage() {
         )}
       </p>
 
+      {canEdit(user) && (
       <Card title="Kunci API untuk Claude Code">
         <p className="text-sm text-muted">
           Dipakai skill <span className="font-semibold">/outreach</span> di laptop Anda untuk membaca antrean target dan menulis riset serta draf ke Hub atas nama Anda. Simpan di berkas <code className="rounded bg-surface-soft px-1">~/.config/zynergy-hub/env</code> sebagai <code className="rounded bg-surface-soft px-1">HUB_API_KEY</code>. Jangan bagikan; cabut kalau bocor.
@@ -69,6 +70,7 @@ export default async function ProfilePage() {
           </form>
         )}
       </Card>
+      )}
     </div>
   );
 }

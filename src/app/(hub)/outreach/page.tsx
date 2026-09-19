@@ -63,7 +63,7 @@ export default async function OutreachPage({ searchParams }: { searchParams: Pro
         <SearchForm action="/outreach" hidden={{ unit: base.unit as string | undefined, status: base.status as string | undefined }} q={q} placeholder="Cari perusahaan, kota, kontak" />
       </div>
 
-      <p className="text-xs text-muted">Riset dan draf diisi otomatis dengan menjalankan <span className="font-semibold">/outreach</span> di Claude Code; di sini Anda memeriksa, mengirim sendiri, dan mencatat.</p>
+      {canEdit(user) && <p className="text-xs text-muted">Riset dan draf diisi otomatis dengan menjalankan <span className="font-semibold">/outreach</span> di Claude Code; di sini Anda memeriksa, mengirim sendiri, dan mencatat.</p>}
 
       {rows.length === 0 ? (
         <EmptyState title={`Belum ada target${q ? ` untuk "${q}"` : ""}.`} hint="Tambahkan perusahaan yang ingin didekati; klien lama cocok untuk mulai." />

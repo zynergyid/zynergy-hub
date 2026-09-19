@@ -1,5 +1,4 @@
-import type { Role } from "@/lib/access";
-import type { Unit } from "@/lib/options";
+import { moneyRoles, type Role, type Unit } from "@/lib/options";
 
 export type IconName =
   | "dashboard"
@@ -67,7 +66,7 @@ export const navSections: NavSection[] = [
   },
   {
     title: "Keuangan",
-    items: [{ href: "/cash-flow", label: "Arus Kas", icon: "cashflow", roles: ["admin", "finance", "staff", "viewer"] }],
+    items: [{ href: "/cash-flow", label: "Arus Kas", icon: "cashflow", roles: moneyRoles }],
   },
   {
     title: "Situs",
@@ -96,7 +95,7 @@ export const navSections: NavSection[] = [
 
 export const mobileTabs: NavItem[] = [
   { href: "/", label: "Ringkasan", icon: "dashboard" },
-  { href: "/cash-flow", label: "Arus Kas", icon: "cashflow", roles: ["admin", "finance", "staff", "viewer"] },
+  { href: "/cash-flow", label: "Arus Kas", icon: "cashflow", roles: moneyRoles },
   { href: "/clients", label: "Klien", icon: "clients" },
   { href: "/orders", label: "Pesanan", icon: "orders", units: ["supply"] },
   { href: "/projects", label: "Proyek", icon: "projects", units: ["digital", "apps"] },

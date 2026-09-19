@@ -193,12 +193,17 @@ menurut audit; server action `updateSiteSeo` POST ke CMS).
   (sudah di Vercel prod sebagai Sensitive; lokal di .env.local, nilainya
   beda). Lokal: jalankan dev server situs (launch config `zynergy-site`,
   port 3000) dan buat user hub lokal dengan skrip yang sama.
-- Urutan deploy: situs dulu (migrasi `site_settings_and_api_keys` dan
-  `site_business_profile_url`), lalu skrip create-hub-user terhadap DB prod
-  (butuh DATABASE_URL_UNPOOLED dan PAYLOAD_SECRET prod lewat `vercel env
-  pull`, karena Payload mengenkripsi kunci API dengan secret), lalu env Hub,
-  lalu deploy Hub (migrasi `seo_audits` jalan di build), lalu tekan
-  "Periksa sekarang" sekali.
+- Urutan deploy (dijalankan 2026-09-20): situs dulu (migrasi
+  `site_settings_and_api_keys` dan `site_business_profile_url`), lalu skrip
+  create-hub-user terhadap DB prod, lalu env Hub, lalu deploy Hub (migrasi
+  `seo_audits` jalan di build), lalu tekan "Periksa sekarang" sekali.
+  JEBAKAN: PAYLOAD_SECRET prod bertipe Sensitive di Vercel, jadi `vercel env
+  pull` TIDAK memberi nilainya; skrip lokal lalu mengindeks kunci API dengan
+  secret yang salah dan kunci ditolak prod (login password tetap jalan).
+  Solusinya: login sebagai user hub ke `/api/users/login` prod, lalu `PATCH
+  /api/users/<id>` dengan `{ enableAPIKey: true, apiKey: <uuid baru> }`
+  memakai JWT itu; server prod mengenkripsi dengan secret yang benar.
+  Kredensial user hub ada di `~/.config/zynergy-site/env` (0600).
 - Temuan audit lokal pertama (20 Sep) yang perlu dibereskan DI REPO SITUS:
   tidak ada canonical di semua halaman, tidak ada og:image, JSON-LD hanya di
   beranda dan /digital, /tentang /blog /portofolio /brief-project
@@ -791,13 +796,22 @@ sampai sengaja ditambahkan ke `edits()`.
     yang menjalankan Supply sehari-hari butuh akses uang tanpa disebut
     "Finance". Dibedakan nanti kalau kebutuhannya berbeda.
   - `member` (Anggota): HANYA MELIHAT di unitnya (klien, outreach, pesanan,
-    proyek, brankas non-rahasia), tanpa harga, tanpa arus kas. Keputusan
-    Danish 2026-09-20; sebelumnya anggota bisa mengubah status/dokumen PO,
-    tahap/brief/log proyek, klien, dan outreach. Designer, marketing,
-    business, developer masuk sini.
+    proyek, brankas non-rahasia). Keputusan Danish 2026-09-20; sebelumnya
+    anggota bisa mengubah status/dokumen PO, tahap/brief/log proyek, klien,
+    dan outreach. SEMENTARA anggota juga boleh melihat uang (Arus Kas, harga
+    PO, nilai proyek) di unitnya: `member` ada di `moneyRoles` (options.ts);
+    cabut dari daftar itu kalau Danish mengubah keputusan. Designer,
+    marketing, business, developer masuk sini.
   - `viewer` (Pengawas, untuk komisaris): melihat semua unit termasuk arus
     kas dan harga; tidak mengubah apa pun; dokumen brankas rahasia tidak
     terlihat (hanya peran editor).
+- Daftar peran adalah satu sumber kebenaran di `options.ts`: `editorRoles`
+  (boleh menulis) dan `moneyRoles` (boleh lihat uang); `access.ts`,
+  `session.ts`, dan `nav.ts` semua membacanya (nav tidak boleh mengimpor
+  access.ts karena menarik Payload ke bundel browser).
+- Catatan untuk developer di UI (skill Claude Code di Outreach, Alat, kartu
+  kunci API di Profil, hint form target) hanya tampil untuk peran editor;
+  anggota tidak perlu tahu skill dan tidak bisa membuat kunci API.
 - Aturan koleksi (semua di `access.ts`): `unitRead` (login, dalam unitnya),
   `unitWrite` (editor, dalam unitnya; admin semua), `isEditor` (create),
   `moneyRead` (seperti unitRead minus anggota), `vaultRead`. Harga di PO
@@ -809,9 +823,8 @@ sampai sengaja ditambahkan ke `edits()`.
   harga lewat prop `showMoney`; server action memakai `canEdit(user)`
   (peran) dan `canWriteUnit(user, unit)` (peran + unit). UI hanya
   menyembunyikan; keamanannya di aturan koleksi dan action.
-- Kunci API pribadi (halaman Profil, untuk skill `/outreach`) bisa dibuat
-  semua peran; kunci anggota/pengawas otomatis hanya-baca karena aturan
-  koleksi yang sama berlaku.
+- Kunci API pribadi (halaman Profil, untuk skill `/outreach`) hanya untuk
+  peran editor; kartunya disembunyikan dari anggota dan pengawas.
 - Uji matriks akses lokal: `access-test.sh` di scratchpad sesi 2026-09-20
   (login tiap akun seed lewat `/api/users/login`, lalu GET/POST/PATCH per
   koleksi; hasil: anggota 403 di semua tulis, tanpa harga; pengawas 403

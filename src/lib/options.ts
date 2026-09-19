@@ -243,10 +243,14 @@ export const roles = [
   { label: "Admin (semua unit, kelola tim)", value: "admin" },
   { label: "Finance (klien + arus kas + pesanan di unitnya)", value: "finance" },
   { label: "Staf (sementara sama dengan Finance)", value: "staff" },
-  { label: "Anggota (lihat unitnya tanpa harga, tidak mengubah)", value: "member" },
+  { label: "Anggota (lihat unitnya, tidak mengubah; sementara termasuk arus kas)", value: "member" },
   { label: "Pengawas (lihat semua unit termasuk uang, tidak mengubah)", value: "viewer" },
 ] as const;
 export type Role = (typeof roles)[number]["value"];
+/** Roles that change data. Everyone else only looks. */
+export const editorRoles: Role[] = ["admin", "finance", "staff"];
+/** Roles that see money. Member is here TEMPORARILY (Danish, 2026-09-20) so Anggota can follow Arus Kas. */
+export const moneyRoles: Role[] = ["admin", "finance", "staff", "viewer", "member"];
 export const roleLabel = new Map<string, string>(roles.map((r) => [r.value, r.label.split(" (")[0]]));
 
 /** Job titles are descriptive only; they never grant access. */
