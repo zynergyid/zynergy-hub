@@ -98,7 +98,9 @@
   2026-09-19 malam (commit a8e8681: dokumen brief untuk klien dua gaya,
   catatan Pertemuan untuk /brief, skill di repo, kartu Skill di Alat)
   lewat Git, migrasi `project_log_pertemuan` jalan, build 57 detik,
-  promosi otomatis. Vercel project
+  promosi otomatis. Deploy kedua belas 2026-09-19 malam (commit 2f1d7a6:
+  halaman Web dan kartu Web dari Umami, env UMAMI_* ditambahkan) lewat
+  Git, tanpa migrasi, promosi otomatis. Vercel project
   `zynergy-hub` (scope `devdanzen-projects`). Neon `zynergy-hub` (paket
   gratis) dan Blob store `zynergy-hub-files` (region sin1) dibuat lewat
   CLI (`vercel integration add neon`, `vercel blob create-store`) dengan
