@@ -90,7 +90,11 @@
   status commit "Vercel" di GitHub tetap jadi bukti yang cukup. Deploy
   kesembilan 2026-09-19 sore (commit 3b5849f: referensi di Brief, kotak
   teks membesar, tanggal tahap bisa dimundurkan) lewat Git, migrasi
-  `project_brief_references` jalan, promosi otomatis dalam 2 menit. Vercel project
+  `project_brief_references` jalan, promosi otomatis dalam 2 menit. Deploy
+  kesepuluh 2026-09-19 malam (commit a6a9b69: brief mode baca dengan
+  Markdown dan selebar penuh, kartu Data proyek, KPI uang hanya setelah
+  nilai terisi, `min-w-0` kolom grid semua halaman detail) lewat Git,
+  tanpa migrasi, build 42 detik, promosi otomatis. Vercel project
   `zynergy-hub` (scope `devdanzen-projects`). Neon `zynergy-hub` (paket
   gratis) dan Blob store `zynergy-hub-files` (region sin1) dibuat lewat
   CLI (`vercel integration add neon`, `vercel blob create-store`) dengan
