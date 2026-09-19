@@ -194,8 +194,9 @@ berikutnya (laporan bulanan untuk klien UMKM jadi bahan yang sudah ada).
   di Ringkasan. Jenis metrik Umami v3 memakai `path` (bukan `url`).
 - **Google Search Console:** record TXT verifikasi
   (`google-site-verification=...`) dipasang di DNS zynergy.co.id lewat
-  `vercel dns add` pada 2026-09-20 dini hari; Danish menekan Verifikasi di
-  akun Google-nya. Belum: akun layanan Google Cloud untuk membaca API
+  `vercel dns add` pada 2026-09-20 dini hari dan Danish sudah menekan
+  Verifikasi (terverifikasi 2026-09-20). Data pencarian biasanya muncul
+  2 sampai 3 hari kemudian. Belum: akun layanan Google Cloud untuk membaca API
   Search Console dari Hub (klik dan kata kunci), laporan bulanan PDF untuk
   klien Digital, halaman /web per klien.
 
