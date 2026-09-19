@@ -87,7 +87,10 @@
   `project_document_presentasi` jalan di Neon, promosi otomatis;
   catatan: token CLI Vercel di auth.json diperbarui sendiri oleh CLI,
   skrip yang membaca token lama sempat 403, sedangkan `vercel ls` dan
-  status commit "Vercel" di GitHub tetap jadi bukti yang cukup. Vercel project
+  status commit "Vercel" di GitHub tetap jadi bukti yang cukup. Deploy
+  kesembilan 2026-09-19 sore (commit 3b5849f: referensi di Brief, kotak
+  teks membesar, tanggal tahap bisa dimundurkan) lewat Git, migrasi
+  `project_brief_references` jalan, promosi otomatis dalam 2 menit. Vercel project
   `zynergy-hub` (scope `devdanzen-projects`). Neon `zynergy-hub` (paket
   gratis) dan Blob store `zynergy-hub-files` (region sin1) dibuat lewat
   CLI (`vercel integration add neon`, `vercel blob create-store`) dengan
