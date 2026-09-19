@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowDownLeft, ArrowLeft, CalendarClock, FileText, ListChecks, Wallet } from "lucide-react";
-import { canEditMoney, canSeeMoney, getSessionUser } from "@/lib/session";
-import { canTouchOrder } from "@/lib/access";
+import { canSeeMoney, getSessionUser } from "@/lib/session";
+import { canWriteUnit } from "@/lib/access";
 import { getPayloadClient } from "@/lib/payload";
 import { clientOf, getClientOptions, getOrderPayments, nextDate, orderTotal } from "@/lib/orders";
 import { daysLabel, formatDate, formatIDR } from "@/lib/format";
@@ -15,7 +15,6 @@ import { KpiCard } from "@/components/hub/KpiCard";
 import { OrderStatusPill } from "@/components/hub/OrderStatusPill";
 import { TxList } from "@/components/hub/TxList";
 import { OrderForm } from "../OrderForm";
-import { StatusCard } from "../StatusCard";
 import { addDocument, removeDocument } from "../actions";
 
 export const metadata: Metadata = { title: "Detail PO" };
@@ -33,8 +32,7 @@ export default async function OrderDetailPage({ params, searchParams }: { params
   const order = await payload.findByID({ collection: "orders", id: orderId, depth: 1, disableErrors: true });
   if (!order || !user.units.includes(order.unit)) notFound();
   const money = canSeeMoney(user);
-  const editable = canEditMoney(user);
-  const canTouch = canTouchOrder(user, order.unit);
+  const editable = canWriteUnit(user, order.unit);
   const [clients, payments] = await Promise.all([
     getClientOptions(user.units),
     money ? getOrderPayments(orderId) : Promise.resolve({ rows: [], paid: 0, cost: 0 }),
@@ -115,12 +113,11 @@ export default async function OrderDetailPage({ params, searchParams }: { params
           <OrderForm order={order} units={user.units} clients={clients} canDelete={editable} readOnly={!editable} showMoney={money} />
         </div>
         <div className="min-w-0 space-y-5 lg:col-span-2">
-          {canTouch && !editable && <StatusCard order={order} />}
           <DocumentsCard
             rows={order.documents ?? []}
             kinds={documentKinds}
             defaultKind="po"
-            editable={canTouch}
+            editable={editable}
             error={first(sp.error)}
             ownerField="orderId"
             ownerId={order.id}

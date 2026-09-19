@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { Project } from "@/payload-types";
 import { getPayloadClient } from "@/lib/payload";
-import { canEditMoney, getSessionUser } from "@/lib/session";
+import { canEdit, getSessionUser } from "@/lib/session";
 import { canWriteUnit } from "@/lib/access";
 import { dateOrNull, digits, pick, text } from "@/lib/form-data";
 import { keepDocumentRows } from "@/lib/documents";
@@ -52,12 +52,12 @@ function revalidateProjects(id?: number) {
 export async function saveProject(_prev: ProjectFormState, formData: FormData): Promise<ProjectFormState> {
   const user = await getSessionUser();
   if (!user) return err("Sesi habis, login lagi.");
-  if (!canEditMoney(user)) return err("Hanya admin, finance, dan staf yang bisa mengubah data proyek.");
+  if (!canEdit(user)) return err("Hanya admin, finance, dan staf yang bisa mengubah data proyek.");
 
   const id = Number(formData.get("id") || 0) || null;
   const unit = pick(units, text(formData, "unit"));
   if (!unit || !projectUnits.includes(unit)) return err("Pilih unit Digital atau Apps.");
-  if (!canWriteUnit(user, unit, true)) return err("Anda tidak punya akses ke unit ini.");
+  if (!canWriteUnit(user, unit)) return err("Anda tidak punya akses ke unit ini.");
   const name = text(formData, "name");
   if (!name) return err("Nama proyek wajib diisi.");
   const clientId = Number(text(formData, "client")) || 0;
@@ -81,7 +81,7 @@ export async function saveProject(_prev: ProjectFormState, formData: FormData): 
     if (!client || client.unit !== unit) return err("Klien tidak ditemukan atau bukan dari unit ini.");
     if (id) {
       const existing = await payload.findByID({ collection: "projects", id, depth: 0, disableErrors: true });
-      if (!existing || !canWriteUnit(user, existing.unit, true)) return err("Proyek tidak ditemukan atau di luar unit Anda.");
+      if (!existing || !canWriteUnit(user, existing.unit)) return err("Proyek tidak ditemukan atau di luar unit Anda.");
     }
     const data = {
       unit,
@@ -116,12 +116,12 @@ export async function saveProject(_prev: ProjectFormState, formData: FormData): 
 
 export async function deleteProject(formData: FormData) {
   const user = await getSessionUser();
-  if (!user || !canEditMoney(user)) return;
+  if (!user || !canEdit(user)) return;
   const id = Number(formData.get("id") || 0);
   if (!id) return;
   const payload = await getPayloadClient();
   const existing = await payload.findByID({ collection: "projects", id, depth: 0, disableErrors: true });
-  if (!existing || !canWriteUnit(user, existing.unit, true)) return;
+  if (!existing || !canWriteUnit(user, existing.unit)) return;
   for (const d of keepDocumentRows(existing.documents)) {
     await payload.delete({ collection: "documents", id: d.file }).catch(() => undefined);
   }
@@ -130,13 +130,13 @@ export async function deleteProject(formData: FormData) {
   redirect("/projects");
 }
 
-/** Stage, status, deliverables, log, documents: anyone working in the project's unit. */
-async function loadTouchable(projectId: number) {
+/** Load a project the current person may change; null otherwise. */
+async function loadEditable(projectId: number) {
   const user = await getSessionUser();
   if (!user) return null;
   const payload = await getPayloadClient();
   const project = await payload.findByID({ collection: "projects", id: projectId, depth: 0, disableErrors: true });
-  if (!project || !canWriteUnit(user, project.unit, false)) return null;
+  if (!project || !canWriteUnit(user, project.unit)) return null;
   return { user, payload, project };
 }
 
@@ -146,7 +146,7 @@ function back(id: number): never {
 
 export async function setStage(formData: FormData) {
   const id = Number(formData.get("projectId") || 0);
-  const ctx = id ? await loadTouchable(id) : null;
+  const ctx = id ? await loadEditable(id) : null;
   if (!ctx) return;
   const stage = pick(projectStages, text(formData, "stage"));
   if (!stage) back(id);
@@ -185,7 +185,7 @@ export async function setStage(formData: FormData) {
 /** The weekly line: health flag, what is next, what we wait for. */
 export async function updateProjectStatus(formData: FormData) {
   const id = Number(formData.get("projectId") || 0);
-  const ctx = id ? await loadTouchable(id) : null;
+  const ctx = id ? await loadEditable(id) : null;
   if (!ctx) return;
   const health = pick(projectHealth, text(formData, "health")) ?? ctx.project.health;
   const blocker = text(formData, "blocker") || null;
@@ -208,7 +208,7 @@ export async function updateProjectStatus(formData: FormData) {
 /** The Discovery artifact, written in the Hub so the stage gate can check it. */
 export async function saveBrief(formData: FormData) {
   const id = Number(formData.get("projectId") || 0);
-  const ctx = id ? await loadTouchable(id) : null;
+  const ctx = id ? await loadEditable(id) : null;
   if (!ctx) return;
   const confirmed = formData.get("confirmed") === "on";
   const wasConfirmed = Boolean(ctx.project.brief?.confirmedAt);
@@ -235,7 +235,7 @@ export async function saveBrief(formData: FormData) {
 
 export async function addDeliverable(formData: FormData) {
   const id = Number(formData.get("projectId") || 0);
-  const ctx = id ? await loadTouchable(id) : null;
+  const ctx = id ? await loadEditable(id) : null;
   if (!ctx) return;
   const title = text(formData, "title");
   if (title) {
@@ -252,7 +252,7 @@ export async function addDeliverable(formData: FormData) {
 export async function toggleDeliverable(formData: FormData) {
   const id = Number(formData.get("projectId") || 0);
   const rowId = text(formData, "rowId");
-  const ctx = id && rowId ? await loadTouchable(id) : null;
+  const ctx = id && rowId ? await loadEditable(id) : null;
   if (!ctx) return;
   const rows = keepDeliverables(ctx.project).map((r) => (r.id === rowId ? { ...r, done: !r.done, doneAt: r.done ? null : new Date().toISOString() } : r));
   await ctx.payload.update({ collection: "projects", id, data: { deliverables: rows } });
@@ -263,7 +263,7 @@ export async function toggleDeliverable(formData: FormData) {
 export async function removeDeliverable(formData: FormData) {
   const id = Number(formData.get("projectId") || 0);
   const rowId = text(formData, "rowId");
-  const ctx = id && rowId ? await loadTouchable(id) : null;
+  const ctx = id && rowId ? await loadEditable(id) : null;
   if (!ctx) return;
   await ctx.payload.update({ collection: "projects", id, data: { deliverables: keepDeliverables(ctx.project).filter((r) => r.id !== rowId) } });
   revalidateProjects(id);
@@ -272,7 +272,7 @@ export async function removeDeliverable(formData: FormData) {
 
 export async function addProjectLog(formData: FormData) {
   const id = Number(formData.get("projectId") || 0);
-  const ctx = id ? await loadTouchable(id) : null;
+  const ctx = id ? await loadEditable(id) : null;
   if (!ctx) return;
   const note = text(formData, "note");
   if (note) {
@@ -287,7 +287,7 @@ export async function addProjectLog(formData: FormData) {
 
 export async function addProjectDocument(formData: FormData) {
   const id = Number(formData.get("projectId") || 0);
-  const ctx = id ? await loadTouchable(id) : null;
+  const ctx = id ? await loadEditable(id) : null;
   if (!ctx) return;
   const file = formData.get("file");
   const kind = pick(projectDocumentKinds, text(formData, "kind")) ?? "lainnya";
@@ -310,7 +310,7 @@ export async function addProjectDocument(formData: FormData) {
 export async function removeProjectDocument(formData: FormData) {
   const id = Number(formData.get("projectId") || 0);
   const rowId = text(formData, "rowId");
-  const ctx = id && rowId ? await loadTouchable(id) : null;
+  const ctx = id && rowId ? await loadEditable(id) : null;
   if (!ctx) return;
   const rows = keepDocumentRows(ctx.project.documents);
   const gone = rows.find((r) => r.id === rowId);

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { Payload } from "payload";
 import { getPayloadClient } from "@/lib/payload";
-import { canEditMoney, getSessionUser } from "@/lib/session";
+import { canEdit, getSessionUser } from "@/lib/session";
 import { paymentMethods, transactionCategories, units } from "@/lib/options";
 import { canWriteUnit } from "@/lib/access";
 import { digits, pick, text } from "@/lib/form-data";
@@ -41,7 +41,7 @@ async function settleOrder(payload: Payload, orderId: number) {
 
 export async function saveTransaction(_prev: QuickAddState, formData: FormData): Promise<QuickAddState> {
   const user = await getSessionUser();
-  if (!user || !canEditMoney(user)) {
+  if (!user || !canEdit(user)) {
     return { status: "error", message: "Hanya admin, finance, dan staf yang bisa mencatat transaksi." };
   }
 
@@ -64,7 +64,7 @@ export async function saveTransaction(_prev: QuickAddState, formData: FormData):
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return { status: "error", message: "Tanggal tidak valid." };
   if (!category) return { status: "error", message: "Pilih kategori." };
   if (!unit) return { status: "error", message: "Pilih unit bisnis." };
-  if (!canWriteUnit(user, unit, true)) return { status: "error", message: "Anda tidak punya akses ke unit ini." };
+  if (!canWriteUnit(user, unit)) return { status: "error", message: "Anda tidak punya akses ke unit ini." };
   if (receipt instanceof File && receipt.size > MAX_UPLOAD_BYTES) return { status: "error", message: MAX_UPLOAD_MESSAGE };
 
   try {
@@ -97,7 +97,7 @@ export async function saveTransaction(_prev: QuickAddState, formData: FormData):
     };
     if (id) {
       const existing = await payload.findByID({ collection: "transactions", id, disableErrors: true });
-      if (!existing || !canWriteUnit(user, existing.unit, true)) {
+      if (!existing || !canWriteUnit(user, existing.unit)) {
         return { status: "error", message: "Transaksi tidak ditemukan atau di luar unit Anda." };
       }
       await payload.update({ collection: "transactions", id, data });
@@ -116,12 +116,12 @@ export async function saveTransaction(_prev: QuickAddState, formData: FormData):
 
 export async function deleteTransaction(formData: FormData) {
   const user = await getSessionUser();
-  if (!user || !canEditMoney(user)) return;
+  if (!user || !canEdit(user)) return;
   const id = Number(formData.get("id") || 0);
   if (!id) return;
   const payload = await getPayloadClient();
   const existing = await payload.findByID({ collection: "transactions", id, depth: 0, disableErrors: true });
-  if (!existing || !canWriteUnit(user, existing.unit, true)) return;
+  if (!existing || !canWriteUnit(user, existing.unit)) return;
   await payload.delete({ collection: "transactions", id });
   revalidate(typeof existing.order === "number" ? existing.order : null, typeof existing.project === "number" ? existing.project : null);
   const back = String(formData.get("closeHref") || "/cash-flow");

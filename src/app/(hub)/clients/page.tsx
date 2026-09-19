@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ClipboardList, MessageCircle, Plus } from "lucide-react";
 import type { Client } from "@/payload-types";
-import { canEditClients, canSeeMoney, getSessionUser } from "@/lib/session";
+import { canEdit, canSeeMoney, getSessionUser } from "@/lib/session";
 import { getPayloadClient } from "@/lib/payload";
 import { resolveUnit, scopeUnits } from "@/lib/finance";
 import { daysLabel, formatIDR } from "@/lib/format";
@@ -139,7 +139,7 @@ export default async function KlienPage({ searchParams }: { searchParams: Promis
             {docs.length} klien{unit !== "semua" ? ` di ${unitLabel.get(unit)}` : ""}{statusLabel ? ` dengan status ${statusLabel}` : ""}.
           </p>
         </div>
-        {canEditClients(user) && (
+        {canEdit(user) && (
           <Link href={unit === "semua" ? "/clients/new" : `/clients/new?unit=${unit}`} className={buttonPrimary}>
             <Plus className="size-4" />
             Klien baru

@@ -1,4 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "DATABASE_URI=$DATABASE_URL_UNPOOLED pnpm payload migrate && pnpm build"
+  "buildCommand": "DATABASE_URI=$DATABASE_URL_UNPOOLED pnpm payload migrate && pnpm build",
+  "crons": [{ "path": "/api/cron/seo-audit", "schedule": "0 19 * * *" }]
 }

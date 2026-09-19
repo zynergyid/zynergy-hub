@@ -137,6 +137,76 @@
   mengubah nama, email, dan password sendiri (wajib setelah login pertama
   dengan password sementara).
 
+## SEO: skor, daftar kerja, dan editor di `/seo` (2026-09-20)
+
+Keputusan Danish setelah diskusi panjang: data konten situs (SEO, nanti
+artikel) tetap di CMS situs sendiri (Payload di zynergy.co.id, database
+terpisah), Hub menjadi satu pintu editornya lewat REST API situs. Alasan:
+dia tidak suka panel bawaan Payload, tim kecil, dan pola yang sama akan
+dipakai untuk situs klien Digital. Praktik umum memang mengedit SEO di
+website-nya; Hub hanya remote control. Lalu dia minta SEO punya tempat
+sendiri di sidebar dengan skor "seberapa bagus webnya". Sidebar: grup
+"Situs" berisi Web dan SEO, grup "Arsip" berisi Brankas; "Pengaturan situs"
+dihapus, editornya pindah ke bagian bawah `/seo`.
+
+Skor dibagi tiga supaya jujur (satu angka gabungan menyesatkan):
+
+- **Teknis** (0 sampai 100): hasil `lib/seo-checks.ts` pada HTML tiap
+  halaman di `lib/site-seo.ts` (status 200, HTTPS, panjang judul dan
+  deskripsi, satu H1, canonical, og:title/description/image, viewport,
+  lang, JSON-LD, tidak noindex, alt gambar, TTFB, ukuran HTML; pass 1,
+  warn 0,5, fail 0) ditambah cek situs (robots.txt menunjuk sitemap,
+  sitemap.xml ada) berbobot 15%. Hasil per halaman disimpan di koleksi
+  `seo-audits` (satu dokumen per path, `checks` json) oleh
+  `lib/seo-audit.ts`; dijalankan admin lewat tombol "Periksa sekarang"
+  (server action, halaman `maxDuration = 60`) dan otomatis tiap hari 02:00
+  WIB oleh Vercel cron `/api/cron/seo-audit` (`vercel.json` crons, header
+  `Authorization: Bearer ${CRON_SECRET}`; Hobby hanya boleh sekali sehari).
+  PageSpeed Insights tidak dipakai: tanpa kunci API kena 429; kalau nanti
+  Danish membuat kunci di Google Cloud-nya, tambahkan sebagai cek opsional.
+- **Konten** (0 sampai 100, `lib/seo-score.ts`): judul dan deskripsi pas
+  (dari audit), tidak ada judul kembar, tautan Google Business Profile
+  terisi (field `businessProfileUrl` di global `site-settings` situs), jumlah
+  artikel terbit (`/api/posts?where[_status][equals]=published`), artikel
+  baru 60 hari, halaman per kategori Supply. Bobot ada di kodenya.
+- **Visibilitas**: bukan skor, tapi kunjungan dari mesin pencari 30 hari
+  terakhir dari Umami (`getSearchVisits`, referrer google/bing/dll) dibanding
+  30 hari sebelumnya. Diganti data Search Console kalau nanti ada service
+  account dari Google Cloud milik akun Zynergy.
+
+Halaman `/seo` (semua peran bisa lihat, admin bisa periksa dan mengedit):
+tiga kartu skor, "Yang perlu dikerjakan" (gabungan semua todo, Kurang dulu
+lalu Perbaiki, sebagian menaut ke `#editor`), tabel per halaman dengan lampu
+judul/deskripsi dan angka Teknis (hover menampilkan catatannya), lalu kartu
+"Ubah judul dan deskripsi" (`SeoForm`: Business Profile, teks bagi-pakai,
+satu fieldset per halaman, penghitung karakter kuning lewat ideal 60/160
+dan merah lewat maksimal 70/200, placeholder = teks yang sekarang tayang
+menurut audit; server action `updateSiteSeo` POST ke CMS).
+
+- `lib/site-cms.ts`: `getSiteSeo`/`saveSiteSeo`/`getPublishedPosts` ke
+  `${SITE_API_URL}` dengan header `Authorization: users API-Key
+  ${SITE_API_KEY}` (user `hub@zynergy.co.id` di CMS situs; dibuat dengan
+  `scripts/create-hub-user.ts` di repo situs). `siteUrl()` = SITE_API_URL
+  tanpa `/api`, dipakai audit.
+- Env Hub: `SITE_API_URL` (prod `https://zynergy.co.id/api`, lokal
+  `http://localhost:3000/api`), `SITE_API_KEY` (Sensitive), `CRON_SECRET`
+  (sudah di Vercel prod sebagai Sensitive; lokal di .env.local, nilainya
+  beda). Lokal: jalankan dev server situs (launch config `zynergy-site`,
+  port 3000) dan buat user hub lokal dengan skrip yang sama.
+- Urutan deploy: situs dulu (migrasi `site_settings_and_api_keys` dan
+  `site_business_profile_url`), lalu skrip create-hub-user terhadap DB prod
+  (butuh DATABASE_URL_UNPOOLED dan PAYLOAD_SECRET prod lewat `vercel env
+  pull`, karena Payload mengenkripsi kunci API dengan secret), lalu env Hub,
+  lalu deploy Hub (migrasi `seo_audits` jalan di build), lalu tekan
+  "Periksa sekarang" sekali.
+- Temuan audit lokal pertama (20 Sep) yang perlu dibereskan DI REPO SITUS:
+  tidak ada canonical di semua halaman, tidak ada og:image, JSON-LD hanya di
+  beranda dan /digital, /tentang /blog /portofolio /brief-project
+  /racik-fitur tanpa H1, judul /blog terlalu pendek, deskripsi /design dan
+  /digital terlalu panjang (dua terakhir bisa dari editor Hub).
+- Berikutnya di bagian yang sama: artikel blog dari Hub (koleksi `posts`
+  situs lewat API yang sama).
+
 ## Statistik web: Umami di stats.zynergy.co.id (2026-09-19 malam)
 
 Pertanyaan Danish: "apakah ada analytic di sidebar hub, berapa yang klik
@@ -191,7 +261,9 @@ berikutnya (laporan bulanan untuk klien UMKM jadi bahan yang sudah ada).
   KPI pengunjung, tayangan, klik WhatsApp, lama kunjungan, grafik tayangan
   per hari, halaman teratas, sumber, tombol WhatsApp per tempat, negara,
   periode 7 atau 30 hari, tombol "Buka Umami". Kartu "Web zynergy.co.id"
-  di Ringkasan. Jenis metrik Umami v3 memakai `path` (bukan `url`).
+  di Ringkasan. Jenis metrik Umami v3 memakai `path` (bukan `url`). Grafik
+  harian: label tanggal di baris terpisah di bawah batang (2026-09-20,
+  bug: label di kolom yang sama mendorong batang berlabel lebih tinggi).
 - **Google Search Console:** record TXT verifikasi
   (`google-site-verification=...`) dipasang di DNS zynergy.co.id lewat
   `vercel dns add` pada 2026-09-20 dini hari dan Danish sudah menekan
@@ -365,6 +437,15 @@ memakai versi "agensi kecil", bukan versi enterprise.
   dari log proyek sebagai bahan utama dan hanya meminta tempelan di chat
   kalau tidak ada; jadi alurnya: catat pertemuan di Hub (boleh dari HP),
   lalu `/brief <proyek>`.
+- **Sidebar dikelompokkan menurut jenis pekerjaan (2026-09-20):**
+  Ringkasan; Klien (Klien, Outreach); Pekerjaan (Pesanan untuk unit Supply,
+  Proyek untuk Digital/Apps); Keuangan (Arus Kas); Arsip & Statistik
+  (Brankas, Web); Segera (alat yang belum dibangun, hilang begitu jadi);
+  Admin (Tim). Aturan yang disepakati Danish: lini bisnis TIDAK menjadi
+  judul kelompok sidebar, karena Klien, Outreach, dan Arus Kas berlaku
+  untuk tiga lini; lini dipilih lewat tab unit di dalam halaman dan
+  dibatasi unit pengguna. Kelompok tanpa judul (Ringkasan) didukung
+  Sidebar. Tab HP tidak berubah.
 - **Baris KPI proyek:** angka uang (nilai, dibayar, sisa) hanya tampil
   setelah Nilai proyek terisi; sebelum itu baris "Rp 0" tiga kali terasa
   seperti dashboard kosong (keluhan Danish 2026-09-19 malam), jadi yang
@@ -690,42 +771,54 @@ memakai versi "agensi kecil", bukan versi enterprise.
 - Pembukuan resmi PT (RUPS, notaris, AHU untuk perubahan modal) tetap di
   luar Hub.
 
-## Peran dan unit (diputuskan 2026-09-11)
+## Peran dan unit (diputuskan 2026-09-11, dipertegas 2026-09-20)
+
+Model akses seluruh Hub dijawab tiga pertanyaan di `src/lib/access.ts`:
+siapa boleh MENGUBAH (admin, finance, staf = "peran editor"), siapa boleh
+MELIHAT UANG (peran editor plus pengawas), dan UNIT mana (admin dan
+pengawas semua unit, sisanya `users.units`). Hak menulis adalah allow-list
+peran, bukan "semua kecuali pengawas": peran baru otomatis hanya-lihat
+sampai sengaja ditambahkan ke `edits()`.
 
 - Tiga unit: `digital`, `apps`, `supply` (field `unit` di Clients,
-  Transactions, Receipts). Design berada di dalam Digital untuk urusan uang.
+  Prospects, Orders, Projects, Documents, Transactions, Receipts). Design
+  berada di dalam Digital untuk urusan uang.
 - Peran = tingkat akses, unit = ruang lingkup, jabatan = label saja.
-  - `admin`: semua unit, kelola tim.
-  - `finance`: klien, arus kas, dan pesanan penuh hanya di unit yang
-    ditugaskan (`users.units`).
-  - `staff` (Staf, ditambah 2026-09-11 malam atas permintaan Danish): untuk
-    SEMENTARA haknya sama persis dengan finance (`seesMoney`/`editsMoney` di
-    access.ts). Dibuat karena orang yang menjalankan Supply sehari-hari
-    (rekan Supply) butuh akses uang tanpa disebut "Finance". Dibedakan nanti
-    kalau kebutuhannya berbeda.
-  - `member` (Anggota): klien dan alat di unitnya, tanpa uang. Sejak
-    2026-09-11 malam juga bisa membuka Pesanan di unitnya TANPA harga
-    (daftar, detail, item tanpa harga satuan, dokumen), mengubah status dan
-    catatan (kartu "Ubah status"), dan mengunggah/menghapus dokumen. Tidak
-    bisa membuat atau menghapus PO, tidak melihat nilai PO, pembayaran,
-    penagihan. Designer, marketing, business, developer masuk sini.
-  - `viewer` (Pengawas, untuk komisaris): melihat semua unit, ringkasan, arus
-    kas, klien, pesanan; tidak bisa mengubah apa pun.
-- Harga di PO dilindungi di lapisan data: field `items.unitPrice` dan
-  `subtotal` punya `access.read` untuk peran uang saja (`moneyFieldRead`),
-  dan semua field data PO punya `access.update` untuk peran uang saja
-  (`moneyFieldWrite`); anggota lewat REST hanya bisa mengubah `status`,
-  `documents`, `notes`. Halaman server memakai Local API (overrideAccess),
-  jadi UI menyembunyikan harga lewat prop `showMoney`; server action
-  `updateOrderStatus`, `addDocument`, `removeDocument` memakai
-  `canTouchOrder` (siapa pun di unit itu kecuali pengawas).
+  - `admin`: semua unit, mengubah apa pun, kelola tim, SEO.
+  - `finance`: mengubah klien, outreach, pesanan, proyek, arus kas, brankas
+    hanya di unit yang ditugaskan.
+  - `staff` (Staf): SEMENTARA sama persis dengan finance. Dibuat karena orang
+    yang menjalankan Supply sehari-hari butuh akses uang tanpa disebut
+    "Finance". Dibedakan nanti kalau kebutuhannya berbeda.
+  - `member` (Anggota): HANYA MELIHAT di unitnya (klien, outreach, pesanan,
+    proyek, brankas non-rahasia), tanpa harga, tanpa arus kas. Keputusan
+    Danish 2026-09-20; sebelumnya anggota bisa mengubah status/dokumen PO,
+    tahap/brief/log proyek, klien, dan outreach. Designer, marketing,
+    business, developer masuk sini.
+  - `viewer` (Pengawas, untuk komisaris): melihat semua unit termasuk arus
+    kas dan harga; tidak mengubah apa pun; dokumen brankas rahasia tidak
+    terlihat (hanya peran editor).
+- Aturan koleksi (semua di `access.ts`): `unitRead` (login, dalam unitnya),
+  `unitWrite` (editor, dalam unitnya; admin semua), `isEditor` (create),
+  `moneyRead` (seperti unitRead minus anggota), `vaultRead`. Harga di PO
+  dan nilai proyek dilindungi field-level `moneyFieldRead` supaya anggota
+  bisa membaca record tanpa angkanya. Tidak ada lagi field-level `update`:
+  siapa yang boleh menulis ditentukan satu kali di level koleksi.
+- Hook `enforceUnit` menjaga REST: non-admin hanya menulis unitnya sendiri.
+  Halaman server memakai Local API (overrideAccess) dan menyembunyikan
+  harga lewat prop `showMoney`; server action memakai `canEdit(user)`
+  (peran) dan `canWriteUnit(user, unit)` (peran + unit). UI hanya
+  menyembunyikan; keamanannya di aturan koleksi dan action.
+- Kunci API pribadi (halaman Profil, untuk skill `/outreach`) bisa dibuat
+  semua peran; kunci anggota/pengawas otomatis hanya-baca karena aturan
+  koleksi yang sama berlaku.
+- Uji matriks akses lokal: `access-test.sh` di scratchpad sesi 2026-09-20
+  (login tiap akun seed lewat `/api/users/login`, lalu GET/POST/PATCH per
+  koleksi; hasil: anggota 403 di semua tulis, tanpa harga; pengawas 403
+  tulis, lihat uang; finance 200 di unitnya, 403 di unit lain).
 - Berkas dipisah dua koleksi: `receipts` (bukti transfer, akses uang) dan
-  `documents` (PDF PO, invoice, surat jalan; akses seperti klien, jadi
-  anggota bisa membukanya). Keduanya ke Vercel Blob di prod.
-- Pembatasan dipaksa di lapisan data (`src/lib/access.ts`: moneyRead,
-  moneyWrite, clientRead, clientWrite mengembalikan query `unit in units`),
-  di hook `enforceUnit` untuk REST, dan di server action (`canWriteUnit`).
-  UI hanya menyembunyikan; keamanannya di query.
+  `documents` (PDF PO, invoice, surat jalan; dibaca semua peran di unitnya,
+  ditulis editor). Keduanya ke Vercel Blob di prod.
 - Klien: satu unit per klien. Klien Supply punya grup `supply` (nama badan
   hukum, NPWP, nomor vendor, termin, alamat penagihan) dan WhatsApp opsional;
   form klien menampilkan bagian itu saat unit = supply dan menyembunyikan

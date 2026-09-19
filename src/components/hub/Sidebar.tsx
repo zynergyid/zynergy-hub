@@ -32,10 +32,12 @@ export function Sidebar({ role, units, userName }: { role: Role; units: Unit[]; 
           const items = section.items.filter((i) => canSeeNav(i, role, units));
           if (items.length === 0) return null;
           return (
-            <div key={section.title} className="mb-5">
-              <p className="mb-1.5 px-2 text-[11px] font-bold uppercase tracking-wider text-muted">
-                {section.title}
-              </p>
+            <div key={section.title || "top"} className="mb-5">
+              {section.title && (
+                <p className="mb-1.5 px-2 text-[11px] font-bold uppercase tracking-wider text-muted">
+                  {section.title}
+                </p>
+              )}
               <ul className="space-y-0.5">
                 {items.map((item) => {
                   const active = isActive(pathname, item.href);

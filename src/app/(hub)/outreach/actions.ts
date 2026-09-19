@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { Prospect } from "@/payload-types";
 import { getPayloadClient } from "@/lib/payload";
-import { getSessionUser } from "@/lib/session";
+import { canEdit, getSessionUser } from "@/lib/session";
 import { canWriteUnit } from "@/lib/access";
 import { dateOrNull, pick, text } from "@/lib/form-data";
 import { FOLLOW_UP_DAYS, outreachChannels, prospectSectors, prospectSources, prospectStatuses, units, type ProspectStatus } from "@/lib/options";
@@ -39,17 +39,17 @@ async function loadEditable(id: number) {
   if (!user) return null;
   const payload = await getPayloadClient();
   const prospect = await payload.findByID({ collection: "prospects", id, depth: 0, disableErrors: true });
-  if (!prospect || !canWriteUnit(user, prospect.unit, false)) return null;
+  if (!prospect || !canWriteUnit(user, prospect.unit)) return null;
   return { user, payload, prospect };
 }
 
 export async function saveProspect(_prev: ProspectFormState, formData: FormData): Promise<ProspectFormState> {
   const user = await getSessionUser();
   if (!user) return err("Sesi habis, login lagi.");
-  if (user.role === "viewer") return err("Pengawas hanya bisa melihat.");
+  if (!canEdit(user)) return err("Peran Anda hanya bisa melihat.");
   const id = Number(formData.get("id") || 0) || null;
   const unit = pick(units, text(formData, "unit")) ?? "supply";
-  if (!canWriteUnit(user, unit, false)) return err("Anda tidak punya akses ke unit ini.");
+  if (!canWriteUnit(user, unit)) return err("Anda tidak punya akses ke unit ini.");
   const company = text(formData, "company");
   if (!company) return err("Nama perusahaan wajib diisi.");
   const clientId = Number(text(formData, "client")) || null;
@@ -75,7 +75,7 @@ export async function saveProspect(_prev: ProspectFormState, formData: FormData)
     let existing: Prospect | null = null;
     if (id) {
       existing = await payload.findByID({ collection: "prospects", id, depth: 0, disableErrors: true });
-      if (!existing || !canWriteUnit(user, existing.unit, false)) return err("Target tidak ditemukan atau di luar unit Anda.");
+      if (!existing || !canWriteUnit(user, existing.unit)) return err("Target tidak ditemukan atau di luar unit Anda.");
     }
     if (clientId) {
       const client = await payload.findByID({ collection: "clients", id: clientId, depth: 0, disableErrors: true });
@@ -280,12 +280,12 @@ export async function convertToClient(formData: FormData) {
 /** From a client page: open an outreach target prefilled from the client, linked to it. */
 export async function startOutreachFromClient(formData: FormData) {
   const user = await getSessionUser();
-  if (!user || user.role === "viewer") return;
+  if (!user || !canEdit(user)) return;
   const clientId = Number(formData.get("clientId") || 0);
   if (!clientId) return;
   const payload = await getPayloadClient();
   const client = await payload.findByID({ collection: "clients", id: clientId, depth: 0, disableErrors: true });
-  if (!client || !canWriteUnit(user, client.unit, false)) return;
+  if (!client || !canWriteUnit(user, client.unit)) return;
   const prospect = await payload.create({
     collection: "prospects",
     data: {

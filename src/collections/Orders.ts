@@ -1,24 +1,23 @@
 import type { CollectionConfig } from "payload";
-import { enforceUnit, moneyFieldRead, moneyFieldWrite, orderCreate, orderDelete, orderRead, orderWrite } from "@/lib/access";
+import { enforceUnit, isEditor, moneyFieldRead, unitRead, unitWrite } from "@/lib/access";
 import { documentKinds, orderStatuses, units } from "@/lib/options";
 
 /**
  * Purchase orders received from buyers (Supply). One PO holds the structured
  * data for dashboards and invoicing plus every document that belongs to it.
- * Everyone in the unit may read a PO and change its status or documents;
- * prices are hidden from members and only money roles edit the PO data.
+ * Everyone in the unit may read a PO; prices are hidden from members
+ * (field-level read rule) and only editor roles change anything.
  */
-const moneyOnly = { access: { update: moneyFieldWrite } };
-const moneyHidden = { access: { read: moneyFieldRead, update: moneyFieldWrite } };
+const moneyHidden = { access: { read: moneyFieldRead } };
 export const Orders: CollectionConfig = {
   slug: "orders",
   labels: { singular: "Pesanan", plural: "Pesanan" },
   admin: { useAsTitle: "number", group: "Operasional" },
   access: {
-    read: orderRead,
-    create: orderCreate,
-    update: orderWrite,
-    delete: orderDelete,
+    read: unitRead,
+    create: isEditor,
+    update: unitWrite,
+    delete: unitWrite,
   },
   hooks: {
     beforeChange: [
@@ -46,46 +45,44 @@ export const Orders: CollectionConfig = {
       type: "select",
       required: true,
       defaultValue: "supply",
-      ...moneyOnly,
       label: "Unit bisnis",
       options: [...units],
     },
     {
       type: "row",
       fields: [
-        { name: "number", type: "text", required: true, label: "Nomor PO", ...moneyOnly },
-        { name: "revision", type: "number", defaultValue: 0, min: 0, label: "Revisi", ...moneyOnly },
+        { name: "number", type: "text", required: true, label: "Nomor PO" },
+        { name: "revision", type: "number", defaultValue: 0, min: 0, label: "Revisi" },
       ],
     },
-    { name: "client", type: "relationship", relationTo: "clients", required: true, label: "Klien", ...moneyOnly },
+    { name: "client", type: "relationship", relationTo: "clients", required: true, label: "Klien" },
     {
       // Big buyers have many purchasers; the person on this PO lives here, not on the client.
       type: "row",
       fields: [
-        { name: "buyerName", type: "text", label: "Nama buyer", ...moneyOnly },
-        { name: "buyerEmail", type: "email", label: "Email buyer", ...moneyOnly },
+        { name: "buyerName", type: "text", label: "Nama buyer" },
+        { name: "buyerEmail", type: "email", label: "Email buyer" },
       ],
     },
     {
       type: "row",
       fields: [
-        { name: "orderDate", type: "date", required: true, label: "Tanggal PO", ...moneyOnly },
-        { name: "deliveryDate", type: "date", label: "Tenggat kirim", ...moneyOnly },
+        { name: "orderDate", type: "date", required: true, label: "Tanggal PO" },
+        { name: "deliveryDate", type: "date", label: "Tenggat kirim" },
       ],
     },
-    { name: "shipTo", type: "textarea", label: "Tujuan kirim", ...moneyOnly },
+    { name: "shipTo", type: "textarea", label: "Tujuan kirim" },
     {
       type: "row",
       fields: [
-        { name: "incoterm", type: "text", label: "Syarat kirim (Incoterm)", ...moneyOnly },
-        { name: "paymentTermsDays", type: "number", defaultValue: 30, min: 0, label: "Termin (hari)", ...moneyOnly },
+        { name: "incoterm", type: "text", label: "Syarat kirim (Incoterm)" },
+        { name: "paymentTermsDays", type: "number", defaultValue: 30, min: 0, label: "Termin (hari)" },
       ],
     },
     {
       name: "items",
       type: "array",
       label: "Item",
-      ...moneyOnly,
       fields: [
         {
           type: "row",
@@ -123,9 +120,9 @@ export const Orders: CollectionConfig = {
     {
       type: "row",
       fields: [
-        { name: "invoiceNumber", type: "text", label: "Nomor invoice", ...moneyOnly },
-        { name: "invoiceDate", type: "date", label: "Tanggal invoice", ...moneyOnly },
-        { name: "dueDate", type: "date", label: "Jatuh tempo bayar", ...moneyOnly },
+        { name: "invoiceNumber", type: "text", label: "Nomor invoice" },
+        { name: "invoiceDate", type: "date", label: "Tanggal invoice" },
+        { name: "dueDate", type: "date", label: "Jatuh tempo bayar" },
       ],
     },
     {

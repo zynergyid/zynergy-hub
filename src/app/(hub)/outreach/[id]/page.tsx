@@ -37,7 +37,7 @@ export default async function ProspectDetailPage({ params }: { params: Promise<{
   const payload = await getPayloadClient();
   const p = await payload.findByID({ collection: "prospects", id: prospectId, depth: 1, disableErrors: true });
   if (!p || !user.units.includes(p.unit)) notFound();
-  const editable = canWriteUnit(user, p.unit, false);
+  const editable = canWriteUnit(user, p.unit);
   const contact = primaryContact(p);
   const owner = ownerOf(p);
   const client = clientOfProspect(p);

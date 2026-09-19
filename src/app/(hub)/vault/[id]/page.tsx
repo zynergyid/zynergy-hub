@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Download, FileText, Lock } from "lucide-react";
-import { canEditMoney, getSessionUser } from "@/lib/session";
+import { canEdit, getSessionUser } from "@/lib/session";
 import { getPayloadClient } from "@/lib/payload";
 import { fileOf, thumbnailOf } from "@/lib/vault";
 import { formatDate } from "@/lib/format";
@@ -23,10 +23,10 @@ export default async function VaultDocumentPage({ params }: { params: Promise<{ 
   const payload = await getPayloadClient();
   const doc = await payload.findByID({ collection: "vault-documents", id: docId, depth: 1, disableErrors: true });
   if (!doc) notFound();
-  if (doc.confidential && !canEditMoney(user)) notFound();
+  if (doc.confidential && !canEdit(user)) notFound();
   const f = fileOf(doc);
   const thumb = thumbnailOf(doc);
-  const editable = canEditMoney(user);
+  const editable = canEdit(user);
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { canEditMoney, getSessionUser } from "@/lib/session";
+import { canEdit, getSessionUser } from "@/lib/session";
 import { getClientOptions } from "@/lib/orders";
 import { getUserOptions, projectUnitsOf } from "@/lib/projects";
 import { first, type Search } from "@/lib/search";
@@ -13,7 +13,7 @@ export default async function NewProjectPage({ searchParams }: { searchParams: P
   const user = await getSessionUser();
   if (!user) redirect("/login");
   const allowed = projectUnitsOf(user.units);
-  if (!canEditMoney(user) || allowed.length === 0) redirect("/projects");
+  if (!canEdit(user) || allowed.length === 0) redirect("/projects");
   const sp = await searchParams;
   const [clients, owners] = await Promise.all([getClientOptions(allowed), getUserOptions()]);
   return (

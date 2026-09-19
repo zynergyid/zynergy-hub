@@ -1,5 +1,5 @@
 import type { CollectionConfig } from "payload";
-import { enforceUnit, moneyCreate, moneyRead, moneyWrite } from "@/lib/access";
+import { enforceUnit, isEditor, moneyRead, unitWrite } from "@/lib/access";
 import { units } from "@/lib/options";
 
 /** Transfer proofs and invoices attached to transactions. Finance and admin only. */
@@ -9,9 +9,9 @@ export const Receipts: CollectionConfig = {
   admin: { group: "Keuangan" },
   access: {
     read: moneyRead,
-    create: moneyCreate,
-    update: moneyWrite,
-    delete: moneyWrite,
+    create: isEditor,
+    update: unitWrite,
+    delete: unitWrite,
   },
   hooks: { beforeChange: [enforceUnit] },
   upload: {

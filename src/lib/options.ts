@@ -243,8 +243,8 @@ export const roles = [
   { label: "Admin (semua unit, kelola tim)", value: "admin" },
   { label: "Finance (klien + arus kas + pesanan di unitnya)", value: "finance" },
   { label: "Staf (sementara sama dengan Finance)", value: "staff" },
-  { label: "Anggota (klien + pesanan tanpa harga di unitnya)", value: "member" },
-  { label: "Pengawas (lihat semua, tanpa mengubah)", value: "viewer" },
+  { label: "Anggota (lihat unitnya tanpa harga, tidak mengubah)", value: "member" },
+  { label: "Pengawas (lihat semua unit termasuk uang, tidak mengubah)", value: "viewer" },
 ] as const;
 export type Role = (typeof roles)[number]["value"];
 export const roleLabel = new Map<string, string>(roles.map((r) => [r.value, r.label.split(" (")[0]]));

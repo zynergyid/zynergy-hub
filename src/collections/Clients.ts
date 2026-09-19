@@ -1,5 +1,5 @@
 import type { CollectionConfig, Validate } from "payload";
-import { clientCreate, clientRead, clientWrite, enforceUnit, isAdmin } from "@/lib/access";
+import { enforceUnit, isAdmin, isEditor, unitRead, unitWrite } from "@/lib/access";
 import { businessTypes, clientStatuses, packages, units } from "@/lib/options";
 
 /** Supply buyers are companies reached by email; everyone else needs a WhatsApp number. */
@@ -20,9 +20,9 @@ export const Clients: CollectionConfig = {
     listSearchableFields: ["name", "owner", "city"],
   },
   access: {
-    read: clientRead,
-    create: clientCreate,
-    update: clientWrite,
+    read: unitRead,
+    create: isEditor,
+    update: unitWrite,
     delete: isAdmin,
   },
   defaultSort: "renewalDate",

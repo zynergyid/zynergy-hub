@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { getPayloadClient } from "@/lib/payload";
-import { editsMoney, seesMoney, unitsOf } from "@/lib/access";
+import { edits, seesMoney, unitsOf } from "@/lib/access";
 import type { Role, Unit } from "@/lib/options";
 
 export interface SessionUser {
@@ -29,5 +29,5 @@ export async function getSessionUser(): Promise<SessionUser | null> {
 }
 
 export const canSeeMoney = (u: SessionUser) => seesMoney(u.role);
-export const canEditMoney = (u: SessionUser) => editsMoney(u.role);
-export const canEditClients = (u: SessionUser) => u.role !== "viewer";
+/** Admin, finance, and staff change data; member and viewer only look. */
+export const canEdit = (u: SessionUser) => edits(u.role);

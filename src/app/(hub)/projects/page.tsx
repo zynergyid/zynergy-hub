@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Plus } from "lucide-react";
-import { canEditMoney, canSeeMoney, getSessionUser } from "@/lib/session";
+import { canEdit, canSeeMoney, getSessionUser } from "@/lib/session";
 import { resolveUnit } from "@/lib/finance";
 import { actionOverdue, clientOfProject, getProjects, isOpenProject, projectUnitsOf, type ProjectListFilter } from "@/lib/projects";
 import { daysLabel, formatIDR } from "@/lib/format";
@@ -62,7 +62,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
   return (
     <div className="space-y-5">
       <PageHeader title="Proyek" subtitle={`${subtitle}.`}>
-        {canEditMoney(user) && allowed.length > 0 && (
+        {canEdit(user) && allowed.length > 0 && (
           <Link href={unit === "semua" ? "/projects/new" : `/projects/new?unit=${unit}`} className={buttonPrimary}>
             <Plus className="size-4" />
             Proyek baru

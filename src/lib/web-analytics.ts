@@ -121,3 +121,28 @@ export const change = (now: number, before: number): number | null => (before > 
 
 /** Average visit length in whole seconds. */
 export const avgSeconds = (t: WebTotals) => (t.visits > 0 ? Math.round(t.totaltime / t.visits) : 0);
+
+const SEARCH_HOST = /(^|\.)(google|bing|yahoo|duckduckgo|yandex|baidu|ecosia)\./i;
+const searchCache = new Map<number, { at: number; value: { visits: number; previous: number } | null }>();
+
+/** Visits that arrived from a search engine, this period and the one before. */
+export async function getSearchVisits(days = 30): Promise<{ visits: number; previous: number } | null> {
+  if (!webAnalyticsConfigured()) return null;
+  const hit = searchCache.get(days);
+  if (hit && Date.now() - hit.at < TTL_MS) return hit.value;
+  const to = Date.now();
+  const from = to - days * 86400000;
+  const sum = (rows: MetricRow[]) => rows.filter((r) => r.x && SEARCH_HOST.test(r.x)).reduce((s, r) => s + r.y, 0);
+  let value: { visits: number; previous: number } | null = null;
+  try {
+    const [now, prev] = await Promise.all([
+      api<MetricRow[]>("metrics", { startAt: from, endAt: to, type: "referrer", limit: 200 }),
+      api<MetricRow[]>("metrics", { startAt: from - days * 86400000, endAt: from, type: "referrer", limit: 200 }),
+    ]);
+    value = { visits: sum(now), previous: sum(prev) };
+  } catch (error) {
+    console.error("getSearchVisits failed:", error);
+  }
+  searchCache.set(days, { at: Date.now(), value });
+  return value;
+}

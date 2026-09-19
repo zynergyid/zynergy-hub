@@ -90,19 +90,26 @@ export default async function WebPage({ searchParams }: { searchParams: Promise<
               <p className="text-sm text-muted">Belum ada kunjungan tercatat. Pelacak aktif sejak 19 Sep 2026.</p>
             ) : (
               <div className="overflow-x-auto">
-                <ul className="flex h-40 min-w-[28rem] items-end gap-1">
-                  {summary.daily.map((d) => {
-                    const max = Math.max(1, ...summary.daily.map((x) => x.pageviews));
-                    return (
-                      <li key={d.date} className="group relative flex h-full flex-1 flex-col justify-end" title={`${dayLabel.format(new Date(`${d.date}T12:00:00+07:00`))}: ${d.pageviews} tayangan, ${d.visitors} pengunjung`}>
-                        <div className={cn("w-full rounded-t bg-primary/70 group-hover:bg-primary", d.pageviews === 0 && "bg-line")} style={{ height: `${Math.max(2, (d.pageviews / max) * 100)}%` }} />
-                        {(summary.days === 7 || Number(d.date.slice(8)) % 5 === 0) && (
-                          <span className="mt-1 block truncate text-center text-[10px] text-muted">{dayLabel.format(new Date(`${d.date}T12:00:00+07:00`))}</span>
-                        )}
+                <div className="min-w-[28rem]">
+                  {/* Bars and labels live in separate rows so a label never lifts its bar off the baseline. */}
+                  <ul className="flex h-40 items-end gap-1">
+                    {summary.daily.map((d) => {
+                      const max = Math.max(1, ...summary.daily.map((x) => x.pageviews));
+                      return (
+                        <li key={d.date} className="group flex h-full flex-1 items-end" title={`${dayLabel.format(new Date(`${d.date}T12:00:00+07:00`))}: ${d.pageviews} tayangan, ${d.visitors} pengunjung`}>
+                          <div className={cn("w-full rounded-t bg-primary/70 group-hover:bg-primary", d.pageviews === 0 && "bg-line")} style={{ height: `${Math.max(2, (d.pageviews / max) * 100)}%` }} />
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <ul className="mt-1 flex gap-1">
+                    {summary.daily.map((d) => (
+                      <li key={d.date} className="min-w-0 flex-1 text-center text-[10px] text-muted">
+                        {(summary.days === 7 || Number(d.date.slice(8)) % 5 === 0) && <span className="block truncate">{dayLabel.format(new Date(`${d.date}T12:00:00+07:00`))}</span>}
                       </li>
-                    );
-                  })}
-                </ul>
+                    ))}
+                  </ul>
+                </div>
               </div>
             )}
           </Card>

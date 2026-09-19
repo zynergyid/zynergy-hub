@@ -8,8 +8,8 @@ import { extractPurchaseOrder, type AiCallUsage } from "@/lib/ai/openai";
 import { getClientOptions } from "@/lib/orders";
 import { matchClient, type OrderDraft } from "@/lib/order-draft";
 import { formatIDR } from "@/lib/format";
-import { canEditMoney, getSessionUser } from "@/lib/session";
-import { canTouchOrder, canWriteUnit } from "@/lib/access";
+import { canEdit, getSessionUser } from "@/lib/session";
+import { canWriteUnit } from "@/lib/access";
 import { dateOrNull, digits, pick, text } from "@/lib/form-data";
 import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MESSAGE, uploadFile } from "@/lib/uploads";
 import { keepDocumentRows } from "@/lib/documents";
@@ -43,12 +43,12 @@ function revalidateOrders(id?: number) {
 export async function saveOrder(_prev: OrderFormState, formData: FormData): Promise<OrderFormState> {
   const user = await getSessionUser();
   if (!user) return err("Sesi habis, login lagi.");
-  if (!canEditMoney(user)) return err("Hanya admin dan finance yang bisa mengubah pesanan.");
+  if (!canEdit(user)) return err("Hanya admin dan finance yang bisa mengubah pesanan.");
 
   const id = Number(formData.get("id") || 0) || null;
   const unit = pick(units, text(formData, "unit"));
   if (!unit) return err("Pilih unit bisnis.");
-  if (!canWriteUnit(user, unit, true)) return err("Anda tidak punya akses ke unit ini.");
+  if (!canWriteUnit(user, unit)) return err("Anda tidak punya akses ke unit ini.");
   const number = text(formData, "number");
   if (!number) return err("Nomor PO wajib diisi.");
   const clientId = Number(text(formData, "client")) || 0;
@@ -94,7 +94,7 @@ export async function saveOrder(_prev: OrderFormState, formData: FormData): Prom
     let existing: Order | null = null;
     if (id) {
       existing = await payload.findByID({ collection: "orders", id, depth: 0, disableErrors: true });
-      if (!existing || !canWriteUnit(user, existing.unit, true)) return err("PO tidak ditemukan atau di luar unit Anda.");
+      if (!existing || !canWriteUnit(user, existing.unit)) return err("PO tidak ditemukan atau di luar unit Anda.");
     }
     const revision = Math.max(0, Math.floor(Number(text(formData, "revision")) || 0));
     const documents = keepDocumentRows(existing?.documents);
@@ -144,9 +144,9 @@ const isoDay = (v: string | null) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : u
 /** Read a buyer's PO PDF and return a form draft. Nothing is saved until the person presses Simpan. */
 export async function importOrderPdf(formData: FormData): Promise<ImportResult> {
   const user = await getSessionUser();
-  if (!user || !canEditMoney(user)) return { status: "error", message: "Hanya admin, finance, dan staf yang bisa mengimpor PO." };
+  if (!user || !canEdit(user)) return { status: "error", message: "Hanya admin, finance, dan staf yang bisa mengimpor PO." };
   const unit = pick(units, text(formData, "unit")) ?? "supply";
-  if (!canWriteUnit(user, unit, true)) return { status: "error", message: "Anda tidak punya akses ke unit ini." };
+  if (!canWriteUnit(user, unit)) return { status: "error", message: "Anda tidak punya akses ke unit ini." };
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) return { status: "error", message: "Pilih PDF PO dulu." };
   if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) return { status: "error", message: "Impor hanya menerima PDF." };
@@ -217,12 +217,12 @@ export async function importOrderPdf(formData: FormData): Promise<ImportResult> 
 
 export async function deleteOrder(formData: FormData) {
   const user = await getSessionUser();
-  if (!user || !canEditMoney(user)) return;
+  if (!user || !canEdit(user)) return;
   const id = Number(formData.get("id") || 0);
   if (!id) return;
   const payload = await getPayloadClient();
   const existing = await payload.findByID({ collection: "orders", id, depth: 0, disableErrors: true });
-  if (!existing || !canWriteUnit(user, existing.unit, true)) return;
+  if (!existing || !canWriteUnit(user, existing.unit)) return;
   for (const d of keepDocumentRows(existing.documents)) {
     await payload.delete({ collection: "documents", id: d.file }).catch(() => undefined);
   }
@@ -231,32 +231,20 @@ export async function deleteOrder(formData: FormData) {
   redirect("/orders");
 }
 
-/** Status and documents: anyone working in the order's unit, not only money roles. */
-async function loadTouchable(orderId: number) {
+/** Load an order the current person may change; null otherwise. */
+async function loadEditable(orderId: number) {
   const user = await getSessionUser();
   if (!user) return null;
   const payload = await getPayloadClient();
   const order = await payload.findByID({ collection: "orders", id: orderId, depth: 0, disableErrors: true });
-  if (!order || !canTouchOrder(user, order.unit)) return null;
+  if (!order || !canWriteUnit(user, order.unit)) return null;
   return { payload, order };
-}
-
-export async function updateOrderStatus(formData: FormData) {
-  const orderId = Number(formData.get("orderId") || 0);
-  if (!orderId) return;
-  const ctx = await loadTouchable(orderId);
-  if (!ctx) return;
-  const status = pick(orderStatuses, text(formData, "status"));
-  if (!status) return;
-  await ctx.payload.update({ collection: "orders", id: orderId, data: { status, notes: text(formData, "notes") || null } });
-  revalidateOrders(orderId);
-  redirect(`/orders/${orderId}`);
 }
 
 export async function addDocument(formData: FormData) {
   const orderId = Number(formData.get("orderId") || 0);
   if (!orderId) return;
-  const ctx = await loadTouchable(orderId);
+  const ctx = await loadEditable(orderId);
   if (!ctx) return;
   const file = formData.get("file");
   const kind = pick(documentKinds, text(formData, "kind")) ?? "lainnya";
@@ -280,7 +268,7 @@ export async function removeDocument(formData: FormData) {
   const orderId = Number(formData.get("orderId") || 0);
   const rowId = text(formData, "rowId");
   if (!orderId || !rowId) return;
-  const ctx = await loadTouchable(orderId);
+  const ctx = await loadEditable(orderId);
   if (!ctx) return;
   const rows = keepDocumentRows(ctx.order.documents);
   const gone = rows.find((r) => r.id === rowId);

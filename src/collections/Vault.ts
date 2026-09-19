@@ -1,5 +1,5 @@
 import type { CollectionConfig } from "payload";
-import { vaultRead, vaultWrite } from "@/lib/access";
+import { isEditor, vaultRead } from "@/lib/access";
 import { vaultCategories } from "@/lib/options";
 
 /**
@@ -14,9 +14,9 @@ export const VaultDocuments: CollectionConfig = {
   admin: { useAsTitle: "title", group: "Operasional" },
   access: {
     read: vaultRead,
-    create: vaultWrite,
-    update: vaultWrite,
-    delete: vaultWrite,
+    create: isEditor,
+    update: isEditor,
+    delete: isEditor,
   },
   defaultSort: "title",
   hooks: {
@@ -71,9 +71,9 @@ export const VaultFiles: CollectionConfig = {
   admin: { group: "Operasional" },
   access: {
     read: vaultRead,
-    create: vaultWrite,
-    update: vaultWrite,
-    delete: vaultWrite,
+    create: isEditor,
+    update: isEditor,
+    delete: isEditor,
   },
   upload: { mimeTypes: ["image/*", "application/pdf"] },
   fields: [{ name: "confidential", type: "checkbox", defaultValue: false, label: "Rahasia" }],

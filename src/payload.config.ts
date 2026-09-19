@@ -12,6 +12,7 @@ import { Orders } from "@/collections/Orders";
 import { Projects } from "@/collections/Projects";
 import { Prospects } from "@/collections/Prospects";
 import { Receipts } from "@/collections/Receipts";
+import { SeoAudits } from "@/collections/SeoAudits";
 import { Transactions } from "@/collections/Transactions";
 import { Users } from "@/collections/Users";
 import { VaultDocuments, VaultFiles } from "@/collections/Vault";
@@ -24,7 +25,7 @@ export default buildConfig({
     // The team uses the custom screens; the Payload panel is not served at all.
     disable: true,
   },
-  collections: [Clients, Orders, Projects, Documents, Transactions, Receipts, Prospects, VaultDocuments, VaultFiles, AiUsage, Users],
+  collections: [Clients, Orders, Projects, Documents, Transactions, Receipts, Prospects, VaultDocuments, VaultFiles, AiUsage, SeoAudits, Users],
   secret: process.env.PAYLOAD_SECRET || "",
   db: postgresAdapter({
     pool: {

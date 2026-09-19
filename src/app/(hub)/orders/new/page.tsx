@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { canEditMoney, getSessionUser } from "@/lib/session";
+import { canEdit, getSessionUser } from "@/lib/session";
 import { getClientOptions } from "@/lib/orders";
 import { first, type Search } from "@/lib/search";
 import { PageHeader } from "@/components/hub/PageHeader";
@@ -13,7 +13,7 @@ export const maxDuration = 60;
 export default async function NewOrderPage({ searchParams }: { searchParams: Promise<Search> }) {
   const user = await getSessionUser();
   if (!user) redirect("/login");
-  if (!canEditMoney(user)) redirect("/orders");
+  if (!canEdit(user)) redirect("/orders");
   const sp = await searchParams;
   const clients = await getClientOptions(user.units);
   return (

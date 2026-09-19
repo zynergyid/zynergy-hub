@@ -1,5 +1,5 @@
 import type { CollectionConfig } from "payload";
-import { clientCreate, clientRead, clientWrite, enforceUnit } from "@/lib/access";
+import { enforceUnit, isEditor, unitRead, unitWrite } from "@/lib/access";
 import { units } from "@/lib/options";
 import { DOCUMENT_MIME_TYPES } from "@/lib/limits";
 
@@ -9,10 +9,10 @@ export const Documents: CollectionConfig = {
   labels: { singular: "Dokumen", plural: "Dokumen" },
   admin: { group: "Operasional" },
   access: {
-    read: clientRead,
-    create: clientCreate,
-    update: clientWrite,
-    delete: clientWrite,
+    read: unitRead,
+    create: isEditor,
+    update: unitWrite,
+    delete: unitWrite,
   },
   hooks: { beforeChange: [enforceUnit] },
   upload: {

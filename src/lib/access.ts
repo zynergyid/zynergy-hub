@@ -4,6 +4,18 @@ import { units, type Role, type Unit } from "@/lib/options";
 
 export type { Role };
 
+/**
+ * One access model for the whole Hub, in three questions:
+ *
+ *   who may CHANGE data?   admin, finance, staff (the "editor" roles)
+ *   who may SEE money?     the editor roles plus viewer (komisaris)
+ *   which UNITS?           admin and viewer every unit, everyone else their `users.units`
+ *
+ * member (Anggota) and viewer (Pengawas) never write anything; member also
+ * never sees money. Writes are an allow-list of roles, so a new role is
+ * read-only until it is added here on purpose.
+ */
+
 interface SessionLike {
   id?: number | string;
   role?: Role;
@@ -13,67 +25,52 @@ interface SessionLike {
 const asUser = (u: unknown) => (u ?? null) as SessionLike | null;
 export const allUnits: Unit[] = units.map((u) => u.value);
 
-/** Money visibility by role. Staff is Finance under another name for now. */
-export const seesMoney = (role?: Role) => role === "admin" || role === "finance" || role === "staff" || role === "viewer";
-export const editsMoney = (role?: Role) => role === "admin" || role === "finance" || role === "staff";
+export const edits = (role?: Role) => role === "admin" || role === "finance" || role === "staff";
+export const seesMoney = (role?: Role) => edits(role) || role === "viewer";
+const seesAllUnits = (role?: Role) => role === "admin" || role === "viewer";
 
-/** Units a user may see: admin and viewer see everything, others only their assigned units. */
+/** Units a person may see, expanded for the roles that see everything. */
 export function unitsOf(user: unknown): Unit[] {
   const u = asUser(user);
   if (!u?.role) return [];
-  if (u.role === "admin" || u.role === "viewer") return allUnits;
+  if (seesAllUnits(u.role)) return allUnits;
   return (u.units ?? []).filter((x): x is Unit => allUnits.includes(x as Unit));
 }
 
 export const isLoggedIn: Access = ({ req }) => Boolean(req.user);
 export const isAdmin: Access = ({ req }) => asUser(req.user)?.role === "admin";
+export const isEditor: Access = ({ req }) => edits(asUser(req.user)?.role);
 
-/** Read money: admin and viewer everywhere, finance only in their units. */
+/** Read a unit-scoped collection: everyone logged in, within their units. */
+export const unitRead: Access = ({ req }) => {
+  const u = asUser(req.user);
+  if (!u?.role) return false;
+  return seesAllUnits(u.role) || { unit: { in: unitsOf(u) } };
+};
+
+/** Change a unit-scoped collection: editor roles only, within their units (admin everywhere). */
+export const unitWrite: Access = ({ req }) => {
+  const u = asUser(req.user);
+  if (!edits(u?.role)) return false;
+  return u?.role === "admin" || { unit: { in: unitsOf(u) } };
+};
+
+/** Read money: like unitRead, minus member. */
 export const moneyRead: Access = ({ req }) => {
   const u = asUser(req.user);
-  if (!u?.role) return false;
-  if (u.role === "admin" || u.role === "viewer") return true;
-  if (editsMoney(u.role)) return { unit: { in: unitsOf(u) } };
-  return false;
-};
-
-/** Change money: admin everywhere, finance only in their units. Used for update/delete (query) and create (boolean). */
-export const moneyWrite: Access = ({ req }) => {
-  const u = asUser(req.user);
-  if (!u?.role) return false;
-  if (u.role === "admin") return true;
-  if (editsMoney(u.role)) return { unit: { in: unitsOf(u) } };
-  return false;
-};
-export const moneyCreate: Access = ({ req }) => editsMoney(asUser(req.user)?.role);
-
-/** Clients: everyone logged in, scoped to their units (admin and viewer see all). */
-export const clientRead: Access = ({ req }) => {
-  const u = asUser(req.user);
-  if (!u?.role) return false;
-  if (u.role === "admin" || u.role === "viewer") return true;
-  return { unit: { in: unitsOf(u) } };
-};
-export const clientWrite: Access = ({ req }) => {
-  const u = asUser(req.user);
-  if (!u?.role || u.role === "viewer") return false;
-  if (u.role === "admin") return true;
-  return { unit: { in: unitsOf(u) } };
-};
-export const clientCreate: Access = ({ req }) => {
-  const role = asUser(req.user)?.role;
-  return Boolean(role) && role !== "viewer";
+  if (!seesMoney(u?.role)) return false;
+  return seesAllUnits(u?.role) || { unit: { in: unitsOf(u) } };
 };
 
 /**
- * Orders: everyone in the unit may read them (members handle sourcing and
- * shipping), but price fields are money and use the field-level rules below.
- * Creating and deleting stay with the money roles.
+ * Vault: everyone may read and download, except documents marked
+ * confidential, which only editor roles see. Uploading and deleting: editors.
  */
-export const orderRead: Access = clientRead;
-export const orderWrite: Access = clientWrite;
-export const orderCreate: Access = moneyCreate;
-export const orderDelete: Access = moneyWrite;
+export const vaultRead: Access = ({ req }) => {
+  const u = asUser(req.user);
+  if (!u?.role) return false;
+  return edits(u.role) || { confidential: { not_equals: true } };
+};
 
 export const hasRoleField =
   (...allowed: Role[]): FieldAccess =>
@@ -82,21 +79,8 @@ export const hasRoleField =
     return Boolean(role && allowed.includes(role));
   };
 
-/**
- * Vault: every team member may read and download, except documents marked
- * confidential, which only money roles see. Uploading and deleting: money roles.
- */
-export const vaultRead: Access = ({ req }) => {
-  const u = asUser(req.user);
-  if (!u?.role) return false;
-  if (editsMoney(u.role)) return true;
-  return { confidential: { not_equals: true } };
-};
-export const vaultWrite: Access = ({ req }) => editsMoney(asUser(req.user)?.role);
-
-/** Field-level rules for prices and billing on orders. */
+/** Field-level rule for prices and billing: hidden from member, who may read the rest of the record. */
 export const moneyFieldRead = hasRoleField("admin", "finance", "staff", "viewer");
-export const moneyFieldWrite = hasRoleField("admin", "finance", "staff");
 
 /**
  * REST safety net: a non-admin may only write documents in their own units.
@@ -112,13 +96,5 @@ export const enforceUnit: CollectionBeforeChangeHook = ({ data, req }) => {
   return data;
 };
 
-/** Server-side checks shared by server actions. */
-export const canWriteUnit = (user: SessionLike | null, unit: Unit, money: boolean) => {
-  if (!user?.role || user.role === "viewer") return false;
-  if (user.role === "admin") return true;
-  if (money && !editsMoney(user.role)) return false;
-  return unitsOf(user).includes(unit);
-};
-
-/** Status changes and documents on an order: anyone working in that unit. */
-export const canTouchOrder = (user: SessionLike | null, unit: Unit) => canWriteUnit(user, unit, false);
+/** Server actions: may this person change something in this unit? */
+export const canWriteUnit = (user: SessionLike | null, unit: Unit) => edits(user?.role) && unitsOf(user).includes(unit);

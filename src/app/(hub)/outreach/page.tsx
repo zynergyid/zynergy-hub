@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Plus } from "lucide-react";
-import { canEditClients, getSessionUser } from "@/lib/session";
+import { canEdit, getSessionUser } from "@/lib/session";
 import { resolveUnit } from "@/lib/finance";
 import { followUpDue, getProspects, nextAction, ownerOf, primaryContact } from "@/lib/outreach";
 import { daysLabel } from "@/lib/format";
@@ -49,7 +49,7 @@ export default async function OutreachPage({ searchParams }: { searchParams: Pro
   return (
     <div className="space-y-5">
       <PageHeader title="Outreach" subtitle={`${rows.length} target${filter !== "aktif" && filter !== "semua" ? ` ${prospectStatuses.find((s) => s.value === filter)?.label.toLowerCase()}` : ""}${due ? ` · ${due} tindak lanjut jatuh tempo` : ""}.`}>
-        {canEditClients(user) && (
+        {canEdit(user) && (
           <Link href={unit === "semua" ? "/outreach/new" : `/outreach/new?unit=${unit}`} className={buttonPrimary}>
             <Plus className="size-4" />
             Target baru

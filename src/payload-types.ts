@@ -77,6 +77,7 @@ export interface Config {
     'vault-documents': VaultDocument;
     'vault-files': VaultFile;
     'ai-usage': AiUsage;
+    'seo-audits': SeoAudit;
     users: User;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -95,6 +96,7 @@ export interface Config {
     'vault-documents': VaultDocumentsSelect<false> | VaultDocumentsSelect<true>;
     'vault-files': VaultFilesSelect<false> | VaultFilesSelect<true>;
     'ai-usage': AiUsageSelect<false> | AiUsageSelect<true>;
+    'seo-audits': SeoAuditsSelect<false> | SeoAuditsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -317,7 +319,7 @@ export interface User {
   name: string;
   role: 'admin' | 'finance' | 'staff' | 'member' | 'viewer';
   /**
-   * Ruang lingkup finance dan anggota. Admin dan pengawas otomatis semua unit.
+   * Ruang lingkup finance, staf, dan anggota. Admin dan pengawas otomatis semua unit.
    */
   units?: ('digital' | 'apps' | 'supply')[] | null;
   title?:
@@ -531,6 +533,35 @@ export interface AiUsage {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "seo-audits".
+ */
+export interface SeoAudit {
+  id: number;
+  path: string;
+  url: string;
+  fetchedAt: string;
+  statusCode?: number | null;
+  ttfbMs?: number | null;
+  htmlBytes?: number | null;
+  title?: string | null;
+  description?: string | null;
+  passed?: number | null;
+  total?: number | null;
+  checks?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  error?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -592,6 +623,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'ai-usage';
         value: number | AiUsage;
+      } | null)
+    | ({
+        relationTo: 'seo-audits';
+        value: number | SeoAudit;
       } | null)
     | ({
         relationTo: 'users';
@@ -939,6 +974,26 @@ export interface AiUsageSelect<T extends boolean = true> {
   costUsd?: T;
   user?: T;
   note?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "seo-audits_select".
+ */
+export interface SeoAuditsSelect<T extends boolean = true> {
+  path?: T;
+  url?: T;
+  fetchedAt?: T;
+  statusCode?: T;
+  ttfbMs?: T;
+  htmlBytes?: T;
+  title?: T;
+  description?: T;
+  passed?: T;
+  total?: T;
+  checks?: T;
+  error?: T;
   updatedAt?: T;
   createdAt?: T;
 }

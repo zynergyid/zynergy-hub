@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, MessageCircle, Plus } from "lucide-react";
-import { canEditClients, canEditMoney, canSeeMoney, getSessionUser } from "@/lib/session";
+import { canEdit, canSeeMoney, getSessionUser } from "@/lib/session";
 import { getPayloadClient } from "@/lib/payload";
 import { getOrders, nextDate, orderTotal } from "@/lib/orders";
 import { getProjects } from "@/lib/projects";
@@ -66,13 +66,13 @@ export default async function KlienDetailPage({ params, searchParams }: { params
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          {isSupply && canEditMoney(user) && (
+          {isSupply && canEdit(user) && (
             <Link href={`/orders/new?client=${client.id}`} className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white hover:bg-primary-dark">
               <Plus className="size-4" />
               PO baru
             </Link>
           )}
-          {!isSupply && canEditMoney(user) && (
+          {!isSupply && canEdit(user) && (
             <Link href={`/projects/new?client=${client.id}`} className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white hover:bg-primary-dark">
               <Plus className="size-4" />
               Proyek baru
@@ -91,7 +91,7 @@ export default async function KlienDetailPage({ params, searchParams }: { params
 
       <div className="grid gap-5 lg:grid-cols-5">
         <div className="min-w-0 lg:col-span-3">
-          <ClientForm client={client} canDelete={user.role === "admin"} readOnly={!canEditClients(user)} units={user.units} />
+          <ClientForm client={client} canDelete={user.role === "admin"} readOnly={!canEdit(user)} units={user.units} />
         </div>
         <div className="min-w-0 space-y-5 lg:col-span-2">
           <Card title="Outreach" action={prospects.docs.length ? { label: "Semua outreach", href: `/outreach?status=semua&q=${encodeURIComponent(client.name)}` } : undefined}>
@@ -110,7 +110,7 @@ export default async function KlienDetailPage({ params, searchParams }: { params
                 ))}
               </ul>
             )}
-            {canEditClients(user) && !hasOpenOutreach && (
+            {canEdit(user) && !hasOpenOutreach && (
               <form action={startOutreachFromClient} className="mt-3 border-t border-line pt-3">
                 <input type="hidden" name="clientId" value={client.id} />
                 <button type="submit" className={buttonOutline}>Mulai outreach</button>
@@ -170,7 +170,7 @@ export default async function KlienDetailPage({ params, searchParams }: { params
           )}
           {tx && (
             <Card title="Transaksi klien ini" action={{ label: "Arus kas", href: `/cash-flow?unit=${client.unit}&q=${encodeURIComponent(client.name)}` }}>
-              <TxList rows={tx.docs} editable={canEditMoney(user)} empty="Belum ada transaksi." />
+              <TxList rows={tx.docs} editable={canEdit(user)} empty="Belum ada transaksi." />
             </Card>
           )}
         </div>

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowDownLeft, ArrowUpRight, CalendarClock, Download, Users, Wallet } from "lucide-react";
 import type { Client } from "@/payload-types";
-import { canEditMoney, canSeeMoney, getSessionUser } from "@/lib/session";
+import { canEdit, canSeeMoney, getSessionUser } from "@/lib/session";
 import {
   getCategoryBreakdown,
   getClientCounts,
@@ -79,7 +79,7 @@ export default async function HubHome({ searchParams }: { searchParams: Promise<
     hasSupply ? getOrderSummary(unit, allowed) : null,
     hasProjects ? getProjectSummary(unit, allowed) : null,
     getOutreachSummary(unit, allowed),
-    getVaultSummary(canEditMoney(user)),
+    getVaultSummary(canEdit(user)),
     webAnalyticsConfigured() ? getWebSummary(7) : Promise.resolve(null),
   ]);
   const ordersHref = unit === "semua" ? "/orders" : `/orders?unit=${unit}`;

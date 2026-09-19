@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowDownLeft, ArrowLeft, CalendarClock, FileText, ListChecks, Wallet } from "lucide-react";
-import { canEditMoney, canSeeMoney, getSessionUser } from "@/lib/session";
+import { canSeeMoney, getSessionUser } from "@/lib/session";
 import { canWriteUnit } from "@/lib/access";
 import { getPayloadClient } from "@/lib/payload";
 import { getClientOptions } from "@/lib/orders";
@@ -37,8 +37,7 @@ export default async function ProjectDetailPage({ params, searchParams }: { para
   const project = await payload.findByID({ collection: "projects", id: projectId, depth: 1, disableErrors: true });
   if (!project || !user.units.includes(project.unit)) notFound();
   const money = canSeeMoney(user);
-  const editable = canEditMoney(user);
-  const canTouch = canWriteUnit(user, project.unit, false);
+  const editable = canWriteUnit(user, project.unit);
   const [clients, owners, payments] = await Promise.all([
     getClientOptions(projectUnitsOf(user.units)),
     getUserOptions(),
@@ -113,8 +112,8 @@ export default async function ProjectDetailPage({ params, searchParams }: { para
 
       <div className="grid gap-5 lg:grid-cols-5">
         <div className="min-w-0 space-y-5 lg:col-span-3">
-          <StageCard project={project} editable={canTouch} error={first(sp.error)} />
-          <HealthCard project={project} editable={canTouch} />
+          <StageCard project={project} editable={editable} error={first(sp.error)} />
+          <HealthCard project={project} editable={editable} />
         </div>
         <div className="min-w-0 lg:col-span-2">
           <ProjectInfoCard project={project} open={open} units={projectUnitsOf(user.units)} clients={clients} owners={owners} currentUserId={user.id} editable={editable} showMoney={money} />
@@ -122,19 +121,19 @@ export default async function ProjectDetailPage({ params, searchParams }: { para
       </div>
 
       {/* The brief is the longest text on the page, so it gets the full width. */}
-      <BriefCard project={project} editable={canTouch} />
+      <BriefCard project={project} editable={editable} />
 
       <div className="grid gap-5 lg:grid-cols-5">
         <div className="min-w-0 space-y-5 lg:col-span-3">
-          <DeliverablesCard project={project} editable={canTouch} />
-          <LogCard project={project} editable={canTouch} />
+          <DeliverablesCard project={project} editable={editable} />
+          <LogCard project={project} editable={editable} />
         </div>
         <div className="min-w-0 space-y-5 lg:col-span-2">
           <DocumentsCard
             rows={project.documents ?? []}
             kinds={projectDocumentKinds}
             defaultKind="scope"
-            editable={canTouch}
+            editable={editable}
             error={first(sp.error)}
             ownerField="projectId"
             ownerId={project.id}

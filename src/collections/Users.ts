@@ -44,7 +44,7 @@ export const Users: CollectionConfig = {
       label: "Unit bisnis",
       options: [...units],
       access: { update: hasRoleField("admin") },
-      admin: { description: "Ruang lingkup finance dan anggota. Admin dan pengawas otomatis semua unit." },
+      admin: { description: "Ruang lingkup finance, staf, dan anggota. Admin dan pengawas otomatis semua unit." },
     },
     {
       name: "title",

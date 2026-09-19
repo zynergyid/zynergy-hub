@@ -1,5 +1,5 @@
 import type { CollectionConfig } from "payload";
-import { enforceUnit, moneyFieldRead, moneyFieldWrite, orderCreate, orderDelete, orderRead, orderWrite } from "@/lib/access";
+import { enforceUnit, isEditor, moneyFieldRead, unitRead, unitWrite } from "@/lib/access";
 import { projectDocumentKinds, projectHealth, projectLogTypes, projectStages, units } from "@/lib/options";
 
 /**
@@ -8,16 +8,16 @@ import { projectDocumentKinds, projectHealth, projectLogTypes, projectStages, un
  * deliverables, and write the log; value and DP are money fields; creating
  * and deleting stay with the money roles, the same rules as orders.
  */
-const moneyHidden = { access: { read: moneyFieldRead, update: moneyFieldWrite } };
+const moneyHidden = { access: { read: moneyFieldRead } };
 export const Projects: CollectionConfig = {
   slug: "projects",
   labels: { singular: "Proyek", plural: "Proyek" },
   admin: { useAsTitle: "name", group: "Operasional" },
   access: {
-    read: orderRead,
-    create: orderCreate,
-    update: orderWrite,
-    delete: orderDelete,
+    read: unitRead,
+    create: isEditor,
+    update: unitWrite,
+    delete: unitWrite,
   },
   hooks: {
     beforeChange: [

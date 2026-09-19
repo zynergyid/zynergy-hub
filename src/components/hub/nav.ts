@@ -8,6 +8,7 @@ export type IconName =
   | "orders"
   | "projects"
   | "web"
+  | "seo"
   | "search"
   | "report"
   | "rfq"
@@ -40,26 +41,51 @@ export interface NavSection {
   items: NavItem[];
 }
 
-/** Sidebar order runs from the simplest daily tools to the most complex ones. */
+/**
+ * Sidebar groups by kind of work, never by business line: the line is chosen
+ * inside each page (unit tabs) and limited by the person's units. Items with
+ * `units` show only to people who work in one of those units.
+ */
 export const navSections: NavSection[] = [
   {
-    title: "Harian",
+    title: "",
+    items: [{ href: "/", label: "Ringkasan", icon: "dashboard" }],
+  },
+  {
+    title: "Klien",
     items: [
-      { href: "/", label: "Ringkasan", icon: "dashboard" },
-      { href: "/cash-flow", label: "Arus Kas", icon: "cashflow", roles: ["admin", "finance", "staff", "viewer"] },
       { href: "/clients", label: "Klien", icon: "clients" },
-      { href: "/orders", label: "Pesanan", icon: "orders", units: ["supply"] },
-      { href: "/projects", label: "Proyek", icon: "projects", units: ["digital", "apps"] },
       { href: "/outreach", label: "Outreach", icon: "outreach" },
-      { href: "/vault", label: "Brankas Dokumen", icon: "vault" },
-      { href: "/web", label: "Web", icon: "web" },
     ],
   },
   {
-    title: "Alat",
+    title: "Pekerjaan",
     items: [
-      { href: "/tools#vendor", label: "Registrasi Vendor", icon: "vendor", soon: true },
-      { href: "/tools#po-email", label: "PO dari Email", icon: "inbox", soon: true },
+      { href: "/orders", label: "Pesanan", icon: "orders", units: ["supply"] },
+      { href: "/projects", label: "Proyek", icon: "projects", units: ["digital", "apps"] },
+    ],
+  },
+  {
+    title: "Keuangan",
+    items: [{ href: "/cash-flow", label: "Arus Kas", icon: "cashflow", roles: ["admin", "finance", "staff", "viewer"] }],
+  },
+  {
+    title: "Situs",
+    items: [
+      { href: "/web", label: "Web", icon: "web" },
+      { href: "/seo", label: "SEO", icon: "seo" },
+    ],
+  },
+  {
+    title: "Arsip",
+    items: [{ href: "/vault", label: "Brankas Dokumen", icon: "vault" }],
+  },
+  {
+    // Disappears once these are built and move into Pekerjaan.
+    title: "Segera",
+    items: [
+      { href: "/tools#vendor", label: "Registrasi Vendor", icon: "vendor", soon: true, units: ["supply"] },
+      { href: "/tools#po-email", label: "PO dari Email", icon: "inbox", soon: true, units: ["supply"] },
     ],
   },
   {
