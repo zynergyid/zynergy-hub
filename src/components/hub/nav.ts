@@ -7,6 +7,7 @@ export type IconName =
   | "clients"
   | "orders"
   | "projects"
+  | "web"
   | "search"
   | "report"
   | "rfq"
@@ -51,6 +52,7 @@ export const navSections: NavSection[] = [
       { href: "/projects", label: "Proyek", icon: "projects", units: ["digital", "apps"] },
       { href: "/outreach", label: "Outreach", icon: "outreach" },
       { href: "/vault", label: "Brankas Dokumen", icon: "vault" },
+      { href: "/web", label: "Web", icon: "web" },
     ],
   },
   {

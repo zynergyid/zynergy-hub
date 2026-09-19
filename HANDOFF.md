@@ -135,6 +135,59 @@
   mengubah nama, email, dan password sendiri (wajib setelah login pertama
   dengan password sementara).
 
+## Statistik web: Umami di stats.zynergy.co.id (2026-09-19 malam)
+
+Pertanyaan Danish: "apakah ada analytic di sidebar hub, berapa yang klik
+zynergy.co.id?". Situs sebelumnya tanpa pelacak sama sekali. Pilihan yang
+diambil (dibanding Vercel Web Analytics tanpa API baca, dan GA4 yang berat
+plus butuh banner cookie): Umami open source dipasang sendiri, gratis, tanpa
+cookie, punya API, dan satu instalasi bisa memantau situs klien Digital
+berikutnya (laporan bulanan untuk klien UMKM jadi bahan yang sudah ada).
+
+- **Instalasi:** fork publik `zynergyid/umami` (upstream
+  umami-software/umami), cabang `production` dipatok di tag v3.4.0; Vercel
+  project `zynergy-umami` (scope devdanzen-projects) Git-connected dengan
+  production branch `production` dan ignored build step seperti repo lain;
+  domain `stats.zynergy.co.id` (DNS zynergy.co.id ada di Vercel, record
+  otomatis). Database: Neon `zynergy-umami` lewat Vercel Marketplace, paket
+  **Free** (free_v3, dicek lewat API sebelum lanjut, aturan biaya). Env
+  production: DATABASE_URL (pooled, dari integrasi), DIRECT_DATABASE_URL
+  (salinan DATABASE_URL_UNPOOLED, untuk `prisma migrate deploy` saat build),
+  APP_SECRET acak, DISABLE_TELEMETRY=1, DISABLE_UPDATES=1,
+  TRACKER_SCRIPT_NAME=z (skrip dilayani di `/z`, TANPA .js, karena rewrite
+  Umami memakai nama apa adanya), COLLECT_API_ENDPOINT=/api/z (menghindari
+  pemblokir iklan). Build sekitar 3 menit. Update versi: `git fetch
+  upstream --tags && git merge v3.x.y` di cabang production lalu push.
+- **Akun:** password admin bawaan (admin/umami) sudah diganti acak lewat
+  API; user `hub` (role user) memiliki website `zynergy.co.id` dan kunci
+  API "Zynergy Hub". Semua kredensial ada di `~/.config/zynergy-umami/env`
+  di laptop Danish (bukan repo); Danish sebaiknya mengganti password admin
+  lewat UI. Untuk situs klien berikutnya: buat website baru sebagai user
+  `hub` (POST /api/websites) supaya kunci yang sama bisa membacanya.
+- **Situs:** `(site)/layout.tsx` memuat `<Script src=NEXT_PUBLIC_UMAMI_SRC
+  data-website-id=NEXT_PUBLIC_UMAMI_WEBSITE_ID>` hanya kalau keduanya terisi
+  (prod: https://stats.zynergy.co.id/z dan id website). Setiap tombol
+  WhatsApp mengirim event `whatsapp` dengan properti `place` (hero, header,
+  menu, layanan, harga-<paket>, harga-custom, penutup, faq, fitur,
+  fitur-atas, footer, tombol-melayang, brief, supply, design,
+  design-bawah, tentang): `CtaLink` punya prop `track`/`place`, anchor
+  biasa memakai `data-umami-event` dan `data-umami-event-place`. Situs
+  deploy pertama lewat jalur Git (commit d214e61) berhasil.
+- **Hub:** `lib/web-analytics.ts` membaca Umami dengan env UMAMI_URL,
+  UMAMI_API_KEY (Sensitive), UMAMI_WEBSITE_ID (prod dan .env.local):
+  stats dengan compare=prev, metrics type path/referrer/country/event,
+  event-data/values untuk properti place, pageviews per hari zona
+  Asia/Jakarta; cache memori 10 menit; gagal = null, halaman menampilkan
+  pesan, bukan error. Halaman `/web` (sidebar "Web", untuk semua peran):
+  KPI pengunjung, tayangan, klik WhatsApp, lama kunjungan, grafik tayangan
+  per hari, halaman teratas, sumber, tombol WhatsApp per tempat, negara,
+  periode 7 atau 30 hari, tombol "Buka Umami". Kartu "Web zynergy.co.id"
+  di Ringkasan. Jenis metrik Umami v3 memakai `path` (bukan `url`).
+- **Belum:** Google Search Console (klik dari pencarian Google dan kata
+  kunci) butuh verifikasi domain oleh Danish di akun Google-nya (TXT DNS
+  bisa saya tambahkan di Vercel) dan akun layanan untuk API; laporan
+  bulanan PDF untuk klien Digital; halaman /web per klien.
+
 ## Proyek (Digital/Apps), 2026-09-19
 
 Pemicu: klien Digital pertama (aplikasi asesmen ergonomi RULA, berbasis web)
