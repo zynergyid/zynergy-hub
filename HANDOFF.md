@@ -108,7 +108,17 @@
   SITE_API_URL, SITE_API_KEY (Sensitive), CRON_SECRET (Sensitive, salinan
   di ~/.config/zynergy-hub/env); audit SEO prod pertama dijalankan lewat
   rute cron dengan secret itu (9 halaman). Urutannya situs dulu (commit
-  ec88fcd, dua migrasi), lalu user hub di CMS situs, lalu Hub. Vercel project
+  ec88fcd, dua migrasi), lalu user hub di CMS situs, lalu Hub. Deploy
+  keempat belas 2026-09-21 dini hari (commit 79490b8, satu commit besar:
+  Kalender lengkap dengan foto dan ICS, peran = jabatan plus admin dan
+  grid Hak akses, klien perorangan, tab HP "Lainnya", ruang kerja per
+  peran, sidebar fixed) lewat Git, ENAM migrasi jalan di Neon
+  (client_kind, events, content_posts_and_calendar_token,
+  roles_and_permissions, job_titles_english, roles_are_jobs,
+  event_photos), build 1 menit, promosi otomatis. Catatan: token CLI di
+  auth.json sempat basi lagi (API 403 invalidToken) sehingga skrip poll
+  tidak melihat deployment; `vercel ls zynergy-hub --scope
+  devdanzen-projects` dan status commit GitHub yang jadi bukti. Vercel project
   `zynergy-hub` (scope `devdanzen-projects`). Neon `zynergy-hub` (paket
   gratis) dan Blob store `zynergy-hub-files` (region sin1) dibuat lewat
   CLI (`vercel integration add neon`, `vercel blob create-store`) dengan
