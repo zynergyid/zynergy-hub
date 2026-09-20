@@ -1,9 +1,9 @@
 import type { CollectionConfig } from "payload";
-import { hasRoleField, isAdmin, isLoggedIn } from "@/lib/access";
-import { jobTitles, roles, units } from "@/lib/options";
+import { adminField, isAdmin, isLoggedIn } from "@/lib/access";
+import { roles, units } from "@/lib/options";
 import { SESSION_MAX_AGE_SECONDS } from "@/lib/auth-cookie";
 
-/** Team accounts. Role = access level, units = scope, title = descriptive only. */
+/** Team accounts. Role = the job (grants come from Hak akses), isAdmin = everything plus team management, units = scope. */
 export const Users: CollectionConfig = {
   slug: "users",
   labels: { singular: "Anggota Tim", plural: "Anggota Tim" },
@@ -20,9 +20,9 @@ export const Users: CollectionConfig = {
     create: isAdmin,
     delete: isAdmin,
     update: ({ req }) => {
-      const user = req.user as { id: number | string; role?: string } | null;
+      const user = req.user as { id: number | string; isAdmin?: boolean | null } | null;
       if (!user) return false;
-      if (user.role === "admin") return true;
+      if (user.isAdmin) return true;
       return { id: { equals: user.id } };
     },
   },
@@ -32,10 +32,18 @@ export const Users: CollectionConfig = {
       name: "role",
       type: "select",
       required: true,
-      defaultValue: "member",
-      label: "Peran",
+      defaultValue: "Other",
+      label: "Peran (jabatan)",
       options: [...roles],
-      access: { update: hasRoleField("admin") },
+      access: { update: adminField },
+    },
+    {
+      name: "isAdmin",
+      type: "checkbox",
+      defaultValue: false,
+      label: "Admin",
+      admin: { description: "Semua hak, kelola tim dan hak akses." },
+      access: { update: adminField },
     },
     {
       name: "units",
@@ -43,14 +51,21 @@ export const Users: CollectionConfig = {
       hasMany: true,
       label: "Unit bisnis",
       options: [...units],
-      access: { update: hasRoleField("admin") },
-      admin: { description: "Ruang lingkup finance, staf, dan anggota. Admin dan pengawas otomatis semua unit." },
+      access: { update: adminField },
+      admin: { description: "Ruang lingkup untuk peran tanpa hak Melihat semua unit." },
     },
     {
-      name: "title",
-      type: "select",
-      label: "Jabatan",
-      options: jobTitles.map((t) => ({ label: t, value: t })),
+      // Secret in the personal calendar-feed URL (read-only feed). Visible to its owner and admins only.
+      name: "calendarToken",
+      type: "text",
+      admin: { hidden: true },
+      access: {
+        read: ({ req, doc }) => {
+          const user = req.user as { id: number | string; isAdmin?: boolean | null } | null;
+          return Boolean(user && (user.isAdmin || doc?.id === user.id));
+        },
+        update: adminField,
+      },
     },
   ],
 };

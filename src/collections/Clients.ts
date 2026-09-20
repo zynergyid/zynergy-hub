@@ -1,6 +1,6 @@
 import type { CollectionConfig, Validate } from "payload";
-import { enforceUnit, isAdmin, isEditor, unitRead, unitWrite } from "@/lib/access";
-import { businessTypes, clientStatuses, packages, units } from "@/lib/options";
+import { createWith, enforceUnit, isAdmin, unitRead, writeWith } from "@/lib/access";
+import { businessTypes, clientKinds, clientStatuses, packages, units } from "@/lib/options";
 
 /** Supply buyers are companies reached by email; everyone else needs a WhatsApp number. */
 const whatsappRequiredOutsideSupply: Validate<string> = (value, { siblingData }) => {
@@ -21,8 +21,8 @@ export const Clients: CollectionConfig = {
   },
   access: {
     read: unitRead,
-    create: isEditor,
-    update: unitWrite,
+    create: createWith("editClients"),
+    update: writeWith("editClients"),
     delete: isAdmin,
   },
   defaultSort: "renewalDate",
@@ -51,9 +51,18 @@ export const Clients: CollectionConfig = {
       admin: { position: "sidebar" },
     },
     {
+      name: "kind",
+      type: "select",
+      required: true,
+      defaultValue: "usaha",
+      label: "Bentuk klien",
+      options: [...clientKinds],
+      admin: { position: "sidebar" },
+    },
+    {
       type: "row",
       fields: [
-        { name: "name", type: "text", required: true, label: "Nama usaha" },
+        { name: "name", type: "text", required: true, label: "Nama" },
         { name: "owner", type: "text", label: "Pemilik / PIC" },
       ],
     },

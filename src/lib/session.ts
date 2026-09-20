@@ -1,33 +1,38 @@
 import { headers } from "next/headers";
 import { getPayloadClient } from "@/lib/payload";
-import { edits, seesMoney, unitsOf } from "@/lib/access";
-import type { Role, Unit } from "@/lib/options";
+import { unitsOf } from "@/lib/access";
+import { capsOf } from "@/lib/grants-cache";
+import { loadGrants } from "@/lib/permissions";
+import type { Capability, Role, Unit } from "@/lib/options";
 
 export interface SessionUser {
   id: number;
   name: string;
   email: string;
+  /** The job, which is also the access role. */
   role: Role;
-  /** Units this person may see (already expanded for admin and viewer). */
+  isAdmin: boolean;
+  /** Units this person may see (already expanded for those who see all). */
   units: Unit[];
-  title: string | null;
+  /** What the person may do right now, from the Hak akses grants (everything for admins). */
+  caps: Capability[];
 }
 
-/** Current team member from the Payload auth cookie, or null. */
+/** Current team member from the Payload auth cookie, or null. Also refreshes the grants cache. */
 export async function getSessionUser(): Promise<SessionUser | null> {
   const payload = await getPayloadClient();
-  const { user } = await payload.auth({ headers: await headers() });
+  const [{ user }] = await Promise.all([payload.auth({ headers: await headers() }), loadGrants()]);
   if (!user) return null;
-  return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    units: unitsOf(user),
-    title: user.title ?? null,
-  };
+  const who = { role: user.role, isAdmin: Boolean(user.isAdmin) };
+  return { id: user.id, name: user.name, email: user.email, role: user.role, isAdmin: who.isAdmin, units: unitsOf(user), caps: capsOf(who) };
 }
 
-export const canSeeMoney = (u: SessionUser) => seesMoney(u.role);
-/** Admin, finance, and staff change data; member and viewer only look. */
-export const canEdit = (u: SessionUser) => edits(u.role);
+const hasCap = (cap: Capability) => (u: SessionUser) => u.caps.includes(cap);
+export const canSeeMoney = hasCap("viewMoney");
+export const canEditMoney = (u: SessionUser) => u.caps.includes("editMoney") && u.caps.includes("viewMoney");
+export const canEditClients = hasCap("editClients");
+export const canEditOrders = hasCap("editOrders");
+export const canEditProjects = hasCap("editProjects");
+export const canEditVault = hasCap("editVault");
+export const canEditTeam = hasCap("team");
+export const canEditSeo = hasCap("seo");

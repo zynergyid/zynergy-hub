@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Sparkles, TerminalSquare } from "lucide-react";
-import { canEdit, canSeeMoney, getSessionUser } from "@/lib/session";
+import { canEditClients, canSeeMoney, getSessionUser } from "@/lib/session";
+import { hasTool } from "@/lib/workspace";
 import { getPayloadClient } from "@/lib/payload";
 import { formatIDR, formatMonthLong } from "@/lib/format";
 import { usdToIdrApprox } from "@/lib/options";
@@ -123,7 +124,7 @@ export default async function AlatPage() {
           />
         </div>
       )}
-      {canEdit(user) && (
+      {canEditClients(user) && hasTool(user.role, "skills") && (
       <div className="space-y-3">
         <h2 className="text-sm font-bold uppercase tracking-wider text-muted">Skill Claude Code</h2>
         <p className="text-sm text-muted">

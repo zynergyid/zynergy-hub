@@ -1,10 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useRouter } from "next/navigation";
 import { KeyRound, Loader2, Trash2 } from "lucide-react";
 import type { User } from "@/payload-types";
-import { jobTitles, roles, units } from "@/lib/options";
+import { roles, units, type Role } from "@/lib/options";
 import { ErrorText, Input, Label } from "@/components/hub/form";
 import { Select } from "@/components/hub/Select";
 import { MultiSelect } from "@/components/hub/MultiSelect";
@@ -12,7 +12,8 @@ import { removeMember, resetPassword, saveMember, type MemberFormState } from ".
 
 const initial: MemberFormState = { status: "idle" };
 
-export function MemberForm({ member, isSelf }: { member?: User; isSelf: boolean }) {
+export function MemberForm({ member, isSelf, roleHints }: { member?: User; isSelf: boolean; roleHints: Record<Role, string> }) {
+  const [role, setRole] = useState<Role>(member?.role ?? "Other");
   const router = useRouter();
   const [state, formAction, pending] = useActionState(
     async (prev: MemberFormState, fd: FormData) => {
@@ -37,13 +38,17 @@ export function MemberForm({ member, isSelf }: { member?: User; isSelf: boolean 
             <Input id="mf-email" name="email" type="email" required defaultValue={member?.email} placeholder="nama@zynergy.co.id" />
           </div>
           <div>
-            <Label htmlFor="mf-role">Peran</Label>
-            <Select id="mf-role" name="role" defaultValue={member?.role ?? "member"} options={roles} disabled={isSelf} />
+            <Label htmlFor="mf-role">Peran (jabatan)</Label>
+            <Select id="mf-role" name="role" value={role} onValueChange={(v) => setRole(v as Role)} options={roles} disabled={isSelf} />
+            <p className="mt-1 text-xs text-muted">{roleHints[role]}</p>
             {isSelf && <p className="mt-1 text-xs text-muted">Peran dan unit Anda sendiri tidak bisa diubah dari sini.</p>}
           </div>
           <div>
-            <Label htmlFor="mf-title">Jabatan</Label>
-            <Select id="mf-title" name="title" defaultValue={member?.title ?? undefined} placeholder="Tanpa jabatan" options={jobTitles.map((t) => ({ label: t, value: t }))} />
+            <Label htmlFor="mf-admin">Admin</Label>
+            <label className="flex items-center gap-2 rounded-xl border border-line px-3.5 py-2.5 text-sm">
+              <input id="mf-admin" name="isAdmin" type="checkbox" defaultChecked={Boolean(member?.isAdmin)} disabled={isSelf} className="size-4 rounded border-line accent-primary" />
+              Semua hak, kelola tim dan hak akses
+            </label>
           </div>
           <div className="sm:col-span-2">
             <Label htmlFor="mf-units">Unit (untuk finance, staf, dan anggota)</Label>

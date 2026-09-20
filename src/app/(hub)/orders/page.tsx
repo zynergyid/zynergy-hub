@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Plus } from "lucide-react";
-import { canEdit, canSeeMoney, getSessionUser } from "@/lib/session";
+import { canEditOrders, canSeeMoney, getSessionUser } from "@/lib/session";
 import { resolveUnit } from "@/lib/finance";
 import { clientOf, getOrders, isOpenOrder, nextDate, orderTotal, type OrderListFilter } from "@/lib/orders";
 import { daysLabel, formatDate, formatIDR } from "@/lib/format";
@@ -59,7 +59,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   return (
     <div className="space-y-5">
       <PageHeader title="Pesanan" subtitle={`${subtitle}.`}>
-        {canEdit(user) && (
+        {canEditOrders(user) && (
           <Link href="/orders/new" className={buttonPrimary}>
             <Plus className="size-4" />
             PO baru

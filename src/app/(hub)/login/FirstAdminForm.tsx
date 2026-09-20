@@ -19,7 +19,7 @@ export function FirstAdminForm() {
     const res = await fetch("/api/users/first-register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: fd.get("name"), email: fd.get("email"), password: fd.get("password"), role: "admin" }),
+      body: JSON.stringify({ name: fd.get("name"), email: fd.get("email"), password: fd.get("password"), role: "Lead", isAdmin: true }),
     });
     setPending(false);
     if (!res.ok) {

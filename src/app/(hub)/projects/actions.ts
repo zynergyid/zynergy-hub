@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { Project } from "@/payload-types";
 import { getPayloadClient } from "@/lib/payload";
-import { canEdit, getSessionUser } from "@/lib/session";
+import { canEditProjects, getSessionUser } from "@/lib/session";
 import { canWriteUnit } from "@/lib/access";
 import { dateOrNull, digits, pick, text } from "@/lib/form-data";
 import { keepDocumentRows } from "@/lib/documents";
@@ -52,12 +52,12 @@ function revalidateProjects(id?: number) {
 export async function saveProject(_prev: ProjectFormState, formData: FormData): Promise<ProjectFormState> {
   const user = await getSessionUser();
   if (!user) return err("Sesi habis, login lagi.");
-  if (!canEdit(user)) return err("Hanya admin, finance, dan staf yang bisa mengubah data proyek.");
+  if (!canEditProjects(user)) return err("Hanya admin, finance, dan staf yang bisa mengubah data proyek.");
 
   const id = Number(formData.get("id") || 0) || null;
   const unit = pick(units, text(formData, "unit"));
   if (!unit || !projectUnits.includes(unit)) return err("Pilih unit Digital atau Apps.");
-  if (!canWriteUnit(user, unit)) return err("Anda tidak punya akses ke unit ini.");
+  if (!canWriteUnit(user, unit, "editProjects")) return err("Anda tidak punya akses ke unit ini.");
   const name = text(formData, "name");
   if (!name) return err("Nama proyek wajib diisi.");
   const clientId = Number(text(formData, "client")) || 0;
@@ -81,7 +81,7 @@ export async function saveProject(_prev: ProjectFormState, formData: FormData): 
     if (!client || client.unit !== unit) return err("Klien tidak ditemukan atau bukan dari unit ini.");
     if (id) {
       const existing = await payload.findByID({ collection: "projects", id, depth: 0, disableErrors: true });
-      if (!existing || !canWriteUnit(user, existing.unit)) return err("Proyek tidak ditemukan atau di luar unit Anda.");
+      if (!existing || !canWriteUnit(user, existing.unit, "editProjects")) return err("Proyek tidak ditemukan atau di luar unit Anda.");
     }
     const data = {
       unit,
@@ -116,12 +116,12 @@ export async function saveProject(_prev: ProjectFormState, formData: FormData): 
 
 export async function deleteProject(formData: FormData) {
   const user = await getSessionUser();
-  if (!user || !canEdit(user)) return;
+  if (!user || !canEditProjects(user)) return;
   const id = Number(formData.get("id") || 0);
   if (!id) return;
   const payload = await getPayloadClient();
   const existing = await payload.findByID({ collection: "projects", id, depth: 0, disableErrors: true });
-  if (!existing || !canWriteUnit(user, existing.unit)) return;
+  if (!existing || !canWriteUnit(user, existing.unit, "editProjects")) return;
   for (const d of keepDocumentRows(existing.documents)) {
     await payload.delete({ collection: "documents", id: d.file }).catch(() => undefined);
   }
@@ -136,7 +136,7 @@ async function loadEditable(projectId: number) {
   if (!user) return null;
   const payload = await getPayloadClient();
   const project = await payload.findByID({ collection: "projects", id: projectId, depth: 0, disableErrors: true });
-  if (!project || !canWriteUnit(user, project.unit)) return null;
+  if (!project || !canWriteUnit(user, project.unit, "editProjects")) return null;
   return { user, payload, project };
 }
 

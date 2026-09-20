@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowDownLeft, ArrowLeft, CalendarClock, FileText, ListChecks, Wallet } from "lucide-react";
-import { canSeeMoney, getSessionUser } from "@/lib/session";
+import { canEditMoney, canEditTeam, canSeeMoney, getSessionUser } from "@/lib/session";
+import { getLinkedEvents } from "@/lib/calendar";
+import { EventsCard } from "@/components/hub/EventsCard";
 import { canWriteUnit } from "@/lib/access";
 import { getPayloadClient } from "@/lib/payload";
 import { getClientOptions } from "@/lib/orders";
@@ -37,7 +39,7 @@ export default async function ProjectDetailPage({ params, searchParams }: { para
   const project = await payload.findByID({ collection: "projects", id: projectId, depth: 1, disableErrors: true });
   if (!project || !user.units.includes(project.unit)) notFound();
   const money = canSeeMoney(user);
-  const editable = canWriteUnit(user, project.unit);
+  const editable = canWriteUnit(user, project.unit, "editProjects");
   const [clients, owners, payments] = await Promise.all([
     getClientOptions(projectUnitsOf(user.units)),
     getUserOptions(),
@@ -51,7 +53,8 @@ export default async function ProjectDetailPage({ params, searchParams }: { para
   const due = nextPayment(project, payments.paid);
   const progress = deliverableProgress(project);
   const addPaymentHref = `/cash-flow?unit=${project.unit}&add=1&project=${project.id}`;
-  const canPay = editable && open && due !== null;
+  const canPay = canEditMoney(user) && open && due !== null;
+  const events = await getLinkedEvents({ project: project.id });
   const targetCard = (
     <KpiCard
       icon={CalendarClock}
@@ -129,6 +132,7 @@ export default async function ProjectDetailPage({ params, searchParams }: { para
           <LogCard project={project} editable={editable} />
         </div>
         <div className="min-w-0 space-y-5 lg:col-span-2">
+          <EventsCard events={events} newHref={canEditTeam(user) ? `/calendar/new?proyek=${project.id}` : undefined} />
           <DocumentsCard
             rows={project.documents ?? []}
             kinds={projectDocumentKinds}
@@ -143,7 +147,7 @@ export default async function ProjectDetailPage({ params, searchParams }: { para
           />
           {money && (
             <Card title="Transaksi proyek ini" action={canPay ? { label: `Catat ${due.label}`, href: addPaymentHref } : undefined}>
-              <TxList rows={payments.rows} editable={editable} empty="Belum ada DP atau biaya yang ditautkan ke proyek ini." />
+              <TxList rows={payments.rows} editable={canEditMoney(user)} empty="Belum ada DP atau biaya yang ditautkan ke proyek ini." />
             </Card>
           )}
         </div>

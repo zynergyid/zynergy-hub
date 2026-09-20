@@ -93,7 +93,7 @@ export function QuickAdd({
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 sm:items-center" role="dialog" aria-modal="true">
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-ink/40 sm:items-center" role="dialog" aria-modal="true">
           <div className="max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-white p-5 shadow-2xl sm:max-w-lg sm:rounded-3xl sm:p-6">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-extrabold">{title}</h2>

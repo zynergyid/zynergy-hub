@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Plus } from "lucide-react";
-import { canEdit, getSessionUser } from "@/lib/session";
+import { canEditClients, getSessionUser } from "@/lib/session";
 import { resolveUnit } from "@/lib/finance";
 import { followUpDue, getProspects, nextAction, ownerOf, primaryContact } from "@/lib/outreach";
 import { daysLabel } from "@/lib/format";
@@ -49,7 +49,7 @@ export default async function OutreachPage({ searchParams }: { searchParams: Pro
   return (
     <div className="space-y-5">
       <PageHeader title="Outreach" subtitle={`${rows.length} target${filter !== "aktif" && filter !== "semua" ? ` ${prospectStatuses.find((s) => s.value === filter)?.label.toLowerCase()}` : ""}${due ? ` · ${due} tindak lanjut jatuh tempo` : ""}.`}>
-        {canEdit(user) && (
+        {canEditClients(user) && (
           <Link href={unit === "semua" ? "/outreach/new" : `/outreach/new?unit=${unit}`} className={buttonPrimary}>
             <Plus className="size-4" />
             Target baru
@@ -63,7 +63,7 @@ export default async function OutreachPage({ searchParams }: { searchParams: Pro
         <SearchForm action="/outreach" hidden={{ unit: base.unit as string | undefined, status: base.status as string | undefined }} q={q} placeholder="Cari perusahaan, kota, kontak" />
       </div>
 
-      {canEdit(user) && <p className="text-xs text-muted">Riset dan draf diisi otomatis dengan menjalankan <span className="font-semibold">/outreach</span> di Claude Code; di sini Anda memeriksa, mengirim sendiri, dan mencatat.</p>}
+      {canEditClients(user) && <p className="text-xs text-muted">Riset dan draf diisi otomatis dengan menjalankan <span className="font-semibold">/outreach</span> di Claude Code; di sini Anda memeriksa, mengirim sendiri, dan mencatat.</p>}
 
       {rows.length === 0 ? (
         <EmptyState title={`Belum ada target${q ? ` untuk "${q}"` : ""}.`} hint="Tambahkan perusahaan yang ingin didekati; klien lama cocok untuk mulai." />

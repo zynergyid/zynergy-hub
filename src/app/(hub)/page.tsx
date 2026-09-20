@@ -1,8 +1,9 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowDownLeft, ArrowUpRight, CalendarClock, Download, Users, Wallet } from "lucide-react";
-import type { Client } from "@/payload-types";
-import { canEdit, canSeeMoney, getSessionUser } from "@/lib/session";
+import type { Client, Transaction } from "@/payload-types";
+import { canEditTeam, canEditVault, canSeeMoney, getSessionUser } from "@/lib/session";
 import {
   getCategoryBreakdown,
   getClientCounts,
@@ -21,17 +22,23 @@ import { getProjectSummary, projectUnitsOf } from "@/lib/projects";
 import { getOutreachSummary } from "@/lib/outreach";
 import { getVaultSummary } from "@/lib/vault";
 import { getWebSummary, webAnalyticsConfigured } from "@/lib/web-analytics";
+import { getKontenEvents, getMyFollowUps, getUpcoming } from "@/lib/calendar";
+import { getSeoSummary } from "@/lib/seo-summary";
+import { workspaceOf, type CardKey } from "@/lib/workspace";
 import { first, type Search } from "@/lib/search";
 import { categoryLabel, unitLabel } from "@/lib/options";
 import { cn } from "@/lib/cn";
+import { AgendaCard } from "@/components/hub/AgendaCard";
 import { Avatar } from "@/components/hub/Avatar";
 import { BarChart } from "@/components/hub/BarChart";
 import { Card } from "@/components/hub/Card";
 import { CategoryBars } from "@/components/hub/CategoryBars";
+import { KontenCard } from "@/components/hub/KontenCard";
 import { KpiCard } from "@/components/hub/KpiCard";
 import { OrdersCard } from "@/components/hub/OrdersCard";
 import { ProjectsCard } from "@/components/hub/ProjectsCard";
 import { OutreachCard } from "@/components/hub/OutreachCard";
+import { SeoCard } from "@/components/hub/SeoCard";
 import { VaultCard } from "@/components/hub/VaultCard";
 import { WebCard } from "@/components/hub/WebCard";
 import { PageHeader } from "@/components/hub/PageHeader";
@@ -40,7 +47,6 @@ import { deadlinePill, deadlineTone } from "@/components/hub/deadline";
 import { buttonOutline } from "@/components/hub/form";
 
 export const dynamic = "force-dynamic";
-
 
 function RenewalRow({ c }: { c: Client }) {
   const tone = c.renewalDate ? deadlineTone(c.renewalDate, 7) : "ok";
@@ -63,6 +69,72 @@ function RenewalRow({ c }: { c: Client }) {
   );
 }
 
+function RenewalsCard({ renewals, className, limit }: { renewals: Client[]; className?: string; limit?: number }) {
+  return (
+    <Card title="Perpanjangan terdekat" action={{ label: "Semua klien", href: "/clients" }} className={className}>
+      {renewals.length === 0 ? (
+        <p className="text-sm text-muted">Tidak ada perpanjangan dalam 30 hari.</p>
+      ) : (
+        <ul className="divide-y divide-line">{(limit ? renewals.slice(0, limit) : renewals).map((c) => <RenewalRow key={c.id} c={c} />)}</ul>
+      )}
+    </Card>
+  );
+}
+
+function TransactionsCard({ rows, unit }: { rows: { tx: Transaction }[]; unit: string }) {
+  return (
+    <Card title="Transaksi terbaru" action={{ label: "Semua", href: `/cash-flow?unit=${unit}` }} className="min-w-0 lg:col-span-3">
+      {rows.length === 0 ? (
+        <p className="text-sm text-muted">Belum ada transaksi bulan ini.</p>
+      ) : (
+        <table className="w-full text-sm">
+          <thead className="text-left text-[11px] uppercase tracking-wider text-muted">
+            <tr>
+              <th className="w-full pb-2 font-bold">Transaksi</th>
+              <th className="hidden pb-2 font-bold sm:table-cell">Tanggal</th>
+              <th className="hidden pb-2 font-bold md:table-cell">Bukti</th>
+              <th className="pb-2 text-right font-bold">Nominal</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-line">
+            {rows.slice(0, 6).map(({ tx }) => {
+              const clientName = typeof tx.client === "object" && tx.client ? tx.client.name : null;
+              const hasReceipt = Boolean(typeof tx.receipt === "object" ? tx.receipt : tx.receipt);
+              return (
+                <tr key={tx.id}>
+                  <td className="w-full max-w-0 py-2.5 pr-3">
+                    <div className="flex items-center gap-3">
+                      <Avatar name={clientName ?? categoryLabel.get(tx.category) ?? "?"} className="size-8 text-[10px]" />
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold">{tx.reference || categoryLabel.get(tx.category)}</p>
+                        <p className="truncate text-xs text-muted">{categoryLabel.get(tx.category)}{clientName ? ` · ${clientName}` : ""}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="hidden py-2.5 pr-3 text-muted sm:table-cell">{formatDate(tx.date)}</td>
+                  <td className="hidden py-2.5 pr-3 md:table-cell">
+                    <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-bold", hasReceipt ? "bg-secondary-soft text-secondary-dark" : "bg-surface-soft text-muted")}>
+                      {hasReceipt ? "Ada bukti" : "Tanpa bukti"}
+                    </span>
+                  </td>
+                  <td className={cn("whitespace-nowrap py-2.5 text-right font-extrabold", tx.type === "masuk" ? "text-secondary-dark" : "text-red-600")}>
+                    {tx.type === "masuk" ? "+" : "-"}{formatIDR(tx.amount)}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+    </Card>
+  );
+}
+
+/**
+ * The dashboard is a list of cards in the order the person's jabatan asks
+ * for (`lib/workspace.ts`); jabatan-only cards render when featured, every
+ * card is still gated by role and unit through its data.
+ */
 export default async function HubHome({ searchParams }: { searchParams: Promise<Search> }) {
   const user = await getSessionUser();
   if (!user) redirect("/login");
@@ -72,15 +144,21 @@ export default async function HubHome({ searchParams }: { searchParams: Promise<
   const now = new Date();
   const hasSupply = unit === "supply" || (unit === "semua" && allowed.includes("supply"));
   const hasProjects = unit === "semua" ? projectUnitsOf(allowed).length > 0 : projectUnitsOf([unit]).length > 0;
+  const ws = workspaceOf(user.role);
+  const featured = new Set<CardKey>(ws.featured);
 
-  const [counts, renewals, orderSummary, projectSummary, outreach, vault, web] = await Promise.all([
+  const [counts, renewals, orderSummary, projectSummary, outreach, vault, web, upcoming, myFollowUps, konten, seo] = await Promise.all([
     getClientCounts(allowed),
     getRenewals(allowed, 30),
     hasSupply ? getOrderSummary(unit, allowed) : null,
     hasProjects ? getProjectSummary(unit, allowed) : null,
     getOutreachSummary(unit, allowed),
-    getVaultSummary(canEdit(user)),
+    getVaultSummary(canEditVault(user)),
     webAnalyticsConfigured() ? getWebSummary(7) : Promise.resolve(null),
+    getUpcoming(user, 7),
+    getMyFollowUps(user.id),
+    featured.has("konten") ? getKontenEvents() : null,
+    featured.has("seo") ? getSeoSummary() : null,
   ]);
   const ordersHref = unit === "semua" ? "/orders" : `/orders?unit=${unit}`;
   const projectsHref = unit === "semua" ? "/projects" : `/projects?unit=${unit}`;
@@ -94,6 +172,36 @@ export default async function HubHome({ searchParams }: { searchParams: Promise<
         Promise.all(allowed.map(async (u) => ({ unit: u, ...(await getUnitMonth(u, allowed, now)) }))),
       ])
     : null;
+  const dueSoon = renewals.filter((c) => c.renewalDate && deadlineTone(c.renewalDate, 30) !== "ok").length;
+
+  const cards: Partial<Record<CardKey, React.ReactNode>> = {
+    agenda: <AgendaCard items={upcoming} followUps={myFollowUps} editable={canEditTeam(user)} />,
+    outreach: <OutreachCard summary={outreach} href={outreachHref} />,
+    orders: orderSummary && <OrdersCard summary={orderSummary} href={ordersHref} showMoney={Boolean(money)} />,
+    projects: projectSummary && <ProjectsCard summary={projectSummary} href={projectsHref} showMoney={Boolean(money)} />,
+    konten: konten && <KontenCard events={konten} userId={user.id} />,
+    seo: seo && <SeoCard summary={seo} />,
+    web: webAnalyticsConfigured() && <WebCard summary={web} />,
+    vault: <VaultCard docs={vault.expiring} total={vault.total} />,
+    cashflow: money && (
+      <div className="grid gap-4 lg:grid-cols-5">
+        <Card title="Arus kas 12 bulan" action={{ label: "Buka arus kas", href: `/cash-flow?unit=${unit}` }} className="min-w-0 lg:col-span-3">
+          <BarChart points={money[1]} />
+        </Card>
+        <Card title="Pengeluaran bulan ini" className="min-w-0 lg:col-span-2">
+          <CategoryBars items={money[2]} />
+        </Card>
+      </div>
+    ),
+    finance: money ? (
+      <div className="grid gap-4 lg:grid-cols-5">
+        <RenewalsCard renewals={renewals} className="min-w-0 lg:col-span-2" limit={5} />
+        <TransactionsCard rows={money[3].rows} unit={unit} />
+      </div>
+    ) : (
+      <RenewalsCard renewals={renewals} />
+    ),
+  };
 
   return (
     <div className="space-y-6">
@@ -109,113 +217,26 @@ export default async function HubHome({ searchParams }: { searchParams: Promise<
 
       {money ? (
         (() => {
-          const [m, last12, categories, ledger, perUnit] = money;
-          const dueSoon = renewals.filter((c) => c.renewalDate && deadlineTone(c.renewalDate, 30) !== "ok").length;
-          const saldoHint =
-            unit === "semua" && perUnit.length > 1
-              ? perUnit.map((p) => `${unitLabel.get(p.unit)} ${formatIDR(p.balance)}`).join(" · ")
-              : "semua waktu";
+          const [m, , , , perUnit] = money;
+          const saldoHint = unit === "semua" && perUnit.length > 1 ? perUnit.map((p) => `${unitLabel.get(p.unit)} ${formatIDR(p.balance)}`).join(" · ") : "semua waktu";
           return (
-            <>
-              <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-                <KpiCard icon={Wallet} label="Saldo" value={formatIDR(m.balance)} hint={saldoHint} tone="primary" />
-                <KpiCard icon={ArrowDownLeft} label="Masuk bulan ini" value={formatIDR(m.masuk)} delta={pctChange(m.masuk, m.masukPrev)} tone="in" hint={fundingHint(m.fundingMasuk)} />
-                <KpiCard icon={ArrowUpRight} label="Keluar bulan ini" value={formatIDR(m.keluar)} delta={pctChange(m.keluar, m.keluarPrev)} upIsGood={false} tone="out" hint={fundingHint(m.fundingKeluar)} />
-                <KpiCard icon={Users} label="Klien aktif" value={String(counts.aktif)} hint={dueSoon ? `${dueSoon} jatuh tempo 30 hari` : `${counts.prospek} prospek`} />
-              </div>
-
-              <OutreachCard summary={outreach} href={outreachHref} />
-              {orderSummary && <OrdersCard summary={orderSummary} href={ordersHref} />}
-              {projectSummary && <ProjectsCard summary={projectSummary} href={projectsHref} />}
-              {webAnalyticsConfigured() && <WebCard summary={web} />}
-              <VaultCard docs={vault.expiring} total={vault.total} />
-
-              <div className="grid gap-4 lg:grid-cols-5">
-                <Card title="Arus kas 12 bulan" action={{ label: "Buka arus kas", href: `/cash-flow?unit=${unit}` }} className="min-w-0 lg:col-span-3">
-                  <BarChart points={last12} />
-                </Card>
-                <Card title="Pengeluaran bulan ini" className="min-w-0 lg:col-span-2">
-                  <CategoryBars items={categories} />
-                </Card>
-              </div>
-
-              <div className="grid gap-4 lg:grid-cols-5">
-                <Card title="Perpanjangan terdekat" action={{ label: "Semua klien", href: "/clients" }} className="min-w-0 lg:col-span-2">
-                  {renewals.length === 0 ? (
-                    <p className="text-sm text-muted">Tidak ada perpanjangan dalam 30 hari.</p>
-                  ) : (
-                    <ul className="divide-y divide-line">
-                      {renewals.slice(0, 5).map((c) => <RenewalRow key={c.id} c={c} />)}
-                    </ul>
-                  )}
-                </Card>
-                <Card title="Transaksi terbaru" action={{ label: "Semua", href: `/cash-flow?unit=${unit}` }} className="min-w-0 lg:col-span-3">
-                  {ledger.rows.length === 0 ? (
-                    <p className="text-sm text-muted">Belum ada transaksi bulan ini.</p>
-                  ) : (
-                    <table className="w-full text-sm">
-                      <thead className="text-left text-[11px] uppercase tracking-wider text-muted">
-                        <tr>
-                          <th className="w-full pb-2 font-bold">Transaksi</th>
-                          <th className="hidden pb-2 font-bold sm:table-cell">Tanggal</th>
-                          <th className="hidden pb-2 font-bold md:table-cell">Bukti</th>
-                          <th className="pb-2 text-right font-bold">Nominal</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-line">
-                        {ledger.rows.slice(0, 6).map(({ tx }) => {
-                          const clientName = typeof tx.client === "object" && tx.client ? tx.client.name : null;
-                          const hasReceipt = Boolean(typeof tx.receipt === "object" ? tx.receipt : tx.receipt);
-                          return (
-                            <tr key={tx.id}>
-                              <td className="w-full max-w-0 py-2.5 pr-3">
-                                <div className="flex items-center gap-3">
-                                  <Avatar name={clientName ?? categoryLabel.get(tx.category) ?? "?"} className="size-8 text-[10px]" />
-                                  <div className="min-w-0">
-                                    <p className="truncate font-semibold">{tx.reference || categoryLabel.get(tx.category)}</p>
-                                    <p className="truncate text-xs text-muted">{categoryLabel.get(tx.category)}{clientName ? ` · ${clientName}` : ""}</p>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="hidden py-2.5 pr-3 text-muted sm:table-cell">{formatDate(tx.date)}</td>
-                              <td className="hidden py-2.5 pr-3 md:table-cell">
-                                <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-bold", hasReceipt ? "bg-secondary-soft text-secondary-dark" : "bg-surface-soft text-muted")}>
-                                  {hasReceipt ? "Ada bukti" : "Tanpa bukti"}
-                                </span>
-                              </td>
-                              <td className={cn("whitespace-nowrap py-2.5 text-right font-extrabold", tx.type === "masuk" ? "text-secondary-dark" : "text-red-600")}>
-                                {tx.type === "masuk" ? "+" : "-"}{formatIDR(tx.amount)}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  )}
-                </Card>
-              </div>
-            </>
+            <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+              <KpiCard icon={Wallet} label="Saldo" value={formatIDR(m.balance)} hint={saldoHint} tone="primary" />
+              <KpiCard icon={ArrowDownLeft} label="Masuk bulan ini" value={formatIDR(m.masuk)} delta={pctChange(m.masuk, m.masukPrev)} tone="in" hint={fundingHint(m.fundingMasuk)} />
+              <KpiCard icon={ArrowUpRight} label="Keluar bulan ini" value={formatIDR(m.keluar)} delta={pctChange(m.keluar, m.keluarPrev)} upIsGood={false} tone="out" hint={fundingHint(m.fundingKeluar)} />
+              <KpiCard icon={Users} label="Klien aktif" value={String(counts.aktif)} hint={dueSoon ? `${dueSoon} jatuh tempo 30 hari` : `${counts.prospek} prospek`} />
+            </div>
           );
         })()
       ) : (
-        <>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-            <KpiCard icon={Users} label="Klien aktif" value={String(counts.aktif)} tone="primary" />
-            <KpiCard icon={CalendarClock} label="Jatuh tempo 30 hari" value={String(renewals.length)} tone={renewals.length ? "out" : "neutral"} />
-            <KpiCard icon={Users} label="Prospek" value={String(counts.prospek)} />
-          </div>
-          <OutreachCard summary={outreach} href={outreachHref} />
-          {orderSummary && <OrdersCard summary={orderSummary} href={ordersHref} showMoney={false} />}
-          {projectSummary && <ProjectsCard summary={projectSummary} href={projectsHref} showMoney={false} />}
-          {webAnalyticsConfigured() && <WebCard summary={web} />}
-          <VaultCard docs={vault.expiring} total={vault.total} />
-          <Card title="Perpanjangan terdekat" action={{ label: "Semua klien", href: "/clients" }}>
-            {renewals.length === 0 ? <p className="text-sm text-muted">Tidak ada perpanjangan dalam 30 hari.</p> : (
-              <ul className="divide-y divide-line">{renewals.map((c) => <RenewalRow key={c.id} c={c} />)}</ul>
-            )}
-          </Card>
-        </>
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+          <KpiCard icon={Users} label="Klien aktif" value={String(counts.aktif)} tone="primary" />
+          <KpiCard icon={CalendarClock} label="Jatuh tempo 30 hari" value={String(renewals.length)} tone={renewals.length ? "out" : "neutral"} />
+          <KpiCard icon={Users} label="Prospek" value={String(counts.prospek)} />
+        </div>
       )}
+
+      {ws.cards.map((key) => (cards[key] ? <Fragment key={key}>{cards[key]}</Fragment> : null))}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import type { CollectionConfig } from "payload";
-import { enforceUnit, isEditor, unitRead, unitWrite } from "@/lib/access";
+import { createWith, enforceUnit, unitRead, writeWith } from "@/lib/access";
 import { outreachChannels, outreachLogTypes, prospectSectors, prospectSources, prospectStatuses, units } from "@/lib/options";
 
 /**
@@ -15,9 +15,9 @@ export const Prospects: CollectionConfig = {
   admin: { useAsTitle: "company", group: "Operasional" },
   access: {
     read: unitRead,
-    create: isEditor,
-    update: unitWrite,
-    delete: unitWrite,
+    create: createWith("editClients"),
+    update: writeWith("editClients"),
+    delete: writeWith("editClients"),
   },
   hooks: { beforeChange: [enforceUnit] },
   defaultSort: "-updatedAt",

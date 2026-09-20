@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Download, FileText, Lock, Plus } from "lucide-react";
-import { canEdit, getSessionUser } from "@/lib/session";
+import { canEditVault, getSessionUser } from "@/lib/session";
 import { fileOf, getVaultDocuments, groupByCategory, thumbnailOf } from "@/lib/vault";
 import { formatDate } from "@/lib/format";
 import { buildHref, first, type Search } from "@/lib/search";
@@ -22,7 +22,7 @@ export default async function VaultPage({ searchParams }: { searchParams: Promis
   const sp = await searchParams;
   const q = (first(sp.q) ?? "").trim();
   const category = (vaultCategories.some((c) => c.value === first(sp.category)) ? first(sp.category) : "") as VaultCategory | "";
-  const editable = canEdit(user);
+  const editable = canEditVault(user);
   const docs = await getVaultDocuments({ includeConfidential: editable, q, category });
   const groups = groupByCategory(docs);
   const href = (patch: Record<string, string | undefined>) => buildHref("/vault", { q: q || undefined, category: category || undefined }, patch);

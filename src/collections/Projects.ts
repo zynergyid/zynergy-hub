@@ -1,5 +1,5 @@
 import type { CollectionConfig } from "payload";
-import { enforceUnit, isEditor, moneyFieldRead, unitRead, unitWrite } from "@/lib/access";
+import { createWith, enforceUnit, moneyFieldRead, unitRead, writeWith } from "@/lib/access";
 import { projectDocumentKinds, projectHealth, projectLogTypes, projectStages, units } from "@/lib/options";
 
 /**
@@ -15,9 +15,9 @@ export const Projects: CollectionConfig = {
   admin: { useAsTitle: "name", group: "Operasional" },
   access: {
     read: unitRead,
-    create: isEditor,
-    update: unitWrite,
-    delete: unitWrite,
+    create: createWith("editProjects"),
+    update: writeWith("editProjects"),
+    delete: writeWith("editProjects"),
   },
   hooks: {
     beforeChange: [

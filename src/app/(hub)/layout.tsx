@@ -30,8 +30,8 @@ export default async function HubLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-screen bg-surface text-ink antialiased">
         {user ? (
           <div className="flex min-h-screen">
-            <Sidebar role={user.role} units={user.units} userName={user.name} />
-            <div className="flex min-w-0 flex-1 flex-col">
+            <Sidebar viewer={user} userName={user.name} />
+            <div className="flex min-w-0 flex-1 flex-col md:pl-64">
               <header className="sticky top-0 z-30 flex h-14 items-center gap-2.5 border-b border-line bg-white px-4 print:hidden md:hidden">
                 <BrandMark className="size-7 text-navy" />
                 <span className="flex-1 text-base font-extrabold tracking-tight">
@@ -47,7 +47,7 @@ export default async function HubLayout({ children }: LayoutProps<"/">) {
                 {children}
               </main>
             </div>
-            <MobileTabs role={user.role} units={user.units} />
+            <MobileTabs viewer={user} />
             <SessionKeepAlive />
             {process.env.NODE_ENV !== "production" && <OverflowGuard />}
           </div>

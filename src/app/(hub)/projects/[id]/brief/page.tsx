@@ -43,7 +43,8 @@ export default async function ClientBriefPage({ params, searchParams }: { params
   const items = confirmationItems(brief, style);
   const confirmed = brief.confirmedAt ? formatDate(brief.confirmedAt) : null;
   const clientName = client?.name ?? "klien";
-  const person = client?.owner ?? null;
+  // A one-person client signs as themselves; a business signs through its owner or PIC.
+  const person = client?.kind === "perorangan" ? client.name : (client?.owner ?? null);
   const contact = person ? `${person}, ${clientName}` : clientName;
   const signLabels = short ? ["Nama", "Tanggal", "Tanda tangan"] : ["Nama", "Jabatan", "Tanggal", "Tanda tangan"];
 

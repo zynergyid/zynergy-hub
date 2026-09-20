@@ -1,5 +1,5 @@
 import type { CollectionConfig } from "payload";
-import { enforceUnit, isEditor, moneyRead, unitWrite } from "@/lib/access";
+import { createWith, enforceUnit, moneyRead, writeWith } from "@/lib/access";
 import { paymentMethods, transactionCategories, units } from "@/lib/options";
 
 /** Cash in and out per unit. Admin everywhere, finance in their units, viewer read-only. */
@@ -13,9 +13,9 @@ export const Transactions: CollectionConfig = {
   },
   access: {
     read: moneyRead,
-    create: isEditor,
-    update: unitWrite,
-    delete: unitWrite,
+    create: createWith("editMoney"),
+    update: writeWith("editMoney"),
+    delete: writeWith("editMoney"),
   },
   hooks: { beforeChange: [enforceUnit] },
   defaultSort: "-date",

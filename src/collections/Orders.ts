@@ -1,5 +1,5 @@
 import type { CollectionConfig } from "payload";
-import { enforceUnit, isEditor, moneyFieldRead, unitRead, unitWrite } from "@/lib/access";
+import { createWith, enforceUnit, moneyFieldRead, unitRead, writeWith } from "@/lib/access";
 import { documentKinds, orderStatuses, units } from "@/lib/options";
 
 /**
@@ -15,9 +15,9 @@ export const Orders: CollectionConfig = {
   admin: { useAsTitle: "number", group: "Operasional" },
   access: {
     read: unitRead,
-    create: isEditor,
-    update: unitWrite,
-    delete: unitWrite,
+    create: createWith("editOrders"),
+    update: writeWith("editOrders"),
+    delete: writeWith("editOrders"),
   },
   hooks: {
     beforeChange: [

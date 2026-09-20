@@ -106,5 +106,5 @@ export async function getProjectPayments(projectId: number): Promise<{ rows: Tra
 export async function getUserOptions(): Promise<UserOption[]> {
   const payload = await getPayloadClient();
   const { docs } = await payload.find({ collection: "users", limit: 100, sort: "name", select: { name: true, role: true } });
-  return docs.filter((u) => u.role !== "viewer").map((u) => ({ id: u.id, name: u.name }));
+  return docs.filter((u) => u.role !== "Commissioner").map((u) => ({ id: u.id, name: u.name }));
 }

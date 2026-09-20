@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowDownLeft, ArrowUpRight, ChevronLeft, ChevronRight, Download, Scale, Wallet } from "lucide-react";
-import { canEdit, canSeeMoney, getSessionUser } from "@/lib/session";
+import { canEditMoney, canSeeMoney, getSessionUser } from "@/lib/session";
 import { getPayloadClient } from "@/lib/payload";
 import { fundingHint, getLedger, getUnitMonth, monthKey, parseMonth, pctChange, resolveUnit } from "@/lib/finance";
 import { dateKey, dayLabel, formatDate, formatIDR, formatMonthLong } from "@/lib/format";
@@ -29,7 +29,7 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
   if (!user) redirect("/login");
   const allowed = user.units;
   if (!canSeeMoney(user) || allowed.length === 0) redirect("/");
-  const editable = canEdit(user);
+  const editable = canEditMoney(user);
 
   const sp = await searchParams;
   const unit = resolveUnit(first(sp.unit), allowed);

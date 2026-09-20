@@ -50,6 +50,13 @@ export const packages = [
   { label: "Custom", value: "custom" },
 ] as const;
 
+/** A client is a business (UMKM, PT, CV) or one person (freelancer, professional, personal brand). */
+export const clientKinds = [
+  { label: "Usaha / perusahaan", value: "usaha" },
+  { label: "Perorangan", value: "perorangan" },
+] as const;
+export type ClientKind = (typeof clientKinds)[number]["value"];
+
 export const clientStatuses = [
   { label: "Prospek", value: "prospek" },
   { label: "Aktif", value: "aktif" },
@@ -239,29 +246,78 @@ export const categoryLabel = new Map<string, string>(
 export const unitLabel = new Map<string, string>(units.map((u) => [u.value, u.label]));
 
 /** Access level. Scope (which units) is a separate field on the user. */
+/**
+ * One role per person, named by the job. What a role may do is granted per
+ * capability on the Hak akses page (`permissions` global, defaults below).
+ * `users.isAdmin` sits on top: an admin has every capability and manages the
+ * team and the grants.
+ */
 export const roles = [
-  { label: "Admin (semua unit, kelola tim)", value: "admin" },
-  { label: "Finance (klien + arus kas + pesanan di unitnya)", value: "finance" },
-  { label: "Staf (sementara sama dengan Finance)", value: "staff" },
-  { label: "Anggota (lihat unitnya, tidak mengubah; sementara termasuk arus kas)", value: "member" },
-  { label: "Pengawas (lihat semua unit termasuk uang, tidak mengubah)", value: "viewer" },
+  { label: "Lead", value: "Lead" },
+  { label: "Developer", value: "Developer" },
+  { label: "Designer", value: "Designer" },
+  { label: "Marketing", value: "Marketing" },
+  { label: "Business", value: "Business" },
+  { label: "Staff", value: "Staff" },
+  { label: "Finance", value: "Finance" },
+  { label: "Commissioner", value: "Commissioner" },
+  { label: "Other", value: "Other" },
 ] as const;
 export type Role = (typeof roles)[number]["value"];
-/** Roles that change data. Everyone else only looks. */
-export const editorRoles: Role[] = ["admin", "finance", "staff"];
-/** Roles that see money. Member is here TEMPORARILY (Danish, 2026-09-20) so Anggota can follow Arus Kas. */
-export const moneyRoles: Role[] = ["admin", "finance", "staff", "viewer", "member"];
-export const roleLabel = new Map<string, string>(roles.map((r) => [r.value, r.label.split(" (")[0]]));
+export const roleLabel = new Map<string, string>(roles.map((r) => [r.value, r.label]));
+export const isRoleValue = (v: unknown): v is Role => typeof v === "string" && roles.some((r) => r.value === v);
 
-/** Job titles are descriptive only; they never grant access. */
-export const jobTitles = [
-  "Lead",
-  "Developer",
-  "Designer",
-  "Marketing",
-  "Business",
-  "Staf",
-  "Finance",
-  "Komisaris",
-  "Lainnya",
+export const capabilities = [
+  { key: "viewMoney", label: "Melihat uang", hint: "Arus kas, harga PO, nilai proyek." },
+  { key: "editMoney", label: "Mengubah arus kas", hint: "Mencatat dan mengubah transaksi; butuh Melihat uang juga." },
+  { key: "editClients", label: "Mengubah klien dan outreach", hint: "Di unit yang ditugaskan. Termasuk skill /outreach." },
+  { key: "editOrders", label: "Mengubah pesanan (PO)", hint: "Harga hanya terlihat dengan Melihat uang." },
+  { key: "editProjects", label: "Mengubah proyek dan brief" },
+  { key: "editVault", label: "Mengelola Brankas Dokumen", hint: "Unggah, hapus, dan melihat dokumen rahasia." },
+  { key: "team", label: "Menulis kalender, catatan musyawarah, konten" },
+  { key: "allUnits", label: "Melihat semua unit", hint: "Tanpa ini hanya unit yang ditugaskan di Tim." },
+  { key: "seo", label: "Mengubah SEO situs" },
 ] as const;
+export type Capability = (typeof capabilities)[number]["key"];
+export const capabilityLabel = new Map<string, string>(capabilities.map((c) => [c.key, c.label]));
+export type RoleGrants = Record<Role, Capability[]>;
+/** Starting point; admins change it on Hak akses. */
+export const defaultGrants: RoleGrants = {
+  Lead: ["viewMoney", "editMoney", "editClients", "editOrders", "editProjects", "editVault", "team", "allUnits", "seo"],
+  Developer: ["editProjects", "team"],
+  Designer: ["team"],
+  Marketing: ["editClients", "team", "seo"],
+  Business: ["editClients", "editOrders", "team"],
+  Staff: ["viewMoney", "editMoney", "editClients", "editOrders", "editVault", "team"],
+  Finance: ["viewMoney", "editMoney", "editClients", "editOrders", "editVault", "team"],
+  Commissioner: ["viewMoney", "allUnits"],
+  Other: ["team"],
+};
+
+/** What a calendar entry is. "konten" is a planned social post with its own fields. */
+export const eventKinds = [
+  { label: "Musyawarah tim", value: "rapat-tim" },
+  { label: "Meeting klien", value: "meeting-klien" },
+  { label: "Konten (unggahan)", value: "konten" },
+  { label: "Acara lain", value: "lainnya" },
+] as const;
+export type EventKind = (typeof eventKinds)[number]["value"];
+export const eventKindLabel = new Map<string, string>(eventKinds.map((k) => [k.value, k.label]));
+
+export const contentPlatforms = [
+  { label: "Instagram", value: "instagram" },
+  { label: "Facebook", value: "facebook" },
+  { label: "TikTok", value: "tiktok" },
+  { label: "LinkedIn", value: "linkedin" },
+  { label: "Website / blog", value: "website" },
+] as const;
+export const contentPlatformLabel = new Map<string, string>(contentPlatforms.map((p) => [p.value, p.label]));
+/** A post moves left to right; "tayang" is the only finished state. */
+export const contentStatuses = [
+  { label: "Ide", value: "ide" },
+  { label: "Draf", value: "draf" },
+  { label: "Siap tayang", value: "siap" },
+  { label: "Tayang", value: "tayang" },
+] as const;
+export type ContentStatus = (typeof contentStatuses)[number]["value"];
+export const contentStatusLabel = new Map<string, string>(contentStatuses.map((s) => [s.value, s.label]));

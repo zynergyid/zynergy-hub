@@ -1,4 +1,13 @@
-import { moneyRoles, type Role, type Unit } from "@/lib/options";
+import type { Capability, Role, Unit } from "@/lib/options";
+
+/** What the nav needs to know about the person. */
+export interface NavViewer {
+  role: Role;
+  isAdmin: boolean;
+  units: Unit[];
+  caps: Capability[];
+}
+import { workspaceOf } from "@/lib/workspace";
 
 export type IconName =
   | "dashboard"
@@ -17,7 +26,9 @@ export type IconName =
   | "vendor"
   | "vault"
   | "inbox"
-  | "team";
+  | "team"
+  | "calendar"
+  | "more";
 
 export interface NavItem {
   href: string;
@@ -25,15 +36,17 @@ export interface NavItem {
   icon: IconName;
   /** Not built yet: rendered disabled with a "Segera" pill. */
   soon?: boolean;
-  /** Visible only to these roles (default: everyone logged in). */
-  roles?: Role[];
+  /** Visible to admins only. */
+  adminOnly?: boolean;
+  /** Visible only with this capability from the Hak akses grants. */
+  needs?: Capability;
   /** Visible only to people who work in one of these units (default: every unit). */
   units?: Unit[];
 }
 
 /** One rule for the sidebar and the phone tabs. */
-export const canSeeNav = (item: NavItem, role: Role, units: Unit[]) =>
-  (!item.roles || item.roles.includes(role)) && (!item.units || item.units.some((u) => units.includes(u)));
+export const canSeeNav = (item: NavItem, v: NavViewer) =>
+  (!item.adminOnly || v.isAdmin) && (!item.needs || v.caps.includes(item.needs)) && (!item.units || item.units.some((u) => v.units.includes(u)));
 
 export interface NavSection {
   title: string;
@@ -48,7 +61,10 @@ export interface NavSection {
 export const navSections: NavSection[] = [
   {
     title: "",
-    items: [{ href: "/", label: "Ringkasan", icon: "dashboard" }],
+    items: [
+      { href: "/", label: "Ringkasan", icon: "dashboard" },
+      { href: "/calendar", label: "Kalender", icon: "calendar" },
+    ],
   },
   {
     title: "Klien",
@@ -66,7 +82,7 @@ export const navSections: NavSection[] = [
   },
   {
     title: "Keuangan",
-    items: [{ href: "/cash-flow", label: "Arus Kas", icon: "cashflow", roles: moneyRoles }],
+    items: [{ href: "/cash-flow", label: "Arus Kas", icon: "cashflow", needs: "viewMoney" }],
   },
   {
     title: "Situs",
@@ -89,15 +105,28 @@ export const navSections: NavSection[] = [
   },
   {
     title: "Admin",
-    items: [{ href: "/team", label: "Tim", icon: "team", roles: ["admin"] }],
+    items: [{ href: "/team", label: "Tim", icon: "team", adminOnly: true }],
   },
 ];
 
-export const mobileTabs: NavItem[] = [
-  { href: "/", label: "Ringkasan", icon: "dashboard" },
-  { href: "/cash-flow", label: "Arus Kas", icon: "cashflow", roles: moneyRoles },
-  { href: "/clients", label: "Klien", icon: "clients" },
-  { href: "/orders", label: "Pesanan", icon: "orders", units: ["supply"] },
-  { href: "/projects", label: "Proyek", icon: "projects", units: ["digital", "apps"] },
-  { href: "/outreach", label: "Outreach", icon: "outreach" },
-];
+/**
+ * Phone bottom bar: the first MOBILE_TAB_COUNT items of the person's
+ * workspace order (by jabatan) that they may see, plus a "Lainnya" tab that
+ * lists every other sidebar item, so nothing in `navSections` is ever
+ * unreachable on a phone.
+ */
+export const MOBILE_TAB_COUNT = 4;
+const navItemByHref = new Map(navSections.flatMap((s) => s.items).map((i) => [i.href, i]));
+
+/** Bottom-bar tabs and the sections left for the "Lainnya" sheet, for one person. */
+export function mobileNav(v: NavViewer): { tabs: NavItem[]; more: NavSection[] } {
+  const tabs = workspaceOf(v.role)
+    .tabs.map((href) => navItemByHref.get(href))
+    .filter((t): t is NavItem => Boolean(t) && canSeeNav(t!, v))
+    .slice(0, MOBILE_TAB_COUNT);
+  const shown = new Set(tabs.map((t) => t.href));
+  const more = navSections
+    .map((s) => ({ title: s.title, items: s.items.filter((i) => canSeeNav(i, v) && !shown.has(i.href)) }))
+    .filter((s) => s.items.length > 0);
+  return { tabs, more };
+}

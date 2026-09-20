@@ -13,6 +13,9 @@ import { Projects } from "@/collections/Projects";
 import { Prospects } from "@/collections/Prospects";
 import { Receipts } from "@/collections/Receipts";
 import { SeoAudits } from "@/collections/SeoAudits";
+import { Events } from "@/collections/Events";
+import { EventPhotos } from "@/collections/EventPhotos";
+import { Permissions } from "@/globals/Permissions";
 import { Transactions } from "@/collections/Transactions";
 import { Users } from "@/collections/Users";
 import { VaultDocuments, VaultFiles } from "@/collections/Vault";
@@ -25,7 +28,8 @@ export default buildConfig({
     // The team uses the custom screens; the Payload panel is not served at all.
     disable: true,
   },
-  collections: [Clients, Orders, Projects, Documents, Transactions, Receipts, Prospects, VaultDocuments, VaultFiles, AiUsage, SeoAudits, Users],
+  collections: [Clients, Orders, Projects, Documents, Transactions, Receipts, Prospects, VaultDocuments, VaultFiles, AiUsage, SeoAudits, Events, EventPhotos, Users],
+  globals: [Permissions],
   secret: process.env.PAYLOAD_SECRET || "",
   db: postgresAdapter({
     pool: {
@@ -41,7 +45,7 @@ export default buildConfig({
     // Registered unconditionally so its admin components land in the importMap.
     vercelBlobStorage({
       enabled: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
-      collections: { receipts: true, documents: true, "vault-files": true },
+      collections: { receipts: true, documents: true, "vault-files": true, "event-photos": true },
       // Files are served through Payload's access-checked route, never by the
       // blob URL; the random suffix keeps that URL unguessable anyway.
       addRandomSuffix: true,

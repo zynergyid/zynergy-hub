@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getSessionUser } from "@/lib/session";
+import { canEditSeo, getSessionUser } from "@/lib/session";
 import { saveSiteSeo, siteCmsConfigured } from "@/lib/site-cms";
 import { DESCRIPTION_MAX, TITLE_MAX, siteSeoPages, type SeoPair, type SiteSeo } from "@/lib/site-seo";
 import { runSeoAudit } from "@/lib/seo-audit";
@@ -18,7 +18,7 @@ const tooLong = (p: SeoPair) => p.title.length > TITLE_MAX || p.description.leng
 /** Writes titles and descriptions to the site CMS. Admin only. */
 export async function updateSiteSeo(_prev: SeoFormState, formData: FormData): Promise<SeoFormState> {
   const user = await getSessionUser();
-  if (!user || user.role !== "admin") return { status: "error", message: "Hanya admin." };
+  if (!user || !canEditSeo(user)) return { status: "error", message: "Peran Anda tidak boleh mengubah SEO." };
   if (!siteCmsConfigured()) return { status: "error", message: "Hub belum terhubung ke CMS situs." };
 
   const pair = (prefix: string): SeoPair => ({ title: text(formData, `${prefix}.title`), description: text(formData, `${prefix}.description`) });
@@ -42,7 +42,7 @@ export async function updateSiteSeo(_prev: SeoFormState, formData: FormData): Pr
 /** Re-runs the technical checks on every page. Admin only. */
 export async function runAuditNow(): Promise<void> {
   const user = await getSessionUser();
-  if (!user || user.role !== "admin") return;
+  if (!user || !canEditSeo(user)) return;
   await runSeoAudit();
   revalidatePath("/seo");
 }

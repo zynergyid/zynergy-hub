@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowDownLeft, ArrowLeft, CalendarClock, FileText, ListChecks, Wallet } from "lucide-react";
-import { canSeeMoney, getSessionUser } from "@/lib/session";
+import { canEditMoney, canSeeMoney, getSessionUser } from "@/lib/session";
 import { canWriteUnit } from "@/lib/access";
 import { getPayloadClient } from "@/lib/payload";
 import { clientOf, getClientOptions, getOrderPayments, nextDate, orderTotal } from "@/lib/orders";
@@ -32,7 +32,7 @@ export default async function OrderDetailPage({ params, searchParams }: { params
   const order = await payload.findByID({ collection: "orders", id: orderId, depth: 1, disableErrors: true });
   if (!order || !user.units.includes(order.unit)) notFound();
   const money = canSeeMoney(user);
-  const editable = canWriteUnit(user, order.unit);
+  const editable = canWriteUnit(user, order.unit, "editOrders");
   const [clients, payments] = await Promise.all([
     getClientOptions(user.units),
     money ? getOrderPayments(orderId) : Promise.resolve({ rows: [], paid: 0, cost: 0 }),
@@ -42,7 +42,7 @@ export default async function OrderDetailPage({ params, searchParams }: { params
   const remaining = Math.max(total - payments.paid, 0);
   const next = nextDate(order);
   const addPaymentHref = `/cash-flow?unit=${order.unit}&add=1&order=${order.id}`;
-  const canPay = editable && remaining > 0 && order.status !== "batal";
+  const canPay = canEditMoney(user) && remaining > 0 && order.status !== "batal";
   const deadlineCard = (
     <KpiCard
       icon={CalendarClock}
@@ -127,7 +127,7 @@ export default async function OrderDetailPage({ params, searchParams }: { params
           />
           {money && (
             <Card title="Transaksi PO ini" action={canPay ? { label: "Catat pembayaran", href: addPaymentHref } : undefined}>
-              <TxList rows={payments.rows} editable={editable} empty="Belum ada uang masuk atau biaya yang ditautkan ke PO ini." />
+              <TxList rows={payments.rows} editable={canEditMoney(user)} empty="Belum ada uang masuk atau biaya yang ditautkan ke PO ini." />
             </Card>
           )}
         </div>

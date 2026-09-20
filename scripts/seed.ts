@@ -12,7 +12,7 @@ const users = await payload.find({ collection: "users", where: { email: { equals
 if (users.totalDocs === 0) {
   await payload.create({
     collection: "users",
-    data: { email: "admin@zynergy.local", password: LOCAL_PASSWORD, name: "Admin Lokal", role: "admin", title: "Lead" },
+    data: { email: "admin@zynergy.local", password: LOCAL_PASSWORD, name: "Admin Lokal", role: "Lead", isAdmin: true },
   });
   payload.logger.info("Seeded local admin");
 }
@@ -30,7 +30,7 @@ if (existing.totalDocs === 0) {
   ] as const;
   const ids: number[] = [];
   for (const c of clients) {
-    const doc = await payload.create({ collection: "clients", data: { ...c, unit: "digital" } });
+    const doc = await payload.create({ collection: "clients", data: { ...c, unit: "digital", kind: "usaha" } });
     ids.push(doc.id);
   }
   const tx = [
@@ -69,6 +69,7 @@ if (orders.totalDocs === 0) {
     collection: "clients",
     data: {
       unit: "supply",
+      kind: "usaha",
       name: "PT Tambang Nusantara (contoh)",
       owner: "Bagian Pengadaan",
       email: "procurement@contoh.local",
@@ -172,11 +173,11 @@ if (projects.totalDocs === 0) {
 }
 
 for (const u of [
-  { email: "finance.digital@zynergy.local", name: "Finance Digital", role: "finance", units: ["digital"], title: "Finance" },
-  { email: "pengawas@zynergy.local", name: "Pengawas Test", role: "viewer", units: [], title: "Komisaris" },
-  { email: "member@zynergy.local", name: "Anggota Digital", role: "member", units: ["digital"], title: "Marketing" },
-  { email: "member.supply@zynergy.local", name: "Anggota Supply", role: "member", units: ["supply"], title: "Business" },
-  { email: "staf.supply@zynergy.local", name: "Staf Supply", role: "staff", units: ["supply"], title: "Staf" },
+  { email: "finance.digital@zynergy.local", name: "Finance Digital", role: "Finance", units: ["digital"] },
+  { email: "pengawas@zynergy.local", name: "Pengawas Test", role: "Commissioner", units: [] },
+  { email: "member@zynergy.local", name: "Anggota Digital", role: "Marketing", units: ["digital"] },
+  { email: "member.supply@zynergy.local", name: "Anggota Supply", role: "Business", units: ["supply"] },
+  { email: "staf.supply@zynergy.local", name: "Staf Supply", role: "Staff", units: ["supply"] },
 ] as const) {
   const found = await payload.find({ collection: "users", where: { email: { equals: u.email } }, limit: 1 });
   if (found.totalDocs === 0) {

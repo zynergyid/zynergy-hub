@@ -1,8 +1,9 @@
 "use server";
 
+import crypto from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { getPayloadClient } from "@/lib/payload";
-import { canEdit, getSessionUser } from "@/lib/session";
+import { canEditClients, getSessionUser } from "@/lib/session";
 
 export interface ProfileState {
   status: "idle" | "success" | "error";
@@ -12,7 +13,7 @@ export interface ProfileState {
 /** Personal API key for the /outreach Claude Code skill. Shown on the profile page, never sent anywhere else. */
 export async function generateApiKey() {
   const user = await getSessionUser();
-  if (!user || !canEdit(user)) return;
+  if (!user || !canEditClients(user)) return;
   const payload = await getPayloadClient();
   await payload.update({ collection: "users", id: user.id, data: { enableAPIKey: true, apiKey: crypto.randomUUID() } });
   revalidatePath("/profile");
@@ -20,9 +21,26 @@ export async function generateApiKey() {
 
 export async function revokeApiKey() {
   const user = await getSessionUser();
-  if (!user || !canEdit(user)) return;
+  if (!user || !canEditClients(user)) return;
   const payload = await getPayloadClient();
   await payload.update({ collection: "users", id: user.id, data: { enableAPIKey: false, apiKey: null } });
+  revalidatePath("/profile");
+}
+
+/** Personal read-only calendar feed. Anyone may subscribe; rotating the token cuts off the old link. */
+export async function generateCalendarToken() {
+  const user = await getSessionUser();
+  if (!user) return;
+  const payload = await getPayloadClient();
+  await payload.update({ collection: "users", id: user.id, data: { calendarToken: crypto.randomBytes(24).toString("hex") } });
+  revalidatePath("/profile");
+}
+
+export async function revokeCalendarToken() {
+  const user = await getSessionUser();
+  if (!user) return;
+  const payload = await getPayloadClient();
+  await payload.update({ collection: "users", id: user.id, data: { calendarToken: null } });
   revalidatePath("/profile");
 }
 

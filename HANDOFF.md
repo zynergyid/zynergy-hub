@@ -658,6 +658,271 @@ memakai versi "agensi kecil", bukan versi enterprise.
   duplikat. Skill membaca PO klien terkait untuk draf reaktivasi.
 - Belum: kirim otomatis (tidak akan), tarik LinkedIn, pengingat via email.
 
+## Peran = jabatan, plus tanda Admin per orang (2026-09-20 larut malam)
+
+Setelah dua kali saya sarankan memisahkan, Danish memutuskan menggabung:
+"lebih praktikal jabatan ya itu peran, supaya saya bisa memanage lebih
+detail seperti finance bisa edit arus kas sedangkan designer tidak."
+Keputusan final, dibangun malam itu juga:
+
+- `users.role` sekarang jabatan: Lead, Developer, Designer, Marketing,
+  Business, Staff, Finance, Commissioner, Other (enum berbahasa Inggris).
+  Kolom `users.title` DIHAPUS. `users.isAdmin` (checkbox, hanya admin yang
+  mengubah) = semua hak plus kelola tim dan hak akses; tidak bisa dicabut
+  dari diri sendiri lewat form (isSelf mengunci peran, unit, admin).
+- Migrasi `roles_are_jobs` (SQL ditulis tangan sebagian): tambah
+  `is_admin`, `UPDATE is_admin = true WHERE role = 'admin'`, lalu `role :=
+  COALESCE(title, CASE role viewer->Commissioner, pengelola->Staff,
+  admin->Lead, ELSE Other)` sebelum enum peran dibangun ulang, lalu drop
+  `title` dan enumnya, lalu tabel `permissions` diganti kolomnya per peran
+  baru. Seed lokal mengikuti.
+- Sembilan kemampuan (`capabilities` di options.ts), supaya detail yang
+  Danish minta bisa diatur: viewMoney, editMoney, editClients (klien dan
+  outreach, juga skill /outreach dan kunci API), editOrders, editProjects,
+  editVault (unggah, hapus, lihat rahasia), team (kalender, rapat, konten),
+  allUnits, seo. `defaultGrants` per peran adalah titik awal; admin
+  mengubahnya di grid Hak akses (9 peran x 9 kemampuan, kolom Admin
+  terkunci). Global `permissions` punya satu grup per peran.
+- Aturan koleksi memakai pabrik `createWith(...caps)` dan
+  `writeWith(...caps)` di access.ts: Clients/Prospects editClients;
+  Orders editOrders; Projects editProjects; Documents (unggahan PO/proyek/
+  klien) salah satu dari editOrders/editProjects/editClients; Transactions/
+  Receipts editMoney; Vault editVault; Events team; Users/permissions
+  admin. Helper sesi per modul: `canEditClients`, `canEditOrders`,
+  `canEditProjects`, `canEditMoney` (butuh viewMoney juga), `canEditVault`,
+  `canEditTeam`, `canEditSeo`, `canSeeMoney`; `canWriteUnit(user, unit,
+  cap)`. Tombol lintas modul mengikuti modul tujuannya (tombol "Buat PO" di
+  halaman klien = editOrders, "Catat pembayaran" = editMoney).
+- Ruang kerja (`lib/workspace.ts`) sekarang dikunci ke peran yang sama;
+  `hasTool(role, "skills")` untuk Lead dan Developer, dan bagian skill
+  juga butuh editClients.
+- Nav: `NavItem.adminOnly` (Tim) dan `needs` (Arus Kas: viewMoney);
+  `canSeeNav(item, viewer)` dengan `NavViewer {role,isAdmin,units,caps}`;
+  Sidebar dan MobileTabs menerima `viewer={user}`.
+- Login pertama (`FirstAdminForm`) membuat Lead dengan isAdmin true.
+- Halaman Tim: daftar menampilkan peran dan tanda Admin; form anggota:
+  peran (jabatan), checkbox Admin, unit (wajib kecuali admin atau peran
+  dengan allUnits), keterangan hak mengikuti peran yang dipilih.
+
+## Peran jadi empat, hak diatur admin di halaman Hak akses (2026-09-20 malam)
+
+Danish menanyakan kenapa "Finance" ada di peran padahal itu jabatan, dan
+apa itu Pengawas. Jawabannya: peran Finance dan Staf adalah warisan
+penamaan (hak keduanya identik). Keputusan:
+
+- Peran = tingkat akses, empat saja: `admin`, `pengelola` (menggantikan
+  `finance` dan `staff`), `member` (Anggota), `viewer` (Pengawas). Migrasi
+  `roles_and_permissions` memindahkan akun finance/staff ke pengelola
+  SEBELUM enum dibangun ulang (baris UPDATE ditambah tangan; generator
+  Payload tidak menulisnya). Jabatan tetap punya Finance dan Staf.
+- Hak per peran bukan lagi daftar di kode, tapi lima kemampuan
+  (`capabilities` di options.ts: edit, money, team, allUnits, seo) yang
+  diberikan per peran lewat global `permissions` (`src/globals/
+  Permissions.ts`, satu grup checkbox per peran non-admin, default dari
+  `defaultGrants`). Admin selalu punya semua dan satu-satunya yang
+  mengelola tim dan hak akses (tidak bisa dicabut, supaya tidak terkunci).
+- Alur bacanya: `lib/grants-cache.ts` (tanpa Payload, boleh diimpor mana
+  saja) menyimpan salinan proses dengan TTL 30 detik; `lib/permissions.ts`
+  memuat dari global (dipanggil `getSessionUser`, jadi setiap halaman
+  segar); aturan akses REST di `access.ts` memuat sendiri lewat
+  `req.payload` kalau basi (fungsi Access jadi async). Setelah admin
+  menyimpan, cache proses itu langsung diganti; instance Vercel lain
+  menyusul dalam 30 detik.
+- `SessionUser.caps` berisi kemampuan orang itu; helper `canEdit`,
+  `canSeeMoney`, `canEditTeam`, `canEditSeo` membacanya. Sidebar dan tab HP
+  menerima `caps`; item nav memakai `needs: "money"` bukan daftar peran.
+  Halaman SEO memakai kemampuan `seo` (default hanya admin).
+- Halaman `/access`: admin melihat grid centang (kemampuan x peran, kolom
+  admin terkunci) plus tabel "artinya per bagian"; peran lain hanya
+  tabelnya. Tim punya tiga tab (`team/TeamTabs.tsx`): Anggota | Hak akses |
+  Ruang kerja; `/workspace` adalah tabel hanya-baca per jabatan (kartu
+  pertama, tab HP, alat khusus, dari `workspaceOf`), permintaan Danish
+  supaya admin bisa melihat efek jabatan tanpa membaca kode. Form anggota menampilkan
+  keterangan hak yang mengikuti peran yang dipilih; Profil punya kartu
+  "Hak Anda". Jangan taruh lagi sebagai tautan catatan kaki (Danish
+  menolaknya).
+- Risiko yang sudah dibicarakan: satu centang salah membuka uang ke peran
+  yang salah, tanpa tinjauan kode. Danish tetap memilih bisa mengatur
+  sendiri.
+
+## Ruang kerja per jabatan dan halaman Hak akses (2026-09-20)
+
+Danish bertanya apakah peran dan jabatan sebaiknya digabung supaya marketing,
+designer, developer punya halaman khusus. Keputusan: TIDAK digabung. Peran =
+hak (keamanan, tetap lima dan di kode, hanya admin yang memberi). Jabatan =
+ruang kerja (kenyamanan), yang sekarang berfungsi lewat `lib/workspace.ts`:
+
+- `workspaceOf(title)` memberi `featured` (kartu yang diminta jabatan itu,
+  urutan pertama), `cards` (urutan penuh Ringkasan: featured lalu kartu umum
+  lainnya), `tabs` (urutan href untuk empat tab HP; `mobileNav` mengambil
+  empat pertama yang boleh dilihat), dan `tools` (`skills` = bagian Skill
+  Claude Code di Alat dan kartu kunci API di Profil; hanya Lead dan
+  Developer, tetap dibatasi `canEdit`).
+- Kartu khusus jabatan hanya tampil kalau ada di `featured`: `KontenCard`
+  (Designer, Marketing: hitungan status dan unggahan yang akan tayang,
+  milik sendiri didahulukan) dan `SeoCard` (Marketing: skor Teknis dan
+  Konten plus empat todo teratas, data dari `lib/seo-summary.ts`). Kartu
+  umum tetap disaring peran dan unit seperti sebelumnya; jabatan tidak
+  pernah membuka data.
+- Pemetaan ada di `byTitle` di workspace.ts (Lead, Developer, Designer,
+  Marketing, Business, Staff, Finance, Commissioner, Other). Menambah jabatan
+  = menambah satu baris di `jobTitles` dan satu di `byTitle`. Jabatan
+  berbahasa Inggris semua (keputusan Danish malam 2026-09-20; sebelumnya
+  campur Staf/Komisaris/Lainnya); migrasi `job_titles_english` memetakan
+  nilai lama dengan UPDATE sebelum enum dibangun ulang, pola yang sama
+  dengan migrasi peran.
+- Halaman `/access` (semua yang login, ditautkan dari Profil dan Tim):
+  tabel hak per peran yang diturunkan dari `editorRoles`, `moneyRoles`,
+  `teamRoles` (`lib/access-matrix.ts`), jadi tidak bisa beda dari kode.
+  Sengaja hanya-baca: matriks yang bisa dicentang admin ditolak untuk tim
+  sekecil ini (risiko salah klik membuka data uang).
+
+## Kalender: satu tampilan, acara, catatan rapat, tindak lanjut (2026-09-20)
+
+Istilah di layar: jenis `rapat-tim` dilabeli "Musyawarah tim" (permintaan
+Danish 2026-09-21); kata "rapat" di teks bantu diganti "musyawarah". Nilai
+enum `rapat-tim` tetap, jadi tanpa migrasi. Sejak 2026-09-21 catatan dan
+tindak lanjut bisa diisi langsung saat membuat acara (dialog cepat dan form
+lengkap, `FollowUpRows.tsx`: baris apa/siapa/tenggat dengan select native
+supaya `fuText`/`fuOwner`/`fuDue` sejajar di FormData); `saveEvent` menyimpan
+`notes` dan `followUps` saat create dan langsung mencerminkan catatan ke log
+proyek. Textarea dikirim browser sebagai CRLF; `multiline()` menormalkan ke
+LF sebelum disimpan.
+
+Foto acara (2026-09-21, permintaan Danish: dokumentasi musyawarah dan
+tangkapan unggahan konten): SATU foto per acara, maksimal 1 MB. Koleksi
+upload `event-photos` (image/*, Blob di prod, akses tulis = kemampuan
+team), field `events.photo`. `lib/image.ts` memperkecil di browser (1600 px
+sisi terpanjang, JPEG, kualitas turun bertahap, lalu skala turun) sampai
+di bawah `MAX_PHOTO_BYTES`; `setEventPhoto` menolak yang lebih besar dan
+menghapus foto lama saat diganti supaya Blob tidak menyimpan yatim.
+Bisa dipilih saat membuat acara (dialog cepat dan form lengkap lewat
+`PhotoPicker`: diperkecil saat dipilih, pratinjau, lalu ditempel ke FormData
+saat submit) atau diganti kemudian di halaman acara (`PhotoCard`).
+Thumbnail di tampilan daftar Kalender dan kartu Konten, ikon kamera di
+grid bulan dan kartu Jadwal.
+Alasan batas: Blob Hobby 1 GB tanpa bisa bayar kelebihan; dengan 300 KB
+per foto cukup untuk ribuan foto.
+
+Keputusan Danish: Hub adalah inti produktivitas tim (keputusan lama "dokumen
+tim di Notion" tidak berlaku lagi). Rapat tim mingguan dan usulan tim soal
+kalender (jadwal konten, meeting klien, rapat berikutnya) dijawab satu
+modul, mengikuti praktik umum: Kalender adalah TAMPILAN, bukan gudang.
+
+- Menu "Kalender" (`/calendar`, grup atas bersama Ringkasan; di HP lewat
+  "Lainnya"). Grid bulan (md ke atas) atau daftar per hari; HP selalu
+  daftar. Lapisan yang bisa dimatikan lewat `?lapisan=a,b`: Acara, Proyek
+  (target launch, tindakan berikutnya), Outreach (tindak lanjut jatuh
+  tempo), Pesanan (tenggat kirim; jatuh tempo bayar hanya peran uang),
+  Klien (perpanjangan website). Semua lapisan selain Acara dibaca langsung
+  dari koleksinya di `lib/calendar.ts` (`getCalendarItems`), tidak pernah
+  disalin; klik item membuka halaman asalnya. Tanggal dalam WIB lewat
+  `lib/calendar-dates.ts` (bebas Payload, boleh diimpor komponen klien).
+- Koleksi `events` (tipe TS `HubEvent`, label Acara): judul, jenis
+  (`eventKinds`: rapat-tim, meeting-klien, lainnya; konten unggahan
+  menyusul sebagai jenis baru), mulai/selesai, tempat atau tautan, peserta
+  (users), tautan ke klien/proyek/target outreach, agenda, catatan
+  (Markdown lewat MarkdownLite), `followUps[]` (apa, siapa, tenggat,
+  selesai pada), `projectLogId`, `createdBy`. Migrasi `events`.
+- Tambah cepat ala Google Calendar (`calendar/QuickAdd.tsx`): klik di mana
+  saja dalam kotak tanggal (grid bulan, `MonthGrid.tsx` komponen klien),
+  tombol "Tambah acara" di header, atau "Tambah" per hari di daftar membuka
+  dialog kecil di halaman yang sama (judul, pil jenis, jam, tempat, peserta;
+  klien dan proyek untuk meeting klien; platform dan status untuk konten).
+  Simpan memuat ulang grid di tempat; "Pilihan lengkap" membuka
+  `/calendar/new` dengan tanggal dan jenis terbawa. `saveEvent` menerima
+  `startAt` (form lengkap) atau `date` + `startTime`/`endTime` (dialog).
+  Tautan item di dalam kotak memakai stopPropagation supaya tidak membuka
+  dialog. Tipe dan palet lapisan ada di `lib/calendar-types.ts` (aman untuk
+  komponen klien); `lib/calendar.ts` mengekspor ulang.
+- Nama "Acara": sama dengan istilah Google Calendar versi Indonesia untuk
+  Event, jadi dipertahankan.
+- Halaman acara `/calendar/[id]`: kartu Agenda dan catatan (baca/ubah),
+  Tindak lanjut (centang, tambah, hapus), dan untuk rapat tim daftar
+  "Belum selesai dari rapat sebelumnya" (tindak lanjut terbuka dari rapat
+  tim sebelumnya, bisa dicentang dari situ), plus kartu Acara dengan tombol
+  Ubah (form yang sama dengan `/calendar/new`). Acara baru rapat tim
+  mengisi peserta dari rapat terakhir; `?tanggal=`, `?klien=`, `?proyek=`,
+  `?target=` mengisi form dari halaman lain.
+- Catatan acara yang ditautkan ke proyek dicerminkan ke log proyek sebagai
+  "Pertemuan" (`mirrorToProjectLog` di `calendar/actions.ts`): baris log
+  dibuat sekali, id-nya disimpan di `event.projectLogId`, penulisan ulang
+  memperbarui baris yang sama. Jadi `/brief` membaca catatan rapat.
+- Ringkasan: `AgendaCard` = "Minggu ini" (semua lapisan 7 hari ke depan)
+  dan "Tindak lanjut saya" (tindak lanjut terbuka milik orang itu, bisa
+  dicentang dari situ, `returnTo="/"`). Halaman proyek dan klien: kartu
+  "Jadwal" (`EventsCard`) berisi acara yang tertaut plus tombol Tambah
+  acara yang sudah terisi tautannya.
+- Akses: area kerja tim (acara, catatan, tindak lanjut) ditulis oleh SEMUA
+  peran kecuali pengawas (`teamRoles` di options.ts, `isTeamWriter` di
+  access.ts, `canEditTeam` di session.ts); ini pengecualian yang disengaja
+  dari aturan Anggota hanya-lihat, karena bukan data klien atau uang.
+  Semua yang login membaca semua acara (kalender tim, tidak per unit).
+- Jenis "konten" (unggahan sosial media, untuk designer dan marketing):
+  acara dengan grup `content` (platform Instagram/Facebook/TikTok/LinkedIn/
+  website, status ide/draf/siap/tayang, tautan desain Canva/Drive, tautan
+  unggahan). `startAt` = tanggal tayang, peserta = penanggung jawab, agenda =
+  brief singkat, catatan = caption. Lapisan "Konten" sendiri (warna rose)
+  dan baris filter status di Kalender (`?status=draf`) yang hanya
+  menyaring konten; itulah "daftar konten yang masih draf", tanpa halaman
+  Konten terpisah. Berkas desain tidak diunggah ke Hub (anggota tidak
+  punya hak unggah dokumen); pakai tautan.
+- Langganan kalender: `users.calendarToken` (48 hex, dibaca hanya pemilik
+  dan admin) dibuat dari halaman Profil (kartu "Kalender di HP", semua
+  peran); rute `/api/calendar/feed.ics?t=<token>` mengembalikan iCalendar
+  (`lib/ics.ts`: escape, lipat 75 oktet, acara berwaktu sebagai instan
+  UTC, tanggal lain sebagai all-day) untuk 30 hari ke belakang sampai 180
+  hari ke depan, sesuai unit dan hak uang orang itu. Google Calendar
+  memuat ulang tiap beberapa jam. Ganti tautan = token baru, tautan lama
+  mati. Sinkron dua arah Google Calendar ditunda (OAuth).
+- Jebakan: nama tipe `Event` bentrok dengan DOM, karena itu koleksi memakai
+  `typescript.interface: "HubEvent"`. String tanggal untuk komponen klien
+  dihitung di server (`EventInfoCard` menerima `when`) supaya hidrasi tidak
+  beda ICU antara Node dan browser.
+
+## Sidebar: daftar menu harus muat tanpa scroll internal (2026-09-20)
+
+Danish melihat ikon sidebar "naik sedikit" saat halaman di-scroll sampai
+bawah. Sebabnya: `nav` sidebar `overflow-y-auto`, dan di layar 962px
+daftar menunya beberapa piksel lebih tinggi dari ruangnya, jadi roda mouse
+menggeser daftar itu dulu sejauh kelebihannya sebelum halaman. Perbaikan:
+jarak dirapatkan (`py-2` nav, `mb-3 last:mb-0` per grup, `py-1.5` per
+item) supaya 13 item plus 7 judul grup muat di jendela 800px ke atas.
+Kalau menu bertambah lagi, ukur `nav.scrollHeight - nav.clientHeight` di
+tinggi 900 dan 962; kelebihan kecil (di bawah 40px) terasa seperti bug,
+lebih baik rapatkan lagi atau pindahkan grup "Segera" ke halaman Alat.
+Lalu Danish melihat logo Zynergy ikut naik turun saat scroll mentok bawah,
+padahal di browser uji (ukuran jendela yang sama, 1854x962) sidebar
+`sticky top-0 h-screen` diam di tempat. Gejala itu khas sticky yang
+kontainernya lebih pendek dari dokumen (ekstensi Chrome menambah elemen di
+body, atau 100vh tidak sama dengan tinggi viewport). Supaya kebal apa pun
+penyebabnya, sidebar desktop jadi `fixed inset-y-0 left-0 w-64` dan kolom
+konten di `(hub)/layout.tsx` diberi `md:pl-64`. Elemen fixed tidak pernah
+bergeser. Diuji dengan menambah 300px ke body lalu scroll mentok: sidebar
+tetap di 0.
+Setelah itu Danish masih melihat ikon Klien, Outreach, Arus Kas "naik"
+sedangkan Pesanan dan Proyek tidak. Pengukuran: semua kotak ikon dan teks
+berpusat di garis yang sama (16px dari atas tautan); ini efek optik huruf
+kecil yang massanya di bawah pusat baris. Perbaikan: `translate-y-px` pada
+ikon sidebar dan lembar "Lainnya", satu piksel ke bawah, praktik umum
+untuk ikon di samping teks campuran.
+
+## Bilah bawah HP: empat tab utama plus "Lainnya" (2026-09-20)
+
+Danish menemukan grup Situs tidak ada di HP: bilah bawah dulu daftar tetap
+enam tab, terpisah dari sidebar, dan tidak punya menu "lainnya", jadi Web,
+SEO, Brankas, Alat, dan Tim tidak bisa dibuka dari HP. Sekarang
+`mobileNav(role, units)` di `nav.ts` mengambil empat kandidat pertama yang
+boleh dilihat orang itu (`mobileTabCandidates`: Ringkasan, Arus Kas, Klien,
+Pesanan untuk Supply, Proyek untuk Digital/Apps, Outreach) lalu tab
+"Lainnya" membuka lembar bawah (`MobileTabs.tsx`) berisi SEMUA item
+`navSections` yang belum tampil, dengan grup yang sama seperti sidebar,
+ditambah Profil dan Keluar. Menu baru di sidebar otomatis muncul di
+"Lainnya"; jangan pernah menambah item hanya ke satu daftar. Lembar
+ditutup saat pindah halaman (state menyimpan path saat dibuka, tanpa
+setState di effect) dan dengan Escape. Untuk mengubah empat tab utama,
+ubah urutan `mobileTabCandidates` atau `MOBILE_TAB_COUNT`.
+
 ## Layar HP: tabel tidak boleh melebarkan halaman (2026-09-17)
 
 - Gejala di prod (Chrome DevTools iPhone 16 Pro Max, 440px): header dan kartu
@@ -796,7 +1061,9 @@ sampai sengaja ditambahkan ke `edits()`.
 - Tiga unit: `digital`, `apps`, `supply` (field `unit` di Clients,
   Prospects, Orders, Projects, Documents, Transactions, Receipts). Design
   berada di dalam Digital untuk urusan uang.
-- Peran = tingkat akses, unit = ruang lingkup, jabatan = label saja.
+- (Diperbarui malam 2026-09-20, lihat bagian "Peran jadi empat": finance
+  dan staff digabung jadi `pengelola`, hak per peran diatur di halaman Hak
+  akses.) Peran = tingkat akses, unit = ruang lingkup, jabatan = ruang kerja.
   - `admin`: semua unit, mengubah apa pun, kelola tim, SEO.
   - `finance`: mengubah klien, outreach, pesanan, proyek, arus kas, brankas
     hanya di unit yang ditugaskan.
@@ -840,6 +1107,17 @@ sampai sengaja ditambahkan ke `edits()`.
 - Berkas dipisah dua koleksi: `receipts` (bukti transfer, akses uang) dan
   `documents` (PDF PO, invoice, surat jalan; dibaca semua peran di unitnya,
   ditulis editor). Keduanya ke Vercel Blob di prod.
+- Bentuk klien (`clients.kind`, 2026-09-20): `usaha` (UMKM, PT, CV) atau
+  `perorangan` (freelancer, profesional, personal brand; klien RULA masuk
+  sini). Perorangan: label "Nama", tanpa Pemilik/PIC dan Jenis usaha (server
+  menyimpan null), data resmi Supply hanya NPWP dan alamat penagihan, dan
+  brief klien otomatis gaya ringkas (businessType kosong) dengan tanda tangan
+  atas nama klien sendiri. Form klien kini dua blok: inti (unit, bentuk,
+  nama, PIC, WhatsApp, email, kota) dan `<details>` "Lengkapi data lain"
+  (status, jenis usaha, website, data resmi atau paket, catatan) yang
+  tertutup saat klien baru dan terbuka saat edit. Migrasi `client_kind`
+  (default usaha untuk baris lama). Kode yang membuat klien (seed, konversi
+  outreach) wajib mengisi `kind`.
 - Klien: satu unit per klien. Klien Supply punya grup `supply` (nama badan
   hukum, NPWP, nomor vendor, termin, alamat penagihan) dan WhatsApp opsional;
   form klien menampilkan bagian itu saat unit = supply dan menyembunyikan

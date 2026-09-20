@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { canEdit, getSessionUser } from "@/lib/session";
+import { canEditClients, getSessionUser } from "@/lib/session";
 import { first, type Search } from "@/lib/search";
 import { units, type Unit } from "@/lib/options";
 import { PageHeader } from "@/components/hub/PageHeader";
@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Klien baru" };
 export default async function KlienBaruPage({ searchParams }: { searchParams: Promise<Search> }) {
   const user = await getSessionUser();
   if (!user) redirect("/login");
-  if (!canEdit(user)) redirect("/clients");
+  if (!canEditClients(user)) redirect("/clients");
   const sp = await searchParams;
   const wanted = first(sp.unit) as Unit | undefined;
   const defaultUnit = wanted && user.units.includes(wanted) && units.some((u) => u.value === wanted) ? wanted : undefined;

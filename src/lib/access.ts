@@ -1,85 +1,99 @@
 import { APIError } from "payload";
-import type { Access, CollectionBeforeChangeHook, FieldAccess } from "payload";
-import { editorRoles, moneyRoles, units, type Role, type Unit } from "@/lib/options";
+import type { Access, CollectionBeforeChangeHook, FieldAccess, PayloadRequest } from "payload";
+import { units, type Capability, type Role, type Unit } from "@/lib/options";
+import { can, fromGlobal, grantsStale, setGrants, type Grantee } from "@/lib/grants-cache";
 
 export type { Role };
 
 /**
- * One access model for the whole Hub, in three questions:
- *
- *   who may CHANGE data?   `editorRoles` in options.ts (admin, finance, staff)
- *   who may SEE money?     `moneyRoles` in options.ts
- *   which UNITS?           admin and viewer every unit, everyone else their `users.units`
- *
- * member (Anggota) and viewer (Pengawas) never write anything. Writes are an
- * allow-list of roles, so a new role is read-only until it is added on purpose.
+ * One access model for the whole Hub. A person has a role (their job) and
+ * maybe the admin flag. Each role is granted capabilities on the Hak akses
+ * page (`permissions` global, cached in `grants-cache.ts`); admins have all
+ * of them and are the only ones who manage the team and the grants. Unit
+ * scoping applies to everyone without "allUnits".
  */
 
-interface SessionLike {
+interface SessionLike extends Grantee {
   id?: number | string;
-  role?: Role;
   units?: Unit[] | null;
 }
 
 const asUser = (u: unknown) => (u ?? null) as SessionLike | null;
 export const allUnits: Unit[] = units.map((u) => u.value);
 
-export const edits = (role?: Role) => Boolean(role && editorRoles.includes(role));
-export const seesMoney = (role?: Role) => Boolean(role && moneyRoles.includes(role));
-const seesAllUnits = (role?: Role) => role === "admin" || role === "viewer";
+export const has = (who: SessionLike | null | undefined, cap: Capability) => can(who, cap);
+const seesAllUnits = (who: SessionLike | null) => can(who, "allUnits");
 
-/** Units a person may see, expanded for the roles that see everything. */
+/** Units a person may see, expanded for those who see everything. */
 export function unitsOf(user: unknown): Unit[] {
   const u = asUser(user);
   if (!u?.role) return [];
-  if (seesAllUnits(u.role)) return allUnits;
+  if (seesAllUnits(u)) return allUnits;
   return (u.units ?? []).filter((x): x is Unit => allUnits.includes(x as Unit));
 }
 
+/** REST requests refresh the grants cache themselves; pages do it in getSessionUser. */
+async function fresh(req: PayloadRequest) {
+  if (!grantsStale()) return;
+  try {
+    setGrants(fromGlobal(await req.payload.findGlobal({ slug: "permissions", depth: 0 })));
+  } catch (error) {
+    console.error("grants refresh failed:", error);
+  }
+}
+
 export const isLoggedIn: Access = ({ req }) => Boolean(req.user);
-export const isAdmin: Access = ({ req }) => asUser(req.user)?.role === "admin";
-export const isEditor: Access = ({ req }) => edits(asUser(req.user)?.role);
+export const isAdmin: Access = ({ req }) => Boolean(asUser(req.user)?.isAdmin);
+export const adminField: FieldAccess = ({ req }) => Boolean(asUser(req.user)?.isAdmin);
 
-/** Read a unit-scoped collection: everyone logged in, within their units. */
-export const unitRead: Access = ({ req }) => {
-  const u = asUser(req.user);
-  if (!u?.role) return false;
-  return seesAllUnits(u.role) || { unit: { in: unitsOf(u) } };
-};
-
-/** Change a unit-scoped collection: editor roles only, within their units (admin everywhere). */
-export const unitWrite: Access = ({ req }) => {
-  const u = asUser(req.user);
-  if (!edits(u?.role)) return false;
-  return u?.role === "admin" || { unit: { in: unitsOf(u) } };
-};
-
-/** Read money: like unitRead, minus member. */
-export const moneyRead: Access = ({ req }) => {
-  const u = asUser(req.user);
-  if (!seesMoney(u?.role)) return false;
-  return seesAllUnits(u?.role) || { unit: { in: unitsOf(u) } };
-};
-
-/**
- * Vault: everyone may read and download, except documents marked
- * confidential, which only editor roles see. Uploading and deleting: editors.
- */
-export const vaultRead: Access = ({ req }) => {
-  const u = asUser(req.user);
-  if (!u?.role) return false;
-  return edits(u.role) || { confidential: { not_equals: true } };
-};
-
-export const hasRoleField =
-  (...allowed: Role[]): FieldAccess =>
-  ({ req }) => {
-    const role = asUser(req.user)?.role;
-    return Boolean(role && allowed.includes(role));
+/** Anyone with the capability may create; unit is checked by `enforceUnit`. */
+export const createWith =
+  (...caps: Capability[]): Access =>
+  async ({ req }) => {
+    await fresh(req);
+    const u = asUser(req.user);
+    return caps.some((c) => has(u, c));
   };
 
-/** Field-level rule for prices and billing: roles outside `moneyRoles` still read the rest of the record. */
-export const moneyFieldRead: FieldAccess = ({ req }) => seesMoney(asUser(req.user)?.role);
+/** Read a unit-scoped collection: everyone logged in, within their units. */
+export const unitRead: Access = async ({ req }) => {
+  await fresh(req);
+  const u = asUser(req.user);
+  if (!u?.role) return false;
+  return seesAllUnits(u) || { unit: { in: unitsOf(u) } };
+};
+
+/** Change a unit-scoped collection with the given capability, within one's units (admin everywhere). */
+export const writeWith =
+  (...caps: Capability[]): Access =>
+  async ({ req }) => {
+    await fresh(req);
+    const u = asUser(req.user);
+    if (!caps.some((c) => has(u, c))) return false;
+    return Boolean(u?.isAdmin) || { unit: { in: unitsOf(u) } };
+  };
+
+/** Read money: like unitRead, for people who see money. */
+export const moneyRead: Access = async ({ req }) => {
+  await fresh(req);
+  const u = asUser(req.user);
+  if (!has(u, "viewMoney")) return false;
+  return seesAllUnits(u) || { unit: { in: unitsOf(u) } };
+};
+
+/** Vault: everyone may read and download, except confidential documents, which need editVault. */
+export const vaultRead: Access = async ({ req }) => {
+  await fresh(req);
+  const u = asUser(req.user);
+  if (!u?.role) return false;
+  return has(u, "editVault") || { confidential: { not_equals: true } };
+};
+
+/** Field-level rule for prices and billing: people without viewMoney still read the rest of the record. */
+export const moneyFieldRead: FieldAccess = async ({ req }) => {
+  await fresh(req);
+  return has(asUser(req.user), "viewMoney");
+};
 
 /**
  * REST safety net: a non-admin may only write documents in their own units.
@@ -87,7 +101,7 @@ export const moneyFieldRead: FieldAccess = ({ req }) => seesMoney(asUser(req.use
  */
 export const enforceUnit: CollectionBeforeChangeHook = ({ data, req }) => {
   const u = asUser(req.user);
-  if (!u?.role || u.role === "admin") return data;
+  if (!u?.role || u.isAdmin) return data;
   const unit = data?.unit as Unit | undefined;
   if (unit && !unitsOf(u).includes(unit)) {
     throw new APIError("Tidak punya akses ke unit ini.", 403);
@@ -95,5 +109,5 @@ export const enforceUnit: CollectionBeforeChangeHook = ({ data, req }) => {
   return data;
 };
 
-/** Server actions: may this person change something in this unit? */
-export const canWriteUnit = (user: SessionLike | null, unit: Unit) => edits(user?.role) && unitsOf(user).includes(unit);
+/** Server actions: may this person change this kind of data in this unit? */
+export const canWriteUnit = (user: SessionLike | null, unit: Unit, cap: Capability) => has(user, cap) && unitsOf(user).includes(unit);

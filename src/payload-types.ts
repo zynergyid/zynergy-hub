@@ -78,6 +78,8 @@ export interface Config {
     'vault-files': VaultFile;
     'ai-usage': AiUsage;
     'seo-audits': SeoAudit;
+    events: HubEvent;
+    'event-photos': EventPhoto;
     users: User;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -97,6 +99,8 @@ export interface Config {
     'vault-files': VaultFilesSelect<false> | VaultFilesSelect<true>;
     'ai-usage': AiUsageSelect<false> | AiUsageSelect<true>;
     'seo-audits': SeoAuditsSelect<false> | SeoAuditsSelect<true>;
+    events: EventsSelect<false> | EventsSelect<true>;
+    'event-photos': EventPhotosSelect<false> | EventPhotosSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -107,8 +111,12 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    permissions: Permission;
+  };
+  globalsSelect: {
+    permissions: PermissionsSelect<false> | PermissionsSelect<true>;
+  };
   locale: null;
   widgets: {
     collections: CollectionsWidget;
@@ -144,6 +152,7 @@ export interface UserAuthOperations {
 export interface Client {
   id: number;
   unit: 'digital' | 'apps' | 'supply';
+  kind: 'usaha' | 'perorangan';
   name: string;
   owner?: string | null;
   whatsapp?: string | null;
@@ -317,14 +326,16 @@ export interface Project {
 export interface User {
   id: number;
   name: string;
-  role: 'admin' | 'finance' | 'staff' | 'member' | 'viewer';
+  role: 'Lead' | 'Developer' | 'Designer' | 'Marketing' | 'Business' | 'Staff' | 'Finance' | 'Commissioner' | 'Other';
   /**
-   * Ruang lingkup finance, staf, dan anggota. Admin dan pengawas otomatis semua unit.
+   * Semua hak, kelola tim dan hak akses.
+   */
+  isAdmin?: boolean | null;
+  /**
+   * Ruang lingkup untuk peran tanpa hak Melihat semua unit.
    */
   units?: ('digital' | 'apps' | 'supply')[] | null;
-  title?:
-    | ('Lead' | 'Developer' | 'Designer' | 'Marketing' | 'Business' | 'Staf' | 'Finance' | 'Komisaris' | 'Lainnya')
-    | null;
+  calendarToken?: string | null;
   updatedAt: string;
   createdAt: string;
   enableAPIKey?: boolean | null;
@@ -562,6 +573,62 @@ export interface SeoAudit {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events".
+ */
+export interface HubEvent {
+  id: number;
+  title: string;
+  kind: 'rapat-tim' | 'meeting-klien' | 'konten' | 'lainnya';
+  startAt: string;
+  endAt?: string | null;
+  location?: string | null;
+  participants?: (number | User)[] | null;
+  client?: (number | null) | Client;
+  project?: (number | null) | Project;
+  prospect?: (number | null) | Prospect;
+  content?: {
+    platform?: ('instagram' | 'facebook' | 'tiktok' | 'linkedin' | 'website') | null;
+    status?: ('ide' | 'draf' | 'siap' | 'tayang') | null;
+    designUrl?: string | null;
+    postUrl?: string | null;
+  };
+  photo?: (number | null) | EventPhoto;
+  agenda?: string | null;
+  notes?: string | null;
+  followUps?:
+    | {
+        text: string;
+        owner?: (number | null) | User;
+        dueAt?: string | null;
+        doneAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  projectLogId?: string | null;
+  createdBy?: (number | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "event-photos".
+ */
+export interface EventPhoto {
+  id: number;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -629,6 +696,14 @@ export interface PayloadLockedDocument {
         value: number | SeoAudit;
       } | null)
     | ({
+        relationTo: 'events';
+        value: number | HubEvent;
+      } | null)
+    | ({
+        relationTo: 'event-photos';
+        value: number | EventPhoto;
+      } | null)
+    | ({
         relationTo: 'users';
         value: number | User;
       } | null);
@@ -680,6 +755,7 @@ export interface PayloadMigration {
  */
 export interface ClientsSelect<T extends boolean = true> {
   unit?: T;
+  kind?: T;
   name?: T;
   owner?: T;
   whatsapp?: T;
@@ -999,13 +1075,70 @@ export interface SeoAuditsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events_select".
+ */
+export interface EventsSelect<T extends boolean = true> {
+  title?: T;
+  kind?: T;
+  startAt?: T;
+  endAt?: T;
+  location?: T;
+  participants?: T;
+  client?: T;
+  project?: T;
+  prospect?: T;
+  content?:
+    | T
+    | {
+        platform?: T;
+        status?: T;
+        designUrl?: T;
+        postUrl?: T;
+      };
+  photo?: T;
+  agenda?: T;
+  notes?: T;
+  followUps?:
+    | T
+    | {
+        text?: T;
+        owner?: T;
+        dueAt?: T;
+        doneAt?: T;
+        id?: T;
+      };
+  projectLogId?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "event-photos_select".
+ */
+export interface EventPhotosSelect<T extends boolean = true> {
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
   role?: T;
+  isAdmin?: T;
   units?: T;
-  title?: T;
+  calendarToken?: T;
   updatedAt?: T;
   createdAt?: T;
   enableAPIKey?: T;
@@ -1065,6 +1198,240 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "permissions".
+ */
+export interface Permission {
+  id: number;
+  Lead?: {
+    viewMoney?: boolean | null;
+    editMoney?: boolean | null;
+    editClients?: boolean | null;
+    editOrders?: boolean | null;
+    editProjects?: boolean | null;
+    editVault?: boolean | null;
+    team?: boolean | null;
+    allUnits?: boolean | null;
+    seo?: boolean | null;
+  };
+  Developer?: {
+    viewMoney?: boolean | null;
+    editMoney?: boolean | null;
+    editClients?: boolean | null;
+    editOrders?: boolean | null;
+    editProjects?: boolean | null;
+    editVault?: boolean | null;
+    team?: boolean | null;
+    allUnits?: boolean | null;
+    seo?: boolean | null;
+  };
+  Designer?: {
+    viewMoney?: boolean | null;
+    editMoney?: boolean | null;
+    editClients?: boolean | null;
+    editOrders?: boolean | null;
+    editProjects?: boolean | null;
+    editVault?: boolean | null;
+    team?: boolean | null;
+    allUnits?: boolean | null;
+    seo?: boolean | null;
+  };
+  Marketing?: {
+    viewMoney?: boolean | null;
+    editMoney?: boolean | null;
+    editClients?: boolean | null;
+    editOrders?: boolean | null;
+    editProjects?: boolean | null;
+    editVault?: boolean | null;
+    team?: boolean | null;
+    allUnits?: boolean | null;
+    seo?: boolean | null;
+  };
+  Business?: {
+    viewMoney?: boolean | null;
+    editMoney?: boolean | null;
+    editClients?: boolean | null;
+    editOrders?: boolean | null;
+    editProjects?: boolean | null;
+    editVault?: boolean | null;
+    team?: boolean | null;
+    allUnits?: boolean | null;
+    seo?: boolean | null;
+  };
+  Staff?: {
+    viewMoney?: boolean | null;
+    editMoney?: boolean | null;
+    editClients?: boolean | null;
+    editOrders?: boolean | null;
+    editProjects?: boolean | null;
+    editVault?: boolean | null;
+    team?: boolean | null;
+    allUnits?: boolean | null;
+    seo?: boolean | null;
+  };
+  Finance?: {
+    viewMoney?: boolean | null;
+    editMoney?: boolean | null;
+    editClients?: boolean | null;
+    editOrders?: boolean | null;
+    editProjects?: boolean | null;
+    editVault?: boolean | null;
+    team?: boolean | null;
+    allUnits?: boolean | null;
+    seo?: boolean | null;
+  };
+  Commissioner?: {
+    viewMoney?: boolean | null;
+    editMoney?: boolean | null;
+    editClients?: boolean | null;
+    editOrders?: boolean | null;
+    editProjects?: boolean | null;
+    editVault?: boolean | null;
+    team?: boolean | null;
+    allUnits?: boolean | null;
+    seo?: boolean | null;
+  };
+  Other?: {
+    viewMoney?: boolean | null;
+    editMoney?: boolean | null;
+    editClients?: boolean | null;
+    editOrders?: boolean | null;
+    editProjects?: boolean | null;
+    editVault?: boolean | null;
+    team?: boolean | null;
+    allUnits?: boolean | null;
+    seo?: boolean | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "permissions_select".
+ */
+export interface PermissionsSelect<T extends boolean = true> {
+  Lead?:
+    | T
+    | {
+        viewMoney?: T;
+        editMoney?: T;
+        editClients?: T;
+        editOrders?: T;
+        editProjects?: T;
+        editVault?: T;
+        team?: T;
+        allUnits?: T;
+        seo?: T;
+      };
+  Developer?:
+    | T
+    | {
+        viewMoney?: T;
+        editMoney?: T;
+        editClients?: T;
+        editOrders?: T;
+        editProjects?: T;
+        editVault?: T;
+        team?: T;
+        allUnits?: T;
+        seo?: T;
+      };
+  Designer?:
+    | T
+    | {
+        viewMoney?: T;
+        editMoney?: T;
+        editClients?: T;
+        editOrders?: T;
+        editProjects?: T;
+        editVault?: T;
+        team?: T;
+        allUnits?: T;
+        seo?: T;
+      };
+  Marketing?:
+    | T
+    | {
+        viewMoney?: T;
+        editMoney?: T;
+        editClients?: T;
+        editOrders?: T;
+        editProjects?: T;
+        editVault?: T;
+        team?: T;
+        allUnits?: T;
+        seo?: T;
+      };
+  Business?:
+    | T
+    | {
+        viewMoney?: T;
+        editMoney?: T;
+        editClients?: T;
+        editOrders?: T;
+        editProjects?: T;
+        editVault?: T;
+        team?: T;
+        allUnits?: T;
+        seo?: T;
+      };
+  Staff?:
+    | T
+    | {
+        viewMoney?: T;
+        editMoney?: T;
+        editClients?: T;
+        editOrders?: T;
+        editProjects?: T;
+        editVault?: T;
+        team?: T;
+        allUnits?: T;
+        seo?: T;
+      };
+  Finance?:
+    | T
+    | {
+        viewMoney?: T;
+        editMoney?: T;
+        editClients?: T;
+        editOrders?: T;
+        editProjects?: T;
+        editVault?: T;
+        team?: T;
+        allUnits?: T;
+        seo?: T;
+      };
+  Commissioner?:
+    | T
+    | {
+        viewMoney?: T;
+        editMoney?: T;
+        editClients?: T;
+        editOrders?: T;
+        editProjects?: T;
+        editVault?: T;
+        team?: T;
+        allUnits?: T;
+        seo?: T;
+      };
+  Other?:
+    | T
+    | {
+        viewMoney?: T;
+        editMoney?: T;
+        editClients?: T;
+        editOrders?: T;
+        editProjects?: T;
+        editVault?: T;
+        team?: T;
+        allUnits?: T;
+        seo?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import type { SeoAudit } from "@/payload-types";
-import { getSessionUser } from "@/lib/session";
+import { canEditSeo, getSessionUser } from "@/lib/session";
 import { getSiteSeo, getPublishedPosts, siteCmsConfigured, siteUrl } from "@/lib/site-cms";
 import { siteSeoPages, type SeoPair } from "@/lib/site-seo";
 import { checksOf, getSeoAudits, getSiteChecks } from "@/lib/seo-audit";
@@ -107,7 +107,7 @@ function AuditRow({ label, audit }: { label: string; audit: SeoAudit }) {
 export default async function SeoPage() {
   const user = await getSessionUser();
   if (!user) redirect("/login");
-  const admin = user.role === "admin";
+  const admin = canEditSeo(user);
   const configured = siteCmsConfigured();
   const [audits, siteChecks, seo, posts, search] = await Promise.all([
     getSeoAudits(),

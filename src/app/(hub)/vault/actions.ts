@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getPayloadClient } from "@/lib/payload";
-import { canEdit, getSessionUser } from "@/lib/session";
+import { canEditVault, getSessionUser } from "@/lib/session";
 import { dateOrNull, pick, text } from "@/lib/form-data";
 import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MESSAGE, uploadFile } from "@/lib/uploads";
 import { vaultCategories } from "@/lib/options";
@@ -25,7 +25,7 @@ function revalidateVault(id?: number) {
 export async function saveVaultDocument(_prev: VaultFormState, formData: FormData): Promise<VaultFormState> {
   const user = await getSessionUser();
   if (!user) return err("Sesi habis, login lagi.");
-  if (!canEdit(user)) return err("Hanya admin, finance, dan staf yang bisa mengelola brankas.");
+  if (!canEditVault(user)) return err("Hanya admin, finance, dan staf yang bisa mengelola brankas.");
   const id = Number(formData.get("id") || 0) || null;
   const title = text(formData, "title");
   if (!title) return err("Nama dokumen wajib diisi.");
@@ -86,7 +86,7 @@ export async function saveVaultDocument(_prev: VaultFormState, formData: FormDat
 
 export async function deleteVaultDocument(formData: FormData) {
   const user = await getSessionUser();
-  if (!user || !canEdit(user)) return;
+  if (!user || !canEditVault(user)) return;
   const id = Number(formData.get("id") || 0);
   if (!id) return;
   const payload = await getPayloadClient();

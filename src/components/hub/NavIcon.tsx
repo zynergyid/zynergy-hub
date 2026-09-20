@@ -2,6 +2,7 @@ import {
   ArrowLeftRight,
   BadgeCheck,
   BellRing,
+  CalendarDays,
   ChartNoAxesColumn,
   ClipboardList,
   FileSearch,
@@ -9,6 +10,7 @@ import {
   FolderLock,
   Inbox,
   LayoutDashboard,
+  Menu,
   MessageSquareText,
   Search,
   Send,
@@ -37,6 +39,8 @@ const icons: Record<IconName, LucideIcon> = {
   vault: FolderLock,
   inbox: Inbox,
   team: Users,
+  more: Menu,
+  calendar: CalendarDays,
 };
 
 export function NavIcon({ name, className }: { name: IconName; className?: string }) {

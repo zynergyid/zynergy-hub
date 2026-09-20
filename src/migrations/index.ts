@@ -17,6 +17,13 @@ import * as migration_20260919_084628_project_document_presentasi from './202609
 import * as migration_20260919_093512_project_brief_references from './20260919_093512_project_brief_references';
 import * as migration_20260919_120410_project_log_pertemuan from './20260919_120410_project_log_pertemuan';
 import * as migration_20260919_183753_seo_audits from './20260919_183753_seo_audits';
+import * as migration_20260920_132345_client_kind from './20260920_132345_client_kind';
+import * as migration_20260920_141530_events from './20260920_141530_events';
+import * as migration_20260920_142918_content_posts_and_calendar_token from './20260920_142918_content_posts_and_calendar_token';
+import * as migration_20260920_160217_roles_and_permissions from './20260920_160217_roles_and_permissions';
+import * as migration_20260920_161619_job_titles_english from './20260920_161619_job_titles_english';
+import * as migration_20260920_163027_roles_are_jobs from './20260920_163027_roles_are_jobs';
+import * as migration_20260920_173034_event_photos from './20260920_173034_event_photos';
 
 export const migrations = [
   {
@@ -112,6 +119,41 @@ export const migrations = [
   {
     up: migration_20260919_183753_seo_audits.up,
     down: migration_20260919_183753_seo_audits.down,
-    name: '20260919_183753_seo_audits'
+    name: '20260919_183753_seo_audits',
+  },
+  {
+    up: migration_20260920_132345_client_kind.up,
+    down: migration_20260920_132345_client_kind.down,
+    name: '20260920_132345_client_kind',
+  },
+  {
+    up: migration_20260920_141530_events.up,
+    down: migration_20260920_141530_events.down,
+    name: '20260920_141530_events',
+  },
+  {
+    up: migration_20260920_142918_content_posts_and_calendar_token.up,
+    down: migration_20260920_142918_content_posts_and_calendar_token.down,
+    name: '20260920_142918_content_posts_and_calendar_token',
+  },
+  {
+    up: migration_20260920_160217_roles_and_permissions.up,
+    down: migration_20260920_160217_roles_and_permissions.down,
+    name: '20260920_160217_roles_and_permissions',
+  },
+  {
+    up: migration_20260920_161619_job_titles_english.up,
+    down: migration_20260920_161619_job_titles_english.down,
+    name: '20260920_161619_job_titles_english',
+  },
+  {
+    up: migration_20260920_163027_roles_are_jobs.up,
+    down: migration_20260920_163027_roles_are_jobs.down,
+    name: '20260920_163027_roles_are_jobs',
+  },
+  {
+    up: migration_20260920_173034_event_photos.up,
+    down: migration_20260920_173034_event_photos.down,
+    name: '20260920_173034_event_photos'
   },
 ];
