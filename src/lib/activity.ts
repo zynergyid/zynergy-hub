@@ -5,7 +5,9 @@ import type { SessionUser } from "@/lib/session";
 import type { AuditAction, AuditChange } from "@/lib/audit";
 
 /** Reading the audit trail: labels, links, and the same visibility rule the REST access uses. */
-export const actionVerb: Record<AuditAction, string> = { create: "membuat", update: "mengubah", delete: "menghapus", login: "masuk ke Hub", export: "mengunduh" };
+export const actionVerb: Record<AuditAction, string> = { create: "membuat", update: "mengubah", delete: "menghapus", login: "masuk ke Hub", export: "mengunduh",
+  view: "melihat",
+};
 
 export const sectionLabel: Record<string, string> = {
   clients: "Klien",

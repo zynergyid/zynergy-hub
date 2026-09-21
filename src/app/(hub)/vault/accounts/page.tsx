@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ExternalLink, Plus } from "lucide-react";
+import { ExternalLink, KeyRound, Plus } from "lucide-react";
+import { PlatformTile } from "@/components/hub/PlatformIcon";
 import { getPayloadClient } from "@/lib/payload";
 import { canEditVault, getSessionUser } from "@/lib/session";
 import { accountPlatformLabel, accountStatusLabel } from "@/lib/options";
@@ -26,7 +27,7 @@ export default async function AccountsPage() {
   const pending = docs.filter((a) => a.status === "belum").length;
   return (
     <div className="space-y-5">
-      <PageHeader title="Akun digital" subtitle={`${docs.length} akun tercatat${pending ? `, ${pending} belum dibuat` : ""}. Siapa pemegangnya dan cara masuk kembali; password tetap di pengelola password.`}>
+      <PageHeader title="Akun digital" subtitle={`${docs.length} akun tercatat${pending ? `, ${pending} belum dibuat` : ""}. Siapa pemegangnya, cara masuk kembali, dan password-nya bila tim menyimpannya di sini.`}>
         <VaultTabs active="accounts" />
         {editable && (
           <Link href="/vault/accounts/new" className={buttonPrimary}>
@@ -43,6 +44,7 @@ export default async function AccountsPage() {
             const holder = typeof a.holder === "object" && a.holder ? a.holder.name : null;
             return (
               <li key={a.id} className="flex items-center gap-3 px-4 py-3">
+                <PlatformTile platform={a.platform} />
                 <div className="min-w-0 flex-1">
                   <Link href={`/vault/accounts/${a.id}`} className="block truncate text-sm font-semibold hover:text-primary">
                     {accountPlatformLabel.get(a.platform)} · {a.name}
@@ -51,6 +53,12 @@ export default async function AccountsPage() {
                     {[holder ? `pemegang ${holder}` : "belum ada pemegang", a.loginEmail, a.twoFactor ? `2FA: ${a.twoFactor}` : null].filter(Boolean).join(" · ")}
                   </p>
                 </div>
+                {a.passwordEnc && (
+                  <span className="hidden items-center gap-1 text-[11px] font-semibold text-muted sm:inline-flex" title={a.visibility === "rahasia" ? "Password: hanya admin dan pemegang" : "Password: semua anggota tim"}>
+                    <KeyRound className="size-3.5" />
+                    {a.visibility === "rahasia" ? "rahasia" : "tim"}
+                  </span>
+                )}
                 {a.url && (
                   <a href={a.url} target="_blank" rel="noopener noreferrer" aria-label="Buka" className="rounded-lg p-1.5 text-muted hover:bg-surface-soft hover:text-primary">
                     <ExternalLink className="size-4" />

@@ -14,7 +14,7 @@ import { units, type Unit } from "@/lib/options";
  * `next/headers`, cached per request. Outside a request (scripts, cron) the
  * actor is null and shows as "sistem".
  */
-export type AuditAction = "create" | "update" | "delete" | "login" | "export";
+export type AuditAction = "create" | "update" | "delete" | "login" | "export" | "view";
 export interface AuditChange {
   field: string;
   label: string;
@@ -25,7 +25,7 @@ export interface AuditChange {
 /** Fields never diffed or shown: secrets, counters, and timestamps the system moves on its own. */
 const IGNORED = new Set(["id", "createdAt", "updatedAt", "password", "salt", "hash", "loginAttempts", "lockUntil", "sessions", "resetPasswordToken", "resetPasswordExpiration", "apiKeyIndex", "lastLoginAt", "lastSeenAt", "projectLogId", "createdBy"]);
 /** Shown as changed, never with their value. */
-const SECRET = new Set(["apiKey", "calendarToken", "enableAPIKey"]);
+const SECRET = new Set(["apiKey", "calendarToken", "enableAPIKey", "passwordEnc"]);
 
 const idr = new Intl.NumberFormat("id-ID");
 const dateFmt = new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Jakarta" });

@@ -5,7 +5,10 @@ import { redirect } from "next/navigation";
 import { getPayloadClient } from "@/lib/payload";
 import { canEditVault, getSessionUser } from "@/lib/session";
 import { pick, text } from "@/lib/form-data";
-import { accountPlatforms, accountStatuses } from "@/lib/options";
+import { accountPlatforms, accountStatuses, accountVisibilities } from "@/lib/options";
+import { canRevealPassword } from "@/lib/accounts";
+import { logActivity } from "@/lib/audit";
+import { open, seal } from "@/lib/secret-box";
 
 export interface AccountFormState {
   status: "idle" | "success" | "error";
@@ -24,8 +27,13 @@ export async function saveAccount(_prev: AccountFormState, formData: FormData): 
   const url = text(formData, "url");
   if (!name) return err("Nama akun wajib diisi.");
   if (url && !/^https?:\/\/\S+$/.test(url)) return err("Tautan harus diawali https://.");
+  // The password is never trimmed or logged; empty means "leave as is", the checkbox clears it.
+  const password = String(formData.get("password") ?? "");
+  const clearPassword = text(formData, "clearPassword") === "1";
   const data = {
     platform: pick(accountPlatforms, text(formData, "platform")) ?? "lainnya",
+    visibility: pick(accountVisibilities, text(formData, "visibility")) ?? "tim",
+    ...(password.trim() ? { passwordEnc: seal(password) } : clearPassword ? { passwordEnc: null } : {}),
     status: pick(accountStatuses, text(formData, "status")) ?? "belum",
     name,
     url: url || null,
@@ -56,4 +64,24 @@ export async function deleteAccount(formData: FormData) {
   await payload.delete({ collection: "accounts", id });
   revalidatePath("/vault/accounts");
   redirect("/vault/accounts");
+}
+
+export type RevealResult = { status: "ok"; value: string } | { status: "error"; message: string };
+
+/** Decrypts a stored password for someone allowed to see it, and leaves a trace in Aktivitas. */
+export async function revealPassword(id: number): Promise<RevealResult> {
+  const user = await getSessionUser();
+  if (!user) return { status: "error", message: "Sesi habis, login lagi." };
+  const payload = await getPayloadClient();
+  const account = await payload.findByID({ collection: "accounts", id, depth: 0, disableErrors: true });
+  if (!account?.passwordEnc) return { status: "error", message: "Tidak ada password tersimpan." };
+  if (!canRevealPassword(user, account)) return { status: "error", message: "Hanya admin dan pemegang akun yang boleh melihat password ini." };
+  let value: string;
+  try {
+    value = open(account.passwordEnc);
+  } catch {
+    return { status: "error", message: "Password tidak bisa dibuka. Simpan ulang password-nya." };
+  }
+  await logActivity(payload, { action: "view", collection: "accounts", docId: id, title: account.name, summary: "melihat password", actor: { id: user.id, name: user.name } });
+  return { status: "ok", value };
 }

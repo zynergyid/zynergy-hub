@@ -5,6 +5,14 @@
 > "deploy", commit dan push biasa). Repo ini PUBLIK sejak 2026-09-19: jangan
 > tulis ekonomi klien, nomor legal, nama orang, atau kunci di sini.
 
+## Akun digital: ikon platform dan password terenkripsi (2026-09-21, belum di-deploy)
+
+Danish minta dua hal di Brankas > Akun digital: ikon per platform, dan tempat menyimpan password dengan pilihan rahasia atau dibagikan ke tim. Keputusan sebelumnya ("Hub bukan pengelola password") dicabut olehnya.
+
+- Ikon: `components/hub/PlatformIcon.tsx` (glyph merek yang sama dengan footer situs, plus ikon lucide untuk WhatsApp, Profil Google, email, domain, hosting), `PlatformTile` di daftar dan kop halaman akun.
+- Password: `accounts.passwordEnc` (AES-256-GCM lewat `lib/secret-box.ts`, kunci diturunkan dari PAYLOAD_SECRET, jadi tanpa env baru; field `access.read: false` sehingga tidak pernah keluar lewat REST) dan `accounts.visibility` = tim | rahasia (migrasi `accounts_password`). Halaman detail tidak mengirim ciphertext ke browser (`SafeAccount`). Aturan lihat di `lib/accounts.ts` `canRevealPassword`: tim = semua yang login; rahasia = Admin atau pemegang akun. Tombol "Tampilkan password" (`RevealSecret.tsx`) memanggil server action `revealPassword`, yang mencatat baris Aktivitas dengan tindakan baru `view` ("melihat password") lalu menyembunyikan lagi setelah 30 detik. Formulir: isi password hanya untuk mengganti, kotak centang untuk menghapus; audit hanya mencatat "tersembunyi" untuk field ini (SECRET di lib/audit.ts).
+- Batas jujur yang perlu diingat: siapa pun yang memegang PAYLOAD_SECRET dan akses database bisa membuka semuanya. Untuk akun paling kritis (domain, email admin) tetap lebih aman di pengelola password.
+
 ## Outreach: target bisa usaha atau perorangan (2026-09-21, belum di-deploy)
 
 Danish bertanya apakah target Outreach harus PT. Jawab: tidak pernah harus, kolom nama adalah teks bebas. Supaya kata-katanya cocok untuk target Digitalin (pemilik usaha kecil, dokter praktik), `prospects.kind` = usaha | perorangan (nilai sama dengan `clients.kind`, migrasi `prospect_kind`, default usaha). Formulir: pilihan "Bentuk target", label nama dan LinkedIn mengikuti, kolom Jabatan disembunyikan untuk perorangan, judul kontak "Cara menghubungi". Jenis ikut terbawa saat "Jadikan klien" (dan sebaliknya dari tombol Mulai outreach di halaman klien); klien perorangan tidak diberi PIC. Bug lama ikut ketemu: "Jadikan klien" untuk target Digitalin/Apps tanpa nomor WhatsApp dulu crash (validasi klien), sekarang berhenti dengan pesan `?butuh=whatsapp`; businessType dan blok supply hanya diisi untuk unit Supply. Skill /outreach punya bagian 1c: untuk perorangan dan usaha kecil, riset jejak publik (Profil Google, Instagram, ulasan) dan draf pesan WhatsApp pendek, bukan email perkenalan gaya Supply.

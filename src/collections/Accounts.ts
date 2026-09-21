@@ -1,13 +1,15 @@
 import type { CollectionConfig } from "payload";
 import { createWith, isLoggedIn } from "@/lib/access";
-import { accountPlatforms, accountStatuses } from "@/lib/options";
+import { accountPlatforms, accountStatuses, accountVisibilities } from "@/lib/options";
 import { auditHooks } from "@/lib/audit";
 
 /**
  * Registry of the company's digital accounts (social profiles, email,
  * domain, hosting): who holds them, which email and phone they are tied
- * to, how 2FA works, and where the password is kept. Never the password
- * itself; the Hub is not a password manager.
+ * to, how 2FA works, and (since 2026-09-21, at Danish's request) the
+ * password itself, encrypted at rest with lib/secret-box and shown only on
+ * request: to the whole team or, for "rahasia", to Admins and the holder.
+ * Every reveal is written to the activity log.
  */
 export const Accounts: CollectionConfig = {
   slug: "accounts",
@@ -43,9 +45,12 @@ export const Accounts: CollectionConfig = {
       type: "row",
       fields: [
         { name: "twoFactor", type: "text", label: "Verifikasi dua langkah", admin: { description: "Contoh: SMS ke HP kantor, Google Authenticator di HP Danish" } },
-        { name: "passwordWhere", type: "text", label: "Password disimpan di", admin: { description: "Contoh: Bitwarden tim, brankas fisik. Jangan tulis password-nya." } },
+        { name: "passwordWhere", type: "text", label: "Password juga disimpan di", admin: { description: "Contoh: Bitwarden tim, brankas fisik." } },
       ],
     },
+    { name: "visibility", type: "select", required: true, defaultValue: "tim", label: "Siapa boleh lihat password", options: [...accountVisibilities] },
+    /** AES-GCM ciphertext from lib/secret-box; never readable through the REST API. */
+    { name: "passwordEnc", type: "text", label: "Password (terenkripsi)", access: { read: () => false }, admin: { hidden: true } },
     { name: "notes", type: "textarea", label: "Catatan" },
   ],
 };

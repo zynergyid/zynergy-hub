@@ -32,6 +32,7 @@ export const Activity: CollectionConfig = {
         { label: "Menghapus", value: "delete" },
         { label: "Masuk", value: "login" },
         { label: "Mengunduh", value: "export" },
+        { label: "Melihat", value: "view" },
       ],
       index: true,
     },

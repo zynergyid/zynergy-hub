@@ -190,6 +190,11 @@ export const accountPlatforms = [
   { label: "Lainnya", value: "lainnya" },
 ] as const;
 export const accountPlatformLabel = new Map<string, string>(accountPlatforms.map((p) => [p.value, p.label]));
+export const accountVisibilities = [
+  { label: "Semua anggota tim", value: "tim" },
+  { label: "Hanya admin dan pemegang", value: "rahasia" },
+] as const;
+export const accountVisibilityLabel = new Map<string, string>(accountVisibilities.map((v) => [v.value, v.label]));
 export const accountStatuses = [
   { label: "Belum dibuat", value: "belum" },
   { label: "Aktif", value: "aktif" },

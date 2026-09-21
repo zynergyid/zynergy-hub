@@ -700,9 +700,11 @@ export interface Account {
    */
   twoFactor?: string | null;
   /**
-   * Contoh: Bitwarden tim, brankas fisik. Jangan tulis password-nya.
+   * Contoh: Bitwarden tim, brankas fisik.
    */
   passwordWhere?: string | null;
+  visibility: 'tim' | 'rahasia';
+  passwordEnc?: string | null;
   notes?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -718,7 +720,7 @@ export interface Activity {
    * Disimpan terpisah supaya tetap terbaca setelah akun dihapus.
    */
   actorName: string;
-  action: 'create' | 'update' | 'delete' | 'login' | 'export';
+  action: 'create' | 'update' | 'delete' | 'login' | 'export' | 'view';
   collection: string;
   docId?: number | null;
   title: string;
@@ -1265,6 +1267,8 @@ export interface AccountsSelect<T extends boolean = true> {
   phone?: T;
   twoFactor?: T;
   passwordWhere?: T;
+  visibility?: T;
+  passwordEnc?: T;
   notes?: T;
   updatedAt?: T;
   createdAt?: T;

@@ -32,6 +32,7 @@ import * as migration_20260921_100235_event_kind_fokus from './20260921_100235_e
 import * as migration_20260921_101122_perintis from './20260921_101122_perintis';
 import * as migration_20260921_102953_event_kind_mentoring from './20260921_102953_event_kind_mentoring';
 import * as migration_20260921_111635_prospect_kind from './20260921_111635_prospect_kind';
+import * as migration_20260921_113339_accounts_password from './20260921_113339_accounts_password';
 
 export const migrations = [
   {
@@ -202,6 +203,11 @@ export const migrations = [
   {
     up: migration_20260921_111635_prospect_kind.up,
     down: migration_20260921_111635_prospect_kind.down,
-    name: '20260921_111635_prospect_kind'
+    name: '20260921_111635_prospect_kind',
+  },
+  {
+    up: migration_20260921_113339_accounts_password.up,
+    down: migration_20260921_113339_accounts_password.down,
+    name: '20260921_113339_accounts_password'
   },
 ];
