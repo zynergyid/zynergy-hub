@@ -1,6 +1,7 @@
 import type { CollectionConfig } from "payload";
 import { adminField, isAdmin, isLoggedIn } from "@/lib/access";
 import { roles, units } from "@/lib/options";
+import { auditHooks } from "@/lib/audit";
 import { SESSION_MAX_AGE_SECONDS } from "@/lib/auth-cookie";
 
 /** Team accounts. Role = the job (grants come from Hak akses), isAdmin = everything plus team management, units = scope. */
@@ -15,6 +16,7 @@ export const Users: CollectionConfig = {
     useAPIKey: true,
   },
   admin: { useAsTitle: "name" },
+  hooks: auditHooks({ title: (d) => String(d.name ?? d.email) }),
   access: {
     read: isLoggedIn,
     create: isAdmin,
@@ -54,6 +56,16 @@ export const Users: CollectionConfig = {
       access: { update: adminField },
       admin: { description: "Ruang lingkup untuk peran tanpa hak Melihat semua unit." },
     },
+    { name: "photo", type: "upload", relationTo: "avatars", label: "Foto profil" },
+    {
+      type: "row",
+      fields: [
+        { name: "whatsapp", type: "text", label: "WhatsApp", admin: { description: "Supaya rekan bisa langsung menghubungi." } },
+        { name: "bio", type: "text", maxLength: 120, label: "Tentang saya", admin: { description: "Satu kalimat: apa yang Anda pegang." } },
+      ],
+    },
+    { name: "lastLoginAt", type: "date", admin: { hidden: true }, access: { update: () => false } },
+    { name: "lastSeenAt", type: "date", admin: { hidden: true }, access: { update: () => false } },
     {
       // Secret in the personal calendar-feed URL (read-only feed). Visible to its owner and admins only.
       name: "calendarToken",

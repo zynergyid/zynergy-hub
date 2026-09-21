@@ -14,6 +14,7 @@ import {
   MessageSquareText,
   Search,
   Send,
+  Trophy,
   SearchCheck,
   UserRound,
   Users,
@@ -41,6 +42,7 @@ const icons: Record<IconName, LucideIcon> = {
   team: Users,
   more: Menu,
   calendar: CalendarDays,
+  trophy: Trophy,
 };
 
 export function NavIcon({ name, className }: { name: IconName; className?: string }) {

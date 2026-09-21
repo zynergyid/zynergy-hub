@@ -1,3 +1,4 @@
+import { ActivityCard } from "@/components/hub/ActivityCard";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -152,6 +153,7 @@ export default async function ProjectDetailPage({ params, searchParams }: { para
           )}
         </div>
       </div>
+      <ActivityCard user={user} collection="projects" docId={project.id} />
     </div>
   );
 }

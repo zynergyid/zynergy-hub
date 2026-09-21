@@ -1,6 +1,7 @@
 import type { CollectionConfig } from "payload";
 import { createWith, isLoggedIn } from "@/lib/access";
 import { contentPlatforms, contentStatuses, eventKinds } from "@/lib/options";
+import { auditHooks } from "@/lib/audit";
 
 /**
  * Calendar entries the team creates by hand: team meetings, client meetings,
@@ -22,6 +23,7 @@ export const Events: CollectionConfig = {
     delete: createWith("team"),
   },
   defaultSort: "-startAt",
+  hooks: auditHooks({ title: (d) => String(d.title) }),
   fields: [
     { name: "title", type: "text", required: true, label: "Judul" },
     { name: "kind", type: "select", required: true, defaultValue: "rapat-tim", label: "Jenis", options: [...eventKinds] },

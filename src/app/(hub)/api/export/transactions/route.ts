@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import { getPayloadClient } from "@/lib/payload";
+import { logActivity } from "@/lib/audit";
 import { parseMonth, resolveUnit, scopeUnits } from "@/lib/finance";
 import { canSeeMoney } from "@/lib/session";
 import { isFinancing } from "@/lib/options";
@@ -13,6 +14,7 @@ export async function GET(req: NextRequest) {
   if (!user || !canSeeMoney(user)) {
     return new Response("Unauthorized", { status: 401 });
   }
+  await logActivity(await getPayloadClient(), { action: "export", collection: "export", title: "Transaksi (CSV)", summary: req.nextUrl.search ? req.nextUrl.search.slice(1).replace(/&/g, " · ") : null, actor: { id: user.id, name: user.name } });
   const unit = resolveUnit(req.nextUrl.searchParams.get("unit") ?? undefined, user.units);
   const scoped = scopeUnits(unit, user.units);
   const month_ = req.nextUrl.searchParams.get("month");

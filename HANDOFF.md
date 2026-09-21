@@ -5,6 +5,16 @@
 > "deploy", commit dan push biasa). Repo ini PUBLIK sejak 2026-09-19: jangan
 > tulis ekonomi klien, nomor legal, nama orang, atau kunci di sini.
 
+## Outreach: target bisa usaha atau perorangan (2026-09-21, belum di-deploy)
+
+Danish bertanya apakah target Outreach harus PT. Jawab: tidak pernah harus, kolom nama adalah teks bebas. Supaya kata-katanya cocok untuk target Digitalin (pemilik usaha kecil, dokter praktik), `prospects.kind` = usaha | perorangan (nilai sama dengan `clients.kind`, migrasi `prospect_kind`, default usaha). Formulir: pilihan "Bentuk target", label nama dan LinkedIn mengikuti, kolom Jabatan disembunyikan untuk perorangan, judul kontak "Cara menghubungi". Jenis ikut terbawa saat "Jadikan klien" (dan sebaliknya dari tombol Mulai outreach di halaman klien); klien perorangan tidak diberi PIC. Bug lama ikut ketemu: "Jadikan klien" untuk target Digitalin/Apps tanpa nomor WhatsApp dulu crash (validasi klien), sekarang berhenti dengan pesan `?butuh=whatsapp`; businessType dan blok supply hanya diisi untuk unit Supply. Skill /outreach punya bagian 1c: untuk perorangan dan usaha kecil, riset jejak publik (Profil Google, Instagram, ulasan) dan draf pesan WhatsApp pendek, bukan email perkenalan gaya Supply.
+
+Jebakan migrasi: snapshot JSON migrasi menyimpan kolom; kalau sebuah kolom dihapus dengan menyunting SQL migrasi lama (seperti `perintis.mentor`), hapus juga dari snapshot JSON migrasi yang belum di-commit, kalau tidak `migrate:create` berikutnya membuat DROP COLUMN liar.
+
+## Unit Digital berganti nama menjadi Digitalin (2026-09-21, belum di-deploy)
+
+Mengikuti situs: nama tampilan lini digital adalah **Digitalin**. Di hub yang berubah hanya label: `units` di options.ts (nilai enum `digital` tetap, jadi tanpa migrasi), pilihan unit di global `perintis` dan TeamForm, label halaman `/digital` di site-seo.ts, teks di Proyek, Alat, skill /brief (SKILL.md dan skills.ts), kop dan catatan kaki cetak Brief ("Digitalin by Zynergy"), dan baris Arus Kas tampilan semua unit kini memakai `unitLabel` alih-alih kata yang ditulis tetap. Jangan mengganti nilai `digital` di database atau rute.
+
 ## State 2026-09-11 (malam)
 
 - Modul 1 (Klien) dan 2 (Keuangan) dibangun dan diverifikasi lokal, dengan
@@ -668,6 +678,141 @@ memakai versi "agensi kecil", bukan versi enterprise.
   duplikat. Skill membaca PO klien terkait untuk draf reaktivasi.
 - Belum: kirim otomatis (tidak akan), tarik LinkedIn, pengingat via email.
 
+## PERINTIS 2026: halaman program lomba (2026-09-21, belum di-deploy)
+
+Zynergy ikut lomba wirausaha pemuda PERINTIS (Pengurus Muda-Mudi Cilandak, Agustus sampai Desember 2026). Danish minta satu halaman acara "semenarik mungkin" dari dua berkas: Petunjuk Teknis Lomba dan FORM-04.1 (Mentoring I). Berkas aslinya ada di ~/Downloads, tidak masuk repo (repo publik).
+
+**Isi dan sumber data**
+- `src/content/perintis.ts`: semua yang tetap dari petunjuk teknis: PROGRAM (modal Rp250.000, tenggat laporan tanggal 5), STAGES (23 Agu kick-off, 4 Okt laporan I, 1 Nov laporan II, 6 Des laporan III, 31 Des final; bobot 15/10/10/10/55), WEIGHTS, FINAL_RUBRIC, PRIZES, MENTORS (rotasi tiga sesi), MENTOR_AGENDA (agenda bulanan bagian C), RULES, SANCTIONS, FINAL_TIPS, REPORT_INDICATORS, REFLECTIONS.
+- Global Payload `perintis` (TS `Perinti`, migrasi `perintis`): data kelompok (nama kelompok, nama usaha, nomor kelompok, ketua, unit sumber angka; mentor TIDAK disimpan, diturunkan dari nomor kelompok dan sesi lewat `mentorForSession`) dan `reports.report1..3` (target, realisasi manual, refleksi, submittedAt). Baca semua yang login, ubah = capability `team`.
+- `src/lib/perintis.ts`: `stageStatuses(today)` (selesai/fokus/nanti, `daysLeft`, `toNext` = pecahan hari ini di antara tahap ini dan berikutnya), `programProgress`, `figuresFromCashFlow` (omzet/biaya/laba/transaksi/saldo dari Arus Kas unit yang dipilih untuk bulan periode laporan), `mergeFigures` (angka manual mengalahkan hitungan), `reportDueDate`, `mentorForSession`, `perintisCalendarItems`, `getMentoringSessions`, `hubSummary` + `factsFrom` + `draftsFrom`.
+
+**Halaman `/perintis`** (grup sidebar "Program" yang ditaruh tepat setelah Dasbor dan Kalender; di HP selalu tab ketiga setelah Kalender lewat `workspaceOf`; ikon trofi; `force-dynamic`)
+- Banner navy: pil "Program berjalan", nama kelompok, empat ubin data, bar "Hari ke-N dari 130", kartu tahap berikutnya dengan cincin persentase perjalanan ke tahap itu, hitung mundur hari, tombol Isi laporan dan Cetak FORM.
+- Roadmap (`Roadmap.tsx`): garis hijau berhenti **di hari ini**, bukan di tahap berikutnya (Danish: "kalau 21 Sep, garisnya jangan tepat di 4 Oktober"). Desktop: satu jalur horizontal, simpul di tengah kolom, pil "Hari ini · 21 Sep" di posisi proporsional. HP: rel vertikal dengan baris "Hari ini" disisipkan setelah tahap yang sudah lewat. Animasi CSS saja (`animate-grow/pop/rise/ring/shine/drift` di globals.css), semua `motion-safe:` sehingga mati saat prefers-reduced-motion.
+- Laporan per tahap (`?laporan=report1|2|3`): target vs realisasi (realisasi dari Hub, tanda "manual" jika ditimpa), capaian persen, refleksi, baris fakta "Dari Hub periode ini", formulir di `<details>` untuk yang punya `team`. Cetak `?cetak=1` = tata letak FORM-04 (ringkasan kinerja, catatan arus kas urut tanggal, refleksi, inovasi, dokumentasi, lampiran) + `PrintButton`.
+- Mentoring (satu kartu, setelah Danish menunjuk duplikasi): tiga ubin sesi I/II/III (mentor dan bidangnya untuk nomor kelompok kita, sesi berikutnya disorot), agenda bulanan dari juknis (bulan berjalan disorot), daftar sesi mentoring yang dicatat di Kalender (catatan dan tindak lanjut), tombol "Jadwalkan mentoring" ke `/calendar/new?jenis=mentoring`, dan tabel rotasi sembilan kelompok dilipat di "Lihat rotasi semua kelompok". Tenggat FORM hanya di kartu laporan, hitung mundur hanya di banner.
+- Bobot (bar bertumpuk), rubrik final, hadiah emas/perak/perunggu, aturan, sanksi, formulir data kelompok.
+
+**Integrasi dengan modul lain**
+- Kalender: lapisan baru `perintis` (`calendar-types.ts`) berisi lima tahap dan tiga tenggat FORM-04 dari `perintisCalendarItems` (tanpa tabel, jadi tidak pernah basi); ikut ke `getUpcoming` di Dasbor dan ke feed ICS HP. Jenis acara baru `mentoring` (migrasi `event_kind_mentoring`, `ADD VALUE IF NOT EXISTS`) untuk sesi yang tanggalnya disepakati dengan mentor.
+- Formulir laporan: placeholder realisasi "Dari Hub: 1.250.000" (Arus Kas; unit terjual = qty Pesanan terkirim + Proyek yang live di periode), placeholder target "Periode lalu N" dari laporan sebelumnya, tombol "Isi dari Hub"/"Tambah dari Hub" per refleksi yang menyusun kalimat dari musyawarah tim, sesi mentoring, tindak lanjut selesai/belum, unggahan tayang per platform, klien baru, prospek baru, pesanan terkirim, proyek live, plus agenda dan target launch bulan berikutnya (`draftsFrom`). `AutoTextarea` kini menyesuaikan tinggi saat `value` diubah kode.
+
+**Jebakan**
+- `payload migrate` bertanya "run Payload in dev mode... data loss will occur? (y/N)" bila dev server sempat mendorong skema; jawab lewat pty: `printf 'y\r' | script -qec 'npx payload migrate' /dev/null`. Jangan `pkill -f "payload migrate"` dari perintah yang teksnya memuat pola itu: shell-nya sendiri ikut terbunuh.
+- Zoom wilayah tidak didukung di panel browser; cek tata letak desktop dengan JS (posisi elemen) alih-alih tangkapan layar yang diperkecil.
+
+## Profil yang lebih kaya (2026-09-21)
+
+Permintaan Danish supaya halaman Profil lebih menarik untuk tim yang akan
+dibagikan akunnya. Yang dibangun, semuanya berguna, bukan hiasan:
+
+- Foto profil: koleksi upload `avatars` (image/*, Blob di prod), field
+  `users.photo`. `compressAvatar` di `lib/image.ts` memotong persegi di
+  tengah dan memperkecil ke 256 px JPEG di bawah 80 KB sebelum dikirim;
+  `setProfilePhoto` menolak di atas 200 KB dan menghapus foto lama. Komponen
+  `Avatar` menerima `src` dan menampilkan foto kalau ada, inisial kalau
+  tidak; dipakai di sidebar, header HP, Tim, Aktivitas (peta id ke url dari
+  `lib/people.ts` `getUserPhotos`), dan kartu Riwayat. `SessionUser.photoUrl`.
+- Kontak: `users.whatsapp` dan `users.bio` (maksimal 120 karakter),
+  diisi di form Data diri, tampil di daftar Tim.
+- Ringkasan saya di atas Profil: tindak lanjut terbuka (bisa dicentang di
+  sana, `returnTo="/profile"`) dan acara yang diikuti 7 hari ke depan
+  (`getMyWeekEvents`). Kartu "Perubahan 7 hari" dan "Login terakhir"
+  sempat ada lalu DIHAPUS atas keberatan Danish (terasa seperti diawasi);
+  `countMyChanges` ikut dihapus.
+  Daftar Tim juga tidak lagi menampilkan "login x lalu", hanya online /
+  aktif x lalu. Baris login di Aktivitas hanya terlihat admin (dan orangnya
+  sendiri); `activityRead` dan `visibleTo` diubah bersama.
+- Urutan kartu: foto dan identitas, empat angka, tindak lanjut dan acara,
+  Data diri, Hak Anda (plus pemberitahuan jejak audit), Kalender di HP,
+  Kunci API (hanya Lead/Developer dengan editClients).
+- Migrasi `user_profile`. Folder lokal `/avatars` masuk .gitignore.
+
+## Jejak audit dan status online (2026-09-21)
+
+Danish akan membagikan Hub ke tim dan bertanya soal riwayat aksi. Yang
+dibangun:
+
+- Koleksi `activity` (`src/collections/Activity.ts`): actor (users) +
+  actorName (denormalisasi supaya tetap terbaca setelah akun dihapus),
+  action (create/update/delete/login/export), collection, docId, title,
+  summary, changes (json: {field,label,from,to}), unit. Ditulis hanya lewat
+  Local API oleh hook dan rute; create/update dari app ditolak, delete admin.
+- `lib/audit.ts`: `auditHooks({ title, unit, labeler })` dipasang di
+  Clients, Prospects, Orders, Projects, Transactions, VaultDocuments,
+  Accounts, Events, Users; `auditGlobalHook` di global permissions.
+  `diffDocs` membandingkan field tingkat atas dan grup, memberi label dari
+  konfigurasi field Payload (label field, label opsi select), memformat
+  uang dan tanggal, mengabaikan timestamp/counter/secret (`IGNORED`), dan
+  hanya menandai "tersembunyi" untuk apiKey/calendarToken. Update tanpa
+  perubahan berarti tidak dicatat. Array dicatat sebagai jumlah baris.
+- Siapa pelakunya: REST punya `req.user`; server action memakai Local API
+  tanpa user, jadi `actorFromHeaders` (React `cache`, sekali per request)
+  membaca cookie lewat `next/headers`. Di luar request (skrip, cron) pelaku
+  null dan tampil "sistem". Penulisan yang tidak boleh tercatat memakai
+  `context: { skipAudit: true }` (stempel lastSeenAt, lastLoginAt,
+  penulisan activity itu sendiri).
+- Login: rute `/api/auth/login` mengisi `users.lastLoginAt` dan
+  `lastSeenAt`, lalu mencatat action login. Unduhan: tiga rute ekspor
+  mencatat action export (collection "export") dengan query-nya.
+- Status online: `touchPresence` di `(hub)/layout.tsx` menstempel
+  `lastSeenAt` paling cepat tiap 5 menit (`PRESENCE_MINUTES`). Halaman Tim
+  menampilkan "online" (aktif < 5 menit), "aktif 12 menit lalu", dan
+  "login 2 jam lalu" (`relativeTime` di format.ts).
+- Tampilan: `/activity` (tab keempat Tim, tapi semua yang login boleh
+  membuka) dengan dua pilihan Orang dan Bagian yang langsung menyaring saat
+  dipilih (`ActivityFilters.tsx`; Danish menolak deretan chip karena tidak
+  skala kalau bagiannya bertambah), dikelompokkan per hari, halaman 50
+  baris; kartu "Riwayat" (`ActivityCard`) di halaman detail klien,
+  pesanan, proyek, outreach, acara, akun digital. Aturan lihat: yang
+  melihat uang melihat semua; selain itu hanya baris sendiri plus bagian
+  non-uang (`activityRead` di access.ts dan `visibleTo` di lib/activity.ts,
+  harus tetap sama).
+- Yang sengaja tidak dicatat: membuka halaman, lama sesi, ketikan. Profil
+  memberi tahu bahwa perubahan, login, dan unduhan tercatat, sama untuk
+  semua orang (etika: tim harus tahu).
+- `getSessionUser` sekarang memakai `authFromHeaders` (React `cache`) supaya
+  satu request hanya satu `payload.auth`. Migrasi `activity_and_presence`.
+
+## Profil sosial dan Akun digital (2026-09-21)
+
+Danish bertanya di mana menaruh kumpulan akun sosial media. Jawabannya dua
+tempat, karena isinya dua jenis:
+
+- Tautan publik: grup `socials` di global `site-settings` situs (kunci
+  mengikuti `src/content/socials.ts` di repo situs dan `socialPlatforms`
+  di `lib/site-seo.ts` Hub: instagram, threads, linkedin, whatsapp, github,
+  facebook, youtube, tiktok, x). Diedit dari kartu "Profil sosial" di
+  editor halaman SEO Hub. Situs: `getSocials()` di `lib/seo.ts` memakai
+  nilai Hub kalau grup pernah diisi, kalau belum memakai
+  `socialDefaults` (Instagram, Threads, LinkedIn @zynergyid); Footer jadi
+  komponen server async dan hanya menampilkan yang terisi (ikon Threads,
+  TikTok, X, GitHub ditambah ke `SocialIcons.tsx`); `sameAsLinks()`
+  mengisi structured data di beranda dan /digital. Skor Konten SEO dapat
+  item "minimal tiga profil sosial". Migrasi situs `site_socials`.
+- Data akun: koleksi `accounts` di Hub (tab "Akun digital" di Brankas,
+  `/vault/accounts`): platform (termasuk Google Business, email, domain,
+  hosting), status belum/aktif/ditinggalkan, nama akun, tautan, pemegang
+  (users), email login, nomor HP, cara 2FA, di mana password disimpan,
+  catatan. Tidak pernah password. Baca: semua yang login; tulis: kemampuan
+  editVault. Akun berstatus "belum dibuat" adalah daftar kerja. Migrasi
+  Hub `accounts`.
+- Jebakan yang ketemu saat menguji: halaman `/vault/accounts/new` tanpa
+  `export const dynamic = "force-dynamic"` sempat berhenti di kerangka
+  loading (HTML streaming berakhir tanpa skrip `$RC` penutup Suspense,
+  form ada di `div#S:0` tersembunyi dan tidak pernah dihidrasi, tanpa
+  error di konsol maupun log). Menambahkan `force-dynamic` menyelesaikannya.
+  Aturan: setiap halaman Hub yang membaca sesi diberi `force-dynamic`,
+  seperti halaman lain.
+
+Rekomendasi kanal yang diberikan ke Danish: buat lima saja dulu (WhatsApp
+Business, Google Business Profile, LinkedIn Page, Instagram plus Threads,
+GitHub org yang sudah ada); Facebook, YouTube, TikTok, X ditunda sampai
+kanal yang ada rutin terisi tiga bulan. Pemegang: Marketing untuk
+LinkedIn dan Instagram, Danish untuk WhatsApp dan Google Business,
+Developer untuk GitHub.
+
 ## Peran = jabatan, plus tanda Admin per orang (2026-09-20 larut malam)
 
 Setelah dua kali saya sarankan memisahkan, Danish memutuskan menggabung:
@@ -774,6 +919,10 @@ ruang kerja (kenyamanan), yang sekarang berfungsi lewat `lib/workspace.ts`:
   Konten plus empat todo teratas, data dari `lib/seo-summary.ts`). Kartu
   umum tetap disaring peran dan unit seperti sebelumnya; jabatan tidak
   pernah membuka data.
+- Kalender selalu tab kedua di HP untuk semua peran (permintaan Danish
+  2026-09-21); dua tab berikutnya mengikuti peran. Menu "Ringkasan" diganti
+  "Dasbor" (permintaan Danish 2026-09-21); rute tetap `/`, kata "Ringkasan"
+  di dokumen ini yang lebih lama berarti Dasbor.
 - Pemetaan ada di `byTitle` di workspace.ts (Lead, Developer, Designer,
   Marketing, Business, Staff, Finance, Commissioner, Other). Menambah jabatan
   = menambah satu baris di `jobTitles` dan satu di `byTitle`. Jabatan
@@ -789,8 +938,11 @@ ruang kerja (kenyamanan), yang sekarang berfungsi lewat `lib/workspace.ts`:
 
 ## Kalender: satu tampilan, acara, catatan rapat, tindak lanjut (2026-09-20)
 
-Istilah di layar: jenis `rapat-tim` dilabeli "Musyawarah tim" (permintaan
-Danish 2026-09-21); kata "rapat" di teks bantu diganti "musyawarah". Nilai
+Jenis `fokus` ("Fokus", satu kata seperti lapisan lain, permintaan Danish
+2026-09-21): blok waktu kerja sendiri, misalnya tiga jam menyiapkan
+presentasi klien; peserta default diri sendiri, tanpa kolom tambahan,
+migrasi `event_kind_fokus`. Istilah di layar: jenis `rapat-tim` dilabeli
+"Musyawarah tim" (permintaan Danish 2026-09-21); kata "rapat" di teks bantu diganti "musyawarah". Nilai
 enum `rapat-tim` tetap, jadi tanpa migrasi. Sejak 2026-09-21 catatan dan
 tindak lanjut bisa diisi langsung saat membuat acara (dialog cepat dan form
 lengkap, `FollowUpRows.tsx`: baris apa/siapa/tenggat dengan select native
@@ -820,8 +972,11 @@ kalender (jadwal konten, meeting klien, rapat berikutnya) dijawab satu
 modul, mengikuti praktik umum: Kalender adalah TAMPILAN, bukan gudang.
 
 - Menu "Kalender" (`/calendar`, grup atas bersama Ringkasan; di HP lewat
-  "Lainnya"). Grid bulan (md ke atas) atau daftar per hari; HP selalu
-  daftar. Lapisan yang bisa dimatikan lewat `?lapisan=a,b`: Acara, Proyek
+  "Lainnya"). Grid bulan (md ke atas) atau daftar per hari; di HP tampilan
+  Bulan memakai `MobileMonth.tsx` (grid ringkas ala Google Calendar: titik
+  warna per lapisan di tiap tanggal, ketuk tanggal untuk daftar isinya di
+  bawah plus tombol Tambah; Danish menolak versi awal yang selalu daftar
+  di HP). Lapisan yang bisa dimatikan lewat `?lapisan=a,b`: Acara, Proyek
   (target launch, tindakan berikutnya), Outreach (tindak lanjut jatuh
   tempo), Pesanan (tenggat kirim; jatuh tempo bayar hanya peran uang),
   Klien (perpanjangan website). Semua lapisan selain Acara dibaca langsung
@@ -869,8 +1024,9 @@ modul, mengikuti praktik umum: Kalender adalah TAMPILAN, bukan gudang.
   dari aturan Anggota hanya-lihat, karena bukan data klien atau uang.
   Semua yang login membaca semua acara (kalender tim, tidak per unit).
 - Jenis "konten" (unggahan sosial media, untuk designer dan marketing):
-  acara dengan grup `content` (platform Instagram/Facebook/TikTok/LinkedIn/
-  website, status ide/draf/siap/tayang, tautan desain Canva/Drive, tautan
+  acara dengan grup `content` (platform = daftar profil sosial plus
+  website/blog: Instagram, Threads, LinkedIn, Facebook, YouTube, TikTok, X,
+  website; migrasi `content_platforms` menyamakan enum, 2026-09-21, status ide/draf/siap/tayang, tautan desain Canva/Drive, tautan
   unggahan). `startAt` = tanggal tayang, peserta = penanggung jawab, agenda =
   brief singkat, catatan = caption. Lapisan "Konten" sendiri (warna rose)
   dan baris filter status di Kalender (`?status=draf`) yang hanya

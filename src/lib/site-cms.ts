@@ -1,4 +1,4 @@
-import { siteSeoPages, type SeoPair, type SiteSeo, type SiteSeoPageKey } from "@/lib/site-seo";
+import { siteSeoPages, socialPlatforms, type SeoPair, type SiteSeo, type SiteSeoPageKey, type Socials } from "@/lib/site-seo";
 
 /**
  * The site's own CMS (Payload on zynergy.co.id) holds the site content; the
@@ -19,9 +19,10 @@ export async function getSiteSeo(): Promise<SiteSeo | null> {
   try {
     const res = await fetch(`${process.env.SITE_API_URL}/globals/site-settings?depth=0`, { headers: headers(), cache: "no-store" });
     if (!res.ok) throw new Error(`site-settings ${res.status}`);
-    const data = (await res.json()) as { businessProfileUrl?: string | null; share?: RawPair; pages?: Partial<Record<SiteSeoPageKey, RawPair>> };
+    const data = (await res.json()) as { businessProfileUrl?: string | null; socials?: Partial<Record<string, string | null>> | null; share?: RawPair; pages?: Partial<Record<SiteSeoPageKey, RawPair>> };
     return {
       businessProfileUrl: data.businessProfileUrl ?? "",
+      socials: Object.fromEntries(socialPlatforms.map((p) => [p.key, data.socials?.[p.key] ?? ""])) as Socials,
       share: pair(data.share),
       pages: Object.fromEntries(siteSeoPages.map((p) => [p.key, pair(data.pages?.[p.key])])) as SiteSeo["pages"],
     };

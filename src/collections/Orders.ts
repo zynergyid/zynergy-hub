@@ -1,6 +1,7 @@
 import type { CollectionConfig } from "payload";
 import { createWith, enforceUnit, moneyFieldRead, unitRead, writeWith } from "@/lib/access";
 import { documentKinds, orderStatuses, units } from "@/lib/options";
+import { auditHooks } from "@/lib/audit";
 
 /**
  * Purchase orders received from buyers (Supply). One PO holds the structured
@@ -37,6 +38,7 @@ export const Orders: CollectionConfig = {
         return data;
       },
     ],
+    ...auditHooks({ title: (d) => `PO ${d.number}`, unit: (d) => d.unit as string }),
   },
   defaultSort: "-orderDate",
   fields: [

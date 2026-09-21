@@ -1,3 +1,4 @@
+import { ActivityCard } from "@/components/hub/ActivityCard";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -172,6 +173,7 @@ export default async function KlienDetailPage({ params, searchParams }: { params
               )}
             </Card>
           )}
+          <ActivityCard user={user} collection="clients" docId={client.id} />
           {tx && (
             <Card title="Transaksi klien ini" action={{ label: "Arus kas", href: `/cash-flow?unit=${client.unit}&q=${encodeURIComponent(client.name)}` }}>
               <TxList rows={tx.docs} editable={canEditMoney(user)} empty="Belum ada transaksi." />

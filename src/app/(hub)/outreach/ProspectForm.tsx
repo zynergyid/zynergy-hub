@@ -6,8 +6,9 @@ import { Loader2, Plus, Trash2 } from "lucide-react";
 import type { Prospect } from "@/payload-types";
 import type { ClientOption } from "@/lib/orders";
 import { matchClient } from "@/lib/order-draft";
-import { prospectSectors, prospectSources, units, type Unit } from "@/lib/options";
+import { prospectSectors, prospectSources, units, type Unit, clientKinds, type ClientKind } from "@/lib/options";
 import { ErrorText, Label, buttonPrimary, fieldClass } from "@/components/hub/form";
+import { cn } from "@/lib/cn";
 import { ConfirmButton } from "@/components/hub/ConfirmButton";
 import { Select } from "@/components/hub/Select";
 import { deleteProspect, saveProspect, type ProspectFormState } from "./actions";
@@ -44,6 +45,8 @@ export function ProspectForm({
 }) {
   const router = useRouter();
   const [unit, setUnit] = useState<Unit>(prospect?.unit ?? defaultUnit ?? (allowedUnits.includes("supply") ? "supply" : (allowedUnits[0] ?? "supply")));
+  const [kind, setKind] = useState<ClientKind>(prospect?.kind ?? "usaha");
+  const person = kind === "perorangan";
   const [company, setCompany] = useState(prospect?.company ?? "");
   const linkedId = prospect ? (typeof prospect.client === "object" && prospect.client ? prospect.client.id : prospect.client) : null;
   const [clientId, setClientId] = useState(linkedId ? String(linkedId) : "");
@@ -78,8 +81,8 @@ export function ProspectForm({
       <fieldset disabled={readOnly} className="space-y-5 disabled:opacity-90">
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <Label htmlFor="pr-company">Perusahaan</Label>
-            <input id="pr-company" name="company" required value={company} onChange={(e) => setCompany(e.target.value)} className={fieldClass} placeholder="Contoh: PT Tambang Nusantara" />
+            <Label htmlFor="pr-company">{person ? "Nama" : "Perusahaan / nama usaha"}</Label>
+            <input id="pr-company" name="company" required value={company} onChange={(e) => setCompany(e.target.value)} className={fieldClass} placeholder={person ? "Contoh: drg. Sari (Klinik Gigi Sari)" : "Contoh: PT Tambang Nusantara"} />
           </div>
           <div className="sm:col-span-2">
             <Label htmlFor="pr-client">Klien yang sudah ada (untuk reaktivasi)</Label>
@@ -92,6 +95,10 @@ export function ProspectForm({
               </p>
             )}
             {clientId && !readOnly && <p className="mt-1 text-xs text-muted">Riwayat PO klien ini ikut dibaca skill /outreach, dan halaman klien menampilkan status outreach-nya.</p>}
+          </div>
+          <div>
+            <Label htmlFor="pr-kind">Bentuk target</Label>
+            <Select id="pr-kind" name="kind" value={kind} onValueChange={(v) => setKind(v as ClientKind)} options={clientKinds} />
           </div>
           <div>
             <Label htmlFor="pr-unit">Unit bisnis</Label>
@@ -114,14 +121,14 @@ export function ProspectForm({
             <input id="pr-web" name="website" defaultValue={prospect?.website ?? ""} className={fieldClass} placeholder="https://" />
           </div>
           <div>
-            <Label htmlFor="pr-li">LinkedIn perusahaan</Label>
-            <input id="pr-li" name="linkedin" defaultValue={prospect?.linkedin ?? ""} className={fieldClass} placeholder="https://linkedin.com/company/..." />
+            <Label htmlFor="pr-li">{person ? "LinkedIn" : "LinkedIn perusahaan"}</Label>
+            <input id="pr-li" name="linkedin" defaultValue={prospect?.linkedin ?? ""} className={fieldClass} placeholder={person ? "https://linkedin.com/in/..." : "https://linkedin.com/company/..."} />
           </div>
         </div>
 
         <section className="space-y-2">
           <div className="flex items-center justify-between">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-muted">Kontak</h2>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-muted">{person ? "Cara menghubungi" : "Kontak"}</h2>
             {!readOnly && (
               <button type="button" onClick={add} className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-line px-2.5 py-1.5 text-xs font-semibold text-muted hover:border-primary hover:text-primary">
                 <Plus className="size-3.5" />
@@ -129,11 +136,11 @@ export function ProspectForm({
               </button>
             )}
           </div>
-          {contacts.length === 0 && <p className="text-xs text-muted">Belum ada kontak. Riset biasanya menemukan nama PIC pengadaan; isi di sini.</p>}
+          {contacts.length === 0 && <p className="text-xs text-muted">{person ? "Isi nama orangnya lagi di sini beserta WhatsApp atau email." : "Belum ada kontak. Riset biasanya menemukan nama PIC pengadaan; isi di sini."}</p>}
           {contacts.map((c) => (
-            <div key={c.key} className="grid grid-cols-2 gap-2 rounded-xl border border-line p-2 sm:grid-cols-[1.3fr_1.2fr_1.3fr_1fr_1fr_auto] sm:items-center">
+            <div key={c.key} className={cn("grid grid-cols-2 gap-2 rounded-xl border border-line p-2 sm:items-center", person ? "sm:grid-cols-[1.3fr_1.3fr_1fr_1fr_auto]" : "sm:grid-cols-[1.3fr_1.2fr_1.3fr_1fr_1fr_auto]")}>
               <input aria-label="Nama" required className={small} placeholder="Nama" value={c.name} onChange={(e) => update(c.key, { name: e.target.value })} />
-              <input aria-label="Jabatan" className={small} placeholder="Jabatan" value={c.role} onChange={(e) => update(c.key, { role: e.target.value })} />
+              {!person && <input aria-label="Jabatan" className={small} placeholder="Jabatan" value={c.role} onChange={(e) => update(c.key, { role: e.target.value })} />}
               <input aria-label="Email" type="email" className={small} placeholder="Email" value={c.email} onChange={(e) => update(c.key, { email: e.target.value })} />
               <input aria-label="WhatsApp" inputMode="tel" className={small} placeholder="WhatsApp" value={c.phone} onChange={(e) => update(c.key, { phone: e.target.value })} />
               <input aria-label="LinkedIn" className={small} placeholder="LinkedIn" value={c.linkedin} onChange={(e) => update(c.key, { linkedin: e.target.value })} />

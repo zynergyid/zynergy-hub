@@ -13,7 +13,7 @@ export async function getSeoSummary(): Promise<SeoSummary> {
   const configured = siteCmsConfigured();
   const [audits, siteChecks, seo, posts] = await Promise.all([getSeoAudits(), getSiteChecks(), configured ? getSiteSeo() : null, configured ? getPublishedPosts() : null]);
   const technical = technicalScore(audits, siteChecks);
-  const content = contentScore({ audits, postsPublished: posts?.total ?? null, latestPostAt: posts?.latestAt ?? null, businessProfileUrl: seo?.businessProfileUrl ?? "" });
+  const content = contentScore({ audits, postsPublished: posts?.total ?? null, latestPostAt: posts?.latestAt ?? null, businessProfileUrl: seo?.businessProfileUrl ?? "", socials: Object.values(seo?.socials ?? {}).filter(Boolean) });
   const order = { fail: 0, warn: 1, pass: 2 };
   return { technical: technical.percent, content: content.percent, todos: [...technical.todos, ...content.todos].sort((a, b) => order[a.status] - order[b.status]) };
 }

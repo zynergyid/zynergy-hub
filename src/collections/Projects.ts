@@ -1,6 +1,7 @@
 import type { CollectionConfig } from "payload";
 import { createWith, enforceUnit, moneyFieldRead, unitRead, writeWith } from "@/lib/access";
 import { projectDocumentKinds, projectHealth, projectLogTypes, projectStages, units } from "@/lib/options";
+import { auditHooks } from "@/lib/audit";
 
 /**
  * Digital and Apps projects: one row per client engagement, walked through
@@ -31,6 +32,7 @@ export const Projects: CollectionConfig = {
         return data;
       },
     ],
+    ...auditHooks({ title: (d) => String(d.name), unit: (d) => d.unit as string }),
   },
   defaultSort: "-updatedAt",
   fields: [

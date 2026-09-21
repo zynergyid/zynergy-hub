@@ -1,6 +1,7 @@
 import type { CollectionConfig, Validate } from "payload";
 import { createWith, enforceUnit, isAdmin, unitRead, writeWith } from "@/lib/access";
 import { businessTypes, clientKinds, clientStatuses, packages, units } from "@/lib/options";
+import { auditHooks } from "@/lib/audit";
 
 /** Supply buyers are companies reached by email; everyone else needs a WhatsApp number. */
 const whatsappRequiredOutsideSupply: Validate<string> = (value, { siblingData }) => {
@@ -39,6 +40,7 @@ export const Clients: CollectionConfig = {
         return data;
       },
     ],
+    ...auditHooks({ title: (d) => String(d.name), unit: (d) => d.unit as string }),
   },
   fields: [
     {

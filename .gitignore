@@ -55,3 +55,4 @@ skills-lock.json
 # copied from pdfjs-dist on postinstall
 /public/pdf.worker.min.mjs
 /event-photos
+/avatars

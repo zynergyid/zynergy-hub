@@ -80,6 +80,9 @@ export interface Config {
     'seo-audits': SeoAudit;
     events: HubEvent;
     'event-photos': EventPhoto;
+    accounts: Account;
+    activity: Activity;
+    avatars: Avatar;
     users: User;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -101,6 +104,9 @@ export interface Config {
     'seo-audits': SeoAuditsSelect<false> | SeoAuditsSelect<true>;
     events: EventsSelect<false> | EventsSelect<true>;
     'event-photos': EventPhotosSelect<false> | EventPhotosSelect<true>;
+    accounts: AccountsSelect<false> | AccountsSelect<true>;
+    activity: ActivitySelect<false> | ActivitySelect<true>;
+    avatars: AvatarsSelect<false> | AvatarsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -113,9 +119,11 @@ export interface Config {
   fallbackLocale: null;
   globals: {
     permissions: Permission;
+    perintis: Perinti;
   };
   globalsSelect: {
     permissions: PermissionsSelect<false> | PermissionsSelect<true>;
+    perintis: PerintisSelect<false> | PerintisSelect<true>;
   };
   locale: null;
   widgets: {
@@ -335,6 +343,17 @@ export interface User {
    * Ruang lingkup untuk peran tanpa hak Melihat semua unit.
    */
   units?: ('digital' | 'apps' | 'supply')[] | null;
+  photo?: (number | null) | Avatar;
+  /**
+   * Supaya rekan bisa langsung menghubungi.
+   */
+  whatsapp?: string | null;
+  /**
+   * Satu kalimat: apa yang Anda pegang.
+   */
+  bio?: string | null;
+  lastLoginAt?: string | null;
+  lastSeenAt?: string | null;
   calendarToken?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -357,6 +376,24 @@ export interface User {
     | null;
   password?: string | null;
   collection: 'users';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "avatars".
+ */
+export interface Avatar {
+  id: number;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -426,6 +463,7 @@ export interface Receipt {
 export interface Prospect {
   id: number;
   unit: 'digital' | 'apps' | 'supply';
+  kind: 'usaha' | 'perorangan';
   company: string;
   sector?: ('tambang' | 'migas' | 'epc' | 'manufaktur' | 'distributor' | 'lainnya') | null;
   city?: string | null;
@@ -578,7 +616,7 @@ export interface SeoAudit {
 export interface HubEvent {
   id: number;
   title: string;
-  kind: 'rapat-tim' | 'meeting-klien' | 'konten' | 'lainnya';
+  kind: 'rapat-tim' | 'meeting-klien' | 'mentoring' | 'konten' | 'fokus' | 'lainnya';
   startAt: string;
   endAt?: string | null;
   location?: string | null;
@@ -587,7 +625,7 @@ export interface HubEvent {
   project?: (number | null) | Project;
   prospect?: (number | null) | Prospect;
   content?: {
-    platform?: ('instagram' | 'facebook' | 'tiktok' | 'linkedin' | 'website') | null;
+    platform?: ('instagram' | 'threads' | 'linkedin' | 'facebook' | 'youtube' | 'tiktok' | 'x' | 'website') | null;
     status?: ('ide' | 'draf' | 'siap' | 'tayang') | null;
     designUrl?: string | null;
     postUrl?: string | null;
@@ -626,6 +664,77 @@ export interface EventPhoto {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "accounts".
+ */
+export interface Account {
+  id: number;
+  platform:
+    | 'whatsapp'
+    | 'google-business'
+    | 'instagram'
+    | 'threads'
+    | 'linkedin'
+    | 'github'
+    | 'facebook'
+    | 'youtube'
+    | 'tiktok'
+    | 'x'
+    | 'email'
+    | 'domain'
+    | 'hosting'
+    | 'lainnya';
+  status: 'belum' | 'aktif' | 'ditinggalkan';
+  /**
+   * Contoh: @zynergyid, admin@zynergy.co.id, zynergy.co.id
+   */
+  name: string;
+  url?: string | null;
+  holder?: (number | null) | User;
+  loginEmail?: string | null;
+  phone?: string | null;
+  /**
+   * Contoh: SMS ke HP kantor, Google Authenticator di HP Danish
+   */
+  twoFactor?: string | null;
+  /**
+   * Contoh: Bitwarden tim, brankas fisik. Jangan tulis password-nya.
+   */
+  passwordWhere?: string | null;
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "activity".
+ */
+export interface Activity {
+  id: number;
+  actor?: (number | null) | User;
+  /**
+   * Disimpan terpisah supaya tetap terbaca setelah akun dihapus.
+   */
+  actorName: string;
+  action: 'create' | 'update' | 'delete' | 'login' | 'export';
+  collection: string;
+  docId?: number | null;
+  title: string;
+  summary?: string | null;
+  changes?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  unit?: ('digital' | 'apps' | 'supply') | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -702,6 +811,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'event-photos';
         value: number | EventPhoto;
+      } | null)
+    | ({
+        relationTo: 'accounts';
+        value: number | Account;
+      } | null)
+    | ({
+        relationTo: 'activity';
+        value: number | Activity;
+      } | null)
+    | ({
+        relationTo: 'avatars';
+        value: number | Avatar;
       } | null)
     | ({
         relationTo: 'users';
@@ -959,6 +1080,7 @@ export interface ReceiptsSelect<T extends boolean = true> {
  */
 export interface ProspectsSelect<T extends boolean = true> {
   unit?: T;
+  kind?: T;
   company?: T;
   sector?: T;
   city?: T;
@@ -1131,6 +1253,58 @@ export interface EventPhotosSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "accounts_select".
+ */
+export interface AccountsSelect<T extends boolean = true> {
+  platform?: T;
+  status?: T;
+  name?: T;
+  url?: T;
+  holder?: T;
+  loginEmail?: T;
+  phone?: T;
+  twoFactor?: T;
+  passwordWhere?: T;
+  notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "activity_select".
+ */
+export interface ActivitySelect<T extends boolean = true> {
+  actor?: T;
+  actorName?: T;
+  action?: T;
+  collection?: T;
+  docId?: T;
+  title?: T;
+  summary?: T;
+  changes?: T;
+  unit?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "avatars_select".
+ */
+export interface AvatarsSelect<T extends boolean = true> {
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
@@ -1138,6 +1312,11 @@ export interface UsersSelect<T extends boolean = true> {
   role?: T;
   isAdmin?: T;
   units?: T;
+  photo?: T;
+  whatsapp?: T;
+  bio?: T;
+  lastLoginAt?: T;
+  lastSeenAt?: T;
   calendarToken?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1309,6 +1488,94 @@ export interface Permission {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "perintis".
+ */
+export interface Perinti {
+  id: number;
+  teamName?: string | null;
+  businessName?: string | null;
+  groupNumber?: number | null;
+  leader?: string | null;
+  unit?: ('digital' | 'apps' | 'supply' | 'semua') | null;
+  reports?: {
+    report1?: {
+      targets?: {
+        omzet?: number | null;
+        biaya?: number | null;
+        laba?: number | null;
+        transaksi?: number | null;
+        unit?: number | null;
+        saldo?: number | null;
+      };
+      actualOverride?: {
+        omzet?: number | null;
+        biaya?: number | null;
+        laba?: number | null;
+        transaksi?: number | null;
+        unit?: number | null;
+        saldo?: number | null;
+      };
+      good?: string | null;
+      problems?: string | null;
+      actions?: string | null;
+      next?: string | null;
+      innovation?: string | null;
+      submittedAt?: string | null;
+    };
+    report2?: {
+      targets?: {
+        omzet?: number | null;
+        biaya?: number | null;
+        laba?: number | null;
+        transaksi?: number | null;
+        unit?: number | null;
+        saldo?: number | null;
+      };
+      actualOverride?: {
+        omzet?: number | null;
+        biaya?: number | null;
+        laba?: number | null;
+        transaksi?: number | null;
+        unit?: number | null;
+        saldo?: number | null;
+      };
+      good?: string | null;
+      problems?: string | null;
+      actions?: string | null;
+      next?: string | null;
+      innovation?: string | null;
+      submittedAt?: string | null;
+    };
+    report3?: {
+      targets?: {
+        omzet?: number | null;
+        biaya?: number | null;
+        laba?: number | null;
+        transaksi?: number | null;
+        unit?: number | null;
+        saldo?: number | null;
+      };
+      actualOverride?: {
+        omzet?: number | null;
+        biaya?: number | null;
+        laba?: number | null;
+        transaksi?: number | null;
+        unit?: number | null;
+        saldo?: number | null;
+      };
+      good?: string | null;
+      problems?: string | null;
+      actions?: string | null;
+      next?: string | null;
+      innovation?: string | null;
+      submittedAt?: string | null;
+    };
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "permissions_select".
  */
 export interface PermissionsSelect<T extends boolean = true> {
@@ -1428,6 +1695,114 @@ export interface PermissionsSelect<T extends boolean = true> {
         team?: T;
         allUnits?: T;
         seo?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "perintis_select".
+ */
+export interface PerintisSelect<T extends boolean = true> {
+  teamName?: T;
+  businessName?: T;
+  groupNumber?: T;
+  leader?: T;
+  unit?: T;
+  reports?:
+    | T
+    | {
+        report1?:
+          | T
+          | {
+              targets?:
+                | T
+                | {
+                    omzet?: T;
+                    biaya?: T;
+                    laba?: T;
+                    transaksi?: T;
+                    unit?: T;
+                    saldo?: T;
+                  };
+              actualOverride?:
+                | T
+                | {
+                    omzet?: T;
+                    biaya?: T;
+                    laba?: T;
+                    transaksi?: T;
+                    unit?: T;
+                    saldo?: T;
+                  };
+              good?: T;
+              problems?: T;
+              actions?: T;
+              next?: T;
+              innovation?: T;
+              submittedAt?: T;
+            };
+        report2?:
+          | T
+          | {
+              targets?:
+                | T
+                | {
+                    omzet?: T;
+                    biaya?: T;
+                    laba?: T;
+                    transaksi?: T;
+                    unit?: T;
+                    saldo?: T;
+                  };
+              actualOverride?:
+                | T
+                | {
+                    omzet?: T;
+                    biaya?: T;
+                    laba?: T;
+                    transaksi?: T;
+                    unit?: T;
+                    saldo?: T;
+                  };
+              good?: T;
+              problems?: T;
+              actions?: T;
+              next?: T;
+              innovation?: T;
+              submittedAt?: T;
+            };
+        report3?:
+          | T
+          | {
+              targets?:
+                | T
+                | {
+                    omzet?: T;
+                    biaya?: T;
+                    laba?: T;
+                    transaksi?: T;
+                    unit?: T;
+                    saldo?: T;
+                  };
+              actualOverride?:
+                | T
+                | {
+                    omzet?: T;
+                    biaya?: T;
+                    laba?: T;
+                    transaksi?: T;
+                    unit?: T;
+                    saldo?: T;
+                  };
+              good?: T;
+              problems?: T;
+              actions?: T;
+              next?: T;
+              innovation?: T;
+              submittedAt?: T;
+            };
       };
   updatedAt?: T;
   createdAt?: T;

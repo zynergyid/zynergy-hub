@@ -105,6 +105,7 @@ if (prospects.totalDocs === 0) {
     collection: "prospects",
     data: {
       unit: "supply",
+      kind: "usaha",
       company: "PT Kontraktor Nusantara (contoh)",
       sector: "epc",
       city: "Balikpapan",

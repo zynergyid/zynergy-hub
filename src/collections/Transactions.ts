@@ -1,6 +1,7 @@
 import type { CollectionConfig } from "payload";
 import { createWith, enforceUnit, moneyRead, writeWith } from "@/lib/access";
 import { paymentMethods, transactionCategories, units } from "@/lib/options";
+import { auditHooks } from "@/lib/audit";
 
 /** Cash in and out per unit. Admin everywhere, finance in their units, viewer read-only. */
 export const Transactions: CollectionConfig = {
@@ -17,7 +18,7 @@ export const Transactions: CollectionConfig = {
     update: writeWith("editMoney"),
     delete: writeWith("editMoney"),
   },
-  hooks: { beforeChange: [enforceUnit] },
+  hooks: { beforeChange: [enforceUnit], ...auditHooks({ title: (d) => `${d.type === "masuk" ? "Uang masuk" : "Uang keluar"} ${d.reference ? String(d.reference) : ""}`.trim(), unit: (d) => d.unit as string }) },
   defaultSort: "-date",
   fields: [
     {

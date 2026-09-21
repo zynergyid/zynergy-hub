@@ -56,7 +56,7 @@ export async function saveProject(_prev: ProjectFormState, formData: FormData): 
 
   const id = Number(formData.get("id") || 0) || null;
   const unit = pick(units, text(formData, "unit"));
-  if (!unit || !projectUnits.includes(unit)) return err("Pilih unit Digital atau Apps.");
+  if (!unit || !projectUnits.includes(unit)) return err("Pilih unit Digitalin atau Apps.");
   if (!canWriteUnit(user, unit, "editProjects")) return err("Anda tidak punya akses ke unit ini.");
   const name = text(formData, "name");
   if (!name) return err("Nama proyek wajib diisi.");

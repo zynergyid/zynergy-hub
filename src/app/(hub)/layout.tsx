@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { getSessionUser } from "@/lib/session";
+import { getSessionUser, touchPresence } from "@/lib/session";
 import { Sidebar } from "@/components/hub/Sidebar";
 import { MobileTabs } from "@/components/hub/MobileTabs";
 import { SessionKeepAlive } from "@/components/hub/SessionKeepAlive";
@@ -7,6 +7,7 @@ import { OverflowGuard } from "@/components/hub/OverflowGuard";
 import { BrandMark } from "@/components/ui/BrandMark";
 import Link from "next/link";
 import { LogoutButton } from "@/components/hub/LogoutButton";
+import { Avatar } from "@/components/hub/Avatar";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -25,12 +26,13 @@ export const viewport: Viewport = {
 
 export default async function HubLayout({ children }: LayoutProps<"/">) {
   const user = await getSessionUser();
+  if (user) await touchPresence(user);
   return (
     <html lang="id">
       <body className="min-h-screen bg-surface text-ink antialiased">
         {user ? (
           <div className="flex min-h-screen">
-            <Sidebar viewer={user} userName={user.name} />
+            <Sidebar viewer={user} userName={user.name} photoUrl={user.photoUrl} />
             <div className="flex min-w-0 flex-1 flex-col md:pl-64">
               <header className="sticky top-0 z-30 flex h-14 items-center gap-2.5 border-b border-line bg-white px-4 print:hidden md:hidden">
                 <BrandMark className="size-7 text-navy" />
@@ -38,7 +40,7 @@ export default async function HubLayout({ children }: LayoutProps<"/">) {
                   Zynergy <span className="text-muted">Hub</span>
                 </span>
                 <Link href="/profile" className="rounded-lg p-2 text-muted hover:bg-surface-soft hover:text-ink" aria-label="Profil">
-                  <span className="grid size-6 place-items-center rounded-full bg-primary-soft text-[10px] font-extrabold text-primary-dark">{user.name.slice(0, 1).toUpperCase()}</span>
+                  <Avatar name={user.name} src={user.photoUrl} className="size-6 text-[10px]" />
                 </Link>
                 <LogoutButton />
               </header>

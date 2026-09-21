@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getPayloadClient } from "@/lib/payload";
 import { REMEMBER_COOKIE, SESSION_MAX_AGE_SECONDS, SHORT_SESSION_SECONDS, cookieBase } from "@/lib/auth-cookie";
+import { logActivity } from "@/lib/audit";
 
 /**
  * Login that honours "Ingat saya". Payload's own /api/users/login always sets
@@ -17,8 +18,11 @@ export async function POST(req: NextRequest) {
 
   const payload = await getPayloadClient();
   try {
-    const { token } = await payload.login({ collection: "users", data: { email, password } });
-    if (!token) return NextResponse.json({ message: "Login gagal. Coba lagi." }, { status: 500 });
+    const { token, user } = await payload.login({ collection: "users", data: { email, password } });
+    if (!token || !user) return NextResponse.json({ message: "Login gagal. Coba lagi." }, { status: 500 });
+    const now = new Date().toISOString();
+    await payload.update({ collection: "users", id: user.id, data: { lastLoginAt: now, lastSeenAt: now }, context: { skipAudit: true } }).catch(() => undefined);
+    await logActivity(payload, { action: "login", collection: "users", docId: user.id, title: user.name, summary: remember ? "perangkat diingat 90 hari" : "sesi 4 jam", actor: { id: user.id, name: user.name } });
     const res = NextResponse.json({ ok: true });
     const maxAge = remember ? SESSION_MAX_AGE_SECONDS : SHORT_SESSION_SECONDS;
     res.cookies.set({ ...cookieBase, name: `${payload.config.cookiePrefix}-token`, value: token, maxAge });

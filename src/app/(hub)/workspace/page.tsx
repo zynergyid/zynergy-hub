@@ -18,7 +18,7 @@ export default async function WorkspacePage() {
   if (!user) redirect("/login");
   return (
     <div className="space-y-5">
-      <PageHeader title="Ruang kerja" subtitle="Yang diubah peran pada layar: urutan kartu di Ringkasan, empat tab di HP, dan alat khusus. Haknya diatur di tab Hak akses; tab yang haknya tidak ada dilewati.">
+      <PageHeader title="Ruang kerja" subtitle="Yang diubah peran pada layar: urutan kartu di Dasbor, empat tab di HP, dan alat khusus. Haknya diatur di tab Hak akses; tab yang haknya tidak ada dilewati.">
         {user.isAdmin && <TeamTabs active="workspace" />}
       </PageHeader>
       <div className="overflow-x-auto rounded-2xl border border-line bg-white shadow-[0_1px_2px_rgba(15,27,51,0.04)]">
@@ -26,7 +26,7 @@ export default async function WorkspacePage() {
           <thead>
             <tr className="text-left text-xs text-muted">
               <th className="px-4 py-3 font-medium">Peran</th>
-              <th className="px-3 py-3 font-medium">Kartu pertama di Ringkasan</th>
+              <th className="px-3 py-3 font-medium">Kartu pertama di Dasbor</th>
               <th className="px-3 py-3 font-medium">Tab HP</th>
               <th className="px-3 py-3 font-medium">Alat khusus</th>
             </tr>

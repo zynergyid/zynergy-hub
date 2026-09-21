@@ -49,6 +49,8 @@ export interface ContentInput {
   postsPublished: number | null;
   latestPostAt: string | null;
   businessProfileUrl: string;
+  /** Filled social profile links. */
+  socials?: string[];
 }
 
 /** A weighted item: full, half, or no credit; the todo status follows the credit. */
@@ -68,6 +70,7 @@ export function contentScore(input: ContentInput): { percent: number; todos: Tod
   const items: Item[] = [
     { id: "meta", weight: 3, score: audited.length === 0 ? 0.5 : credit(weakPages.length === 0, weakPages.length <= 2), label: "Judul dan deskripsi tiap halaman pas panjangnya", detail: audited.length === 0 ? "belum diperiksa" : weakPages.length ? `perlu dirapikan: ${weakPages.join(", ")}` : undefined, href: "#editor" },
     { id: "dupes", weight: 1, score: credit(dupes.length === 0), label: "Tidak ada judul halaman yang sama", detail: dupes.length ? dupes.join(", ") : undefined, href: "#editor" },
+    { id: "socials", weight: 1, score: credit((input.socials?.length ?? 0) >= 3, (input.socials?.length ?? 0) >= 1), label: "Minimal tiga profil sosial terisi (Instagram, LinkedIn, WhatsApp)", detail: "muncul di footer dan structured data sameAs; membantu Google mengenali Zynergy sebagai satu entitas", href: "#editor" },
     { id: "gbp", weight: 3, score: credit(Boolean(input.businessProfileUrl)), label: "Google Business Profile dibuat dan tautannya diisi", detail: "penentu terbesar untuk pencarian lokal dan Maps; hanya pemilik akun Google yang bisa membuatnya", href: "#editor" },
     { id: "posts", weight: 3, score: credit(posts >= 3, posts > 0), label: "Minimal 3 artikel terbit di blog", detail: `${posts} artikel sekarang; artikel yang menjawab pertanyaan pembeli adalah yang mendatangkan pencarian` },
     { id: "fresh", weight: 1, score: credit(fresh, !fresh), label: "Ada artikel baru dalam 60 hari terakhir" },

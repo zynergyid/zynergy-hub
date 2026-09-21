@@ -65,7 +65,6 @@ export function PhotoCard({ eventId, photoUrl, editable, post }: { eventId: numb
               </ConfirmButton>
             </form>
           )}
-          <p className="w-full text-xs text-muted">Satu foto per acara. Diperkecil otomatis di browser sampai maksimal 1 MB.</p>
           <ErrorText>{error}</ErrorText>
         </div>
       )}

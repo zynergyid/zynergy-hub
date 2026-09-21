@@ -1,7 +1,7 @@
 /** Shared option lists: used by collections (admin labels) and custom UI. */
 
 export const units = [
-  { label: "Digital", value: "digital" },
+  { label: "Digitalin", value: "digital" },
   { label: "Apps", value: "apps" },
   { label: "Supply", value: "supply" },
 ] as const;
@@ -172,6 +172,31 @@ export const vaultCategories = [
 ] as const;
 export type VaultCategory = (typeof vaultCategories)[number]["value"];
 export const vaultCategoryLabel = new Map<string, string>(vaultCategories.map((c) => [c.value, c.label]));
+/** Where a company account lives. Social keys match `socialPlatforms` in site-seo.ts. */
+export const accountPlatforms = [
+  { label: "WhatsApp Business", value: "whatsapp" },
+  { label: "Google Business Profile", value: "google-business" },
+  { label: "Instagram", value: "instagram" },
+  { label: "Threads", value: "threads" },
+  { label: "LinkedIn", value: "linkedin" },
+  { label: "GitHub", value: "github" },
+  { label: "Facebook", value: "facebook" },
+  { label: "YouTube", value: "youtube" },
+  { label: "TikTok", value: "tiktok" },
+  { label: "X", value: "x" },
+  { label: "Email / Zoho", value: "email" },
+  { label: "Domain / DNS", value: "domain" },
+  { label: "Hosting / Vercel / Neon", value: "hosting" },
+  { label: "Lainnya", value: "lainnya" },
+] as const;
+export const accountPlatformLabel = new Map<string, string>(accountPlatforms.map((p) => [p.value, p.label]));
+export const accountStatuses = [
+  { label: "Belum dibuat", value: "belum" },
+  { label: "Aktif", value: "aktif" },
+  { label: "Ditinggalkan", value: "ditinggalkan" },
+] as const;
+export const accountStatusLabel = new Map<string, string>(accountStatuses.map((s) => [s.value, s.label]));
+
 /** Days ahead the vault warns about an expiry. */
 export const VAULT_WARN_DAYS = 30;
 
@@ -298,17 +323,23 @@ export const defaultGrants: RoleGrants = {
 export const eventKinds = [
   { label: "Musyawarah tim", value: "rapat-tim" },
   { label: "Meeting klien", value: "meeting-klien" },
+  { label: "Mentoring", value: "mentoring" },
   { label: "Konten (unggahan)", value: "konten" },
+  { label: "Fokus (waktu kerja sendiri)", value: "fokus" },
   { label: "Acara lain", value: "lainnya" },
 ] as const;
 export type EventKind = (typeof eventKinds)[number]["value"];
 export const eventKindLabel = new Map<string, string>(eventKinds.map((k) => [k.value, k.label]));
 
+/** Where a post goes. Same set as the site's social profiles, plus the blog. */
 export const contentPlatforms = [
   { label: "Instagram", value: "instagram" },
-  { label: "Facebook", value: "facebook" },
-  { label: "TikTok", value: "tiktok" },
+  { label: "Threads", value: "threads" },
   { label: "LinkedIn", value: "linkedin" },
+  { label: "Facebook", value: "facebook" },
+  { label: "YouTube", value: "youtube" },
+  { label: "TikTok", value: "tiktok" },
+  { label: "X", value: "x" },
   { label: "Website / blog", value: "website" },
 ] as const;
 export const contentPlatformLabel = new Map<string, string>(contentPlatforms.map((p) => [p.value, p.label]));

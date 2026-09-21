@@ -1,3 +1,4 @@
+import { ActivityCard } from "@/components/hub/ActivityCard";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -132,6 +133,7 @@ export default async function OrderDetailPage({ params, searchParams }: { params
           )}
         </div>
       </div>
+      <ActivityCard user={user} collection="orders" docId={order.id} />
     </div>
   );
 }

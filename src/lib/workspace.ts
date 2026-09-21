@@ -14,32 +14,34 @@ export interface Workspace {
   featured: CardKey[];
   /** Full dashboard order: featured first, then every other general card. */
   cards: CardKey[];
-  /** Phone tab hrefs in priority order; the bar shows the first four the person may see. */
+  /** Phone tab hrefs in priority order; the bar shows the first four the person may see. Kalender is always second (Danish, 2026-09-21). */
   tabs: string[];
   tools: ToolKey[];
 }
 
 /** General cards, in the order everyone without a jabatan sees them. */
 const GENERAL: CardKey[] = ["agenda", "outreach", "orders", "projects", "web", "vault", "cashflow", "finance"];
-const DEFAULT_TABS = ["/", "/cash-flow", "/clients", "/orders", "/projects", "/outreach", "/calendar"];
+const DEFAULT_TABS = ["/", "/calendar", "/cash-flow", "/clients", "/orders", "/projects", "/outreach"];
 
 const byRole: Record<Role, { featured: CardKey[]; tabs: string[]; tools?: ToolKey[] }> = {
-  Lead: { featured: [], tabs: ["/", "/cash-flow", "/clients", "/calendar"], tools: ["skills"] },
-  Developer: { featured: ["agenda", "projects"], tabs: ["/", "/projects", "/calendar", "/clients"], tools: ["skills"] },
+  Lead: { featured: [], tabs: ["/", "/calendar", "/cash-flow", "/clients"], tools: ["skills"] },
+  Developer: { featured: ["agenda", "projects"], tabs: ["/", "/calendar", "/projects", "/clients"], tools: ["skills"] },
   Designer: { featured: ["agenda", "konten", "vault"], tabs: ["/", "/calendar", "/vault", "/clients"] },
-  Marketing: { featured: ["agenda", "outreach", "web", "konten", "seo"], tabs: ["/", "/outreach", "/calendar", "/clients"] },
-  Business: { featured: ["agenda", "orders", "outreach"], tabs: ["/", "/orders", "/outreach", "/clients"] },
-  Staff: { featured: ["agenda", "orders", "outreach", "cashflow"], tabs: ["/", "/orders", "/cash-flow", "/clients"] },
-  Finance: { featured: ["agenda", "cashflow", "finance", "orders"], tabs: ["/", "/cash-flow", "/orders", "/clients"] },
-  Commissioner: { featured: ["agenda", "cashflow", "finance", "orders", "projects"], tabs: ["/", "/cash-flow", "/orders", "/projects"] },
-  Other: { featured: [], tabs: [] },
+  Marketing: { featured: ["agenda", "outreach", "web", "konten", "seo"], tabs: ["/", "/calendar", "/outreach", "/clients"] },
+  Business: { featured: ["agenda", "orders", "outreach"], tabs: ["/", "/calendar", "/orders", "/outreach", "/clients"] },
+  Staff: { featured: ["agenda", "orders", "outreach", "cashflow"], tabs: ["/", "/calendar", "/orders", "/cash-flow", "/clients"] },
+  Finance: { featured: ["agenda", "cashflow", "finance", "orders"], tabs: ["/", "/calendar", "/cash-flow", "/orders", "/clients"] },
+  Commissioner: { featured: ["agenda", "cashflow", "finance", "orders", "projects"], tabs: ["/", "/calendar", "/cash-flow", "/orders", "/projects"] },
+  Other: { featured: [], tabs: ["/", "/calendar"] },
 };
 
 export function workspaceOf(role?: string | null): Workspace {
   const w = isRoleValue(role) ? byRole[role] : byRole.Other;
   const featured = w.featured;
   const cards = [...featured, ...GENERAL.filter((c) => !featured.includes(c))];
-  const tabs = [...w.tabs, ...DEFAULT_TABS.filter((t) => !w.tabs.includes(t))];
+  // Dasbor, Kalender, then PERINTIS on every phone (Danish's order), then the job's own tabs.
+  const own = w.tabs.filter((t) => t !== "/perintis");
+  const tabs = [...own.slice(0, 2), "/perintis", ...own.slice(2), ...DEFAULT_TABS.filter((t) => !own.includes(t) && t !== "/perintis")];
   return { featured, cards, tabs, tools: w.tools ?? [] };
 }
 

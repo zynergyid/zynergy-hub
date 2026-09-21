@@ -25,7 +25,7 @@ const Ctx = createContext<{ open: (date?: string) => void; enabled: boolean }>({
 export const useQuickAdd = () => useContext(Ctx);
 
 const initial: EventFormState = { status: "idle" };
-const kindLabel: Record<EventKind, string> = { "rapat-tim": "Musyawarah tim", "meeting-klien": "Meeting klien", konten: "Konten", lainnya: "Lain" };
+const kindLabel: Record<EventKind, string> = { "rapat-tim": "Musyawarah tim", "meeting-klien": "Meeting klien", mentoring: "Mentoring", konten: "Konten", fokus: "Fokus", lainnya: "Lain" };
 
 function QuickAddDialog({ date, options, currentUserId, onClose }: { date: string; options: EventFormOptions; currentUserId: number; onClose: () => void }) {
   const router = useRouter();
@@ -55,7 +55,7 @@ function QuickAddDialog({ date, options, currentUserId, onClose }: { date: strin
         <input type="hidden" name="kind" value={kind} />
         <input type="hidden" name="date" value={date} />
         <div className="flex items-start justify-between gap-3">
-          <input name="title" required autoFocus placeholder={post ? "Judul unggahan" : "Tambah judul"} className="w-full border-0 border-b border-line bg-transparent px-0 py-1.5 text-lg font-semibold placeholder:font-normal placeholder:text-muted focus:border-primary focus:outline-none" />
+          <input name="title" required autoFocus placeholder={post ? "Judul unggahan" : kind === "fokus" ? "Apa yang dikerjakan, misalnya Siapkan presentasi RULA" : "Tambah judul"} className="w-full border-0 border-b border-line bg-transparent px-0 py-1.5 text-lg font-semibold placeholder:font-normal placeholder:text-muted focus:border-primary focus:outline-none" />
           <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-muted hover:bg-surface-soft" aria-label="Tutup">
             <X className="size-4" />
           </button>

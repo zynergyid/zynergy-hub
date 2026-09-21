@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { canEditSeo, getSessionUser } from "@/lib/session";
 import { saveSiteSeo, siteCmsConfigured } from "@/lib/site-cms";
-import { DESCRIPTION_MAX, TITLE_MAX, siteSeoPages, type SeoPair, type SiteSeo } from "@/lib/site-seo";
+import { DESCRIPTION_MAX, TITLE_MAX, siteSeoPages, socialPlatforms, type SeoPair, type SiteSeo, type Socials } from "@/lib/site-seo";
 import { runSeoAudit } from "@/lib/seo-audit";
 import { text } from "@/lib/form-data";
 
@@ -13,6 +13,7 @@ export interface SeoFormState {
 }
 
 const validUrl = (v: string) => v === "" || /^https:\/\/\S+$/.test(v);
+const err = (message: string): SeoFormState => ({ status: "error", message });
 const tooLong = (p: SeoPair) => p.title.length > TITLE_MAX || p.description.length > DESCRIPTION_MAX;
 
 /** Writes titles and descriptions to the site CMS. Admin only. */
@@ -22,8 +23,12 @@ export async function updateSiteSeo(_prev: SeoFormState, formData: FormData): Pr
   if (!siteCmsConfigured()) return { status: "error", message: "Hub belum terhubung ke CMS situs." };
 
   const pair = (prefix: string): SeoPair => ({ title: text(formData, `${prefix}.title`), description: text(formData, `${prefix}.description`) });
+  const socials = Object.fromEntries(socialPlatforms.map((p) => [p.key, text(formData, `socials.${p.key}`)])) as Socials;
+  const badSocial = socialPlatforms.find((p) => !validUrl(socials[p.key]));
+  if (badSocial) return err(`Tautan ${badSocial.label} harus diawali https://.`);
   const seo: SiteSeo = {
     businessProfileUrl: text(formData, "businessProfileUrl"),
+    socials,
     share: pair("share"),
     pages: Object.fromEntries(siteSeoPages.map((p) => [p.key, pair(`pages.${p.key}`)])) as SiteSeo["pages"],
   };

@@ -27,7 +27,7 @@ export const hubSkills: HubSkill[] = [
   {
     command: "/brief",
     title: "Brief proyek",
-    what: "Menyusun brief (analisis bisnis satu halaman) sebuah proyek Digital/Apps dari catatan pertemuan dan dokumen klien, langsung tersimpan di kartu Brief.",
+    what: "Menyusun brief (analisis bisnis satu halaman) sebuah proyek Digitalin/Apps dari catatan pertemuan dan dokumen klien, langsung tersimpan di kartu Brief.",
     when: "Setelah pertemuan discovery atau setelah menerima dokumen klien, selama proyek masih di tahap Discovery.",
     modes: ["/brief <nama proyek>: susun atau perbarui brief", "/brief pertanyaan <nama>: daftar pertanyaan discovery", "/brief arsitektur <nama>: ARCHITECTURE.md di repo aplikasi klien"],
     never: "Tidak pernah mencentang konfirmasi klien, mengubah tahap, atau mengarang fakta; dugaan ditandai (?).",

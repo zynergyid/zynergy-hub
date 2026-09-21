@@ -37,7 +37,7 @@ interface Tool {
   text: string;
 }
 
-/** Order = build order. Focus is Supply (decided 2026-09-17); Digital tools wait for a paying Digital client. */
+/** Order = build order. Focus is Supply (decided 2026-09-17); Digitalin tools wait for a paying Digitalin client. */
 const nextTools: Tool[] = [
   {
     id: "vendor",
@@ -68,21 +68,21 @@ const deferredTools: Tool[] = [
     icon: "search",
     title: "Cek Google",
     level: "Ditunda",
-    text: "Laporan satu halaman tentang profil Google, ulasan, website, dan Instagram calon klien Digital.",
+    text: "Laporan satu halaman tentang profil Google, ulasan, website, dan Instagram calon klien Digitalin.",
   },
   {
     id: "laporan",
     icon: "report",
     title: "Laporan Bulanan",
     level: "Ditunda",
-    text: "Angka profil Google tiap klien Digital jadi laporan bulanan yang dikirim lewat WhatsApp.",
+    text: "Angka profil Google tiap klien Digitalin jadi laporan bulanan yang dikirim lewat WhatsApp.",
   },
   {
     id: "portal",
     icon: "portal",
     title: "Portal Klien",
     level: "Ditunda",
-    text: "Klien Digital melihat laporan dan langganannya sendiri di Hub.",
+    text: "Klien Digitalin melihat laporan dan langganannya sendiri di Hub.",
   },
 ];
 
@@ -161,7 +161,7 @@ export default async function AlatPage() {
         </ul>
       </div>
       <div className="space-y-3">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-muted">Ditunda sampai ada klien Digital</h2>
+        <h2 className="text-sm font-bold uppercase tracking-wider text-muted">Ditunda sampai ada klien Digitalin</h2>
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {deferredTools.map((t) => <ToolCard key={t.id} t={t} muted />)}
         </ul>

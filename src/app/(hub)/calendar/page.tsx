@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/hub/EmptyState";
 import { PageHeader } from "@/components/hub/PageHeader";
 import { SegmentedLinks } from "@/components/hub/SegmentedLinks";
 import { buttonPrimary } from "@/components/hub/form";
+import { MobileMonth } from "./MobileMonth";
 import { MonthGrid } from "./MonthGrid";
 import { QuickAddProvider, QuickAddTrigger } from "./QuickAdd";
 
@@ -127,9 +128,9 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
         </div>
       )}
 
-      {/* Phones always get the list; the grid needs width. */}
+      {/* Phones get a compact grid with dots and a tapped-day list; wider screens the full grid. */}
       <div className="md:hidden">
-        <ListView items={items} month={month} today={today} canAdd={canAdd} />
+        {view === "bulan" ? <MobileMonth items={items} month={month} today={today} /> : <ListView items={items} month={month} today={today} canAdd={canAdd} />}
       </div>
       <div className="hidden md:block">
         {view === "bulan" ? <MonthGrid items={items} month={month} today={today} listHref={listHref} /> : <ListView items={items} month={month} today={today} canAdd={canAdd} />}

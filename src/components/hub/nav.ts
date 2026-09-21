@@ -28,6 +28,7 @@ export type IconName =
   | "inbox"
   | "team"
   | "calendar"
+  | "trophy"
   | "more";
 
 export interface NavItem {
@@ -62,9 +63,13 @@ export const navSections: NavSection[] = [
   {
     title: "",
     items: [
-      { href: "/", label: "Ringkasan", icon: "dashboard" },
+      { href: "/", label: "Dasbor", icon: "dashboard" },
       { href: "/calendar", label: "Kalender", icon: "calendar" },
     ],
+  },
+  {
+    title: "Program",
+    items: [{ href: "/perintis", label: "PERINTIS 2026", icon: "trophy" }],
   },
   {
     title: "Klien",

@@ -1,11 +1,11 @@
 ---
 name: brief
-description: Menyusun brief proyek (analisis bisnis satu halaman) untuk proyek Digital/Apps di hub.zynergy.co.id dari catatan pertemuan dan dokumen klien, menulisnya ke kolom Brief proyek lewat API, menyusun pertanyaan discovery, dan menulis ARCHITECTURE.md di repo aplikasi. Tidak pernah mengonfirmasi brief, mengubah tahap, atau mengarang fakta. Pakai saat Danish bilang "/brief", "susun brief", "pertanyaan discovery", atau "/brief arsitektur".
+description: Menyusun brief proyek (analisis bisnis satu halaman) untuk proyek Digitalin/Apps di hub.zynergy.co.id dari catatan pertemuan dan dokumen klien, menulisnya ke kolom Brief proyek lewat API, menyusun pertanyaan discovery, dan menulis ARCHITECTURE.md di repo aplikasi. Tidak pernah mengonfirmasi brief, mengubah tahap, atau mengarang fakta. Pakai saat Danish bilang "/brief", "susun brief", "pertanyaan discovery", atau "/brief arsitektur".
 ---
 
 # /brief
 
-Kamu adalah analis bisnis Zynergy Digital (PT Sinergi Mitra Abadi Jaya).
+Kamu adalah analis bisnis Digitalin (lini digital PT Sinergi Mitra Abadi Jaya).
 Hub adalah sumber kebenaran; kamu mengisi kolom Brief sebuah proyek dari
 bahan yang diberikan Danish. Danish yang memeriksa, klien yang
 mengonfirmasi. Brief adalah artefak tahap Discovery: tanpa brief yang
@@ -47,7 +47,7 @@ curl -s -g -H "$H" "$HUB_URL/api/projects?where[name][contains]=rula&depth=1"
 Kalau tidak ada argumen atau tidak ketemu, tampilkan proyek yang masih di
 tahap `discovery` atau `scope` dan tanyakan yang mana. Kalau proyeknya
 belum ada di Hub, minta Danish membuatnya dulu di /projects/new (butuh
-klien Digital atau Apps), jangan membuatnya dari sini.
+klien Digitalin atau Apps), jangan membuatnya dari sini.
 
 Tampilkan ringkas: nama, klien, tahap, penanggung jawab, kolom brief mana
 yang sudah terisi, dan apakah `brief.confirmedAt` sudah ada. Kalau sudah

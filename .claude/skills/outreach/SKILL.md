@@ -47,6 +47,13 @@ adalah `klien-lama`, tanyakan ke Danish apa yang dia ingat (kapan, siapa,
 barang apa) dan simpan jawabannya ke `history` lewat PATCH sebelum lanjut.
 Jangan pernah mengarang riwayat yang tidak tertulis.
 
+## 1c. Jenis target (`kind`)
+
+Setiap target punya `kind`: `usaha` (perusahaan, toko, klinik, warung) atau `perorangan` (satu orang yang dihubungi sebagai pribadi, misalnya dokter praktik atau pemilik usaha kecil). Untuk `perorangan` dan usaha kecil unit Digitalin:
+
+- Riset: cari jejak publiknya (Profil Google Bisnis, Instagram, marketplace, ulasan), bukan profil perusahaan atau struktur pengadaan. Tulis apa yang sudah bagus dan satu hal konkret yang bisa dibantu (belum ada website, Instagram jarang diperbarui, ulasan belum dibalas).
+- Draf: satu pesan WhatsApp pendek (3 sampai 5 kalimat), sapaan dengan nama, sebutkan hal konkret dari riset, tawarkan satu langkah kecil (obrolan 15 menit), tanpa jargon dan tanpa lampiran. Untuk `usaha` besar tetap pakai format email perkenalan di bagian 3.
+
 ## 2. Riset (status `baru`)
 
 Untuk tiap target, gunakan WebSearch dan WebFetch pada: website perusahaan,

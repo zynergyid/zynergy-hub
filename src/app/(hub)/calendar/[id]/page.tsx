@@ -7,6 +7,7 @@ import { getEvent, getEventFormOptions, getOpenFollowUpsBefore } from "@/lib/cal
 import { dateKeyWib, formatDayLong, timeWib } from "@/lib/calendar-dates";
 import { contentPlatformLabel, contentStatusLabel, eventKindLabel } from "@/lib/options";
 import { PageHeader } from "@/components/hub/PageHeader";
+import { ActivityCard } from "@/components/hub/ActivityCard";
 import { EventInfoCard, type EventFact } from "../EventInfoCard";
 import { FollowUpsCard } from "../FollowUpsCard";
 import { NotesCard } from "../NotesCard";
@@ -55,6 +56,7 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
         <div className="min-w-0 space-y-5 lg:col-span-2">
           <EventInfoCard event={event} when={when} participants={participants} facts={facts} options={options} />
           <PhotoCard eventId={event.id} photoUrl={photoUrl} editable={editable} post={event.kind === "konten"} />
+          <ActivityCard user={user} collection="events" docId={event.id} />
         </div>
       </div>
     </div>

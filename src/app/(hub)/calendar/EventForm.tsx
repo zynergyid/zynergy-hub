@@ -56,7 +56,7 @@ export function EventForm({ event, options, defaults = {}, onCancel, currentUser
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <Label htmlFor="ev-title">{post ? "Judul unggahan" : "Judul"}</Label>
-          <Input id="ev-title" name="title" required defaultValue={event?.title} placeholder={post ? "Contoh: Reel 3 tanda website UMKM perlu diperbarui" : "Contoh: Musyawarah tim mingguan, Meeting RULA discovery"} />
+          <Input id="ev-title" name="title" required defaultValue={event?.title} placeholder={post ? "Contoh: Reel 3 tanda website UMKM perlu diperbarui" : kind === "fokus" ? "Contoh: Siapkan presentasi RULA" : "Contoh: Musyawarah tim mingguan, Meeting RULA discovery"} />
         </div>
         <div>
           <Label htmlFor="ev-kind">Jenis</Label>

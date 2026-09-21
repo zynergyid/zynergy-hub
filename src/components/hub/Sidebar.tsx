@@ -16,7 +16,7 @@ function isActive(pathname: string, href: string) {
   return pathname === base || pathname.startsWith(base + "/");
 }
 
-export function Sidebar({ viewer, userName }: { viewer: NavViewer; userName: string }) {
+export function Sidebar({ viewer, userName, photoUrl }: { viewer: NavViewer; userName: string; photoUrl?: string | null }) {
   const pathname = usePathname();
   // Fixed, not sticky: a sticky column shifts at the end of the page whenever the document is taller than its
   // container (browser extensions, 100vh quirks). Fixed never moves; the layout pads the content column instead.
@@ -75,7 +75,7 @@ export function Sidebar({ viewer, userName }: { viewer: NavViewer; userName: str
       </nav>
       <div className="flex items-center gap-3 border-t border-line px-4 py-3">
         <Link href="/profile" className="flex min-w-0 flex-1 items-center gap-3 rounded-lg hover:text-primary">
-          <Avatar name={userName} className="size-8 text-[10px]" />
+          <Avatar name={userName} src={photoUrl} className="size-8 text-[10px]" />
           <span className="min-w-0">
             <span className="block truncate text-sm font-semibold">{userName}</span>
             <span className="block text-xs text-muted">{roleLabel.get(viewer.role) ?? viewer.role}{viewer.isAdmin ? " · Admin" : ""}</span>

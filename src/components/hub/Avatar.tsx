@@ -8,7 +8,12 @@ const palette = [
   "bg-sky-50 text-sky-700",
 ];
 
-export function Avatar({ name, className }: { name: string; className?: string }) {
+/** A person's photo when they set one, otherwise their initials on a stable colour. */
+export function Avatar({ name, src, className }: { name: string; src?: string | null; className?: string }) {
+  if (src) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={src} alt="" className={cn("size-9 shrink-0 rounded-full object-cover", className)} />;
+  }
   const initials = name
     .split(" ")
     .filter(Boolean)

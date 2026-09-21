@@ -18,6 +18,7 @@ export { dateKeyWib, todayWib };
 export type { CalendarItem, CalendarLayer } from "@/lib/calendar-types";
 export { allLayers, calendarLayers, isLayer, layerOf } from "@/lib/calendar-types";
 import { allLayers, type CalendarItem, type CalendarLayer } from "@/lib/calendar-types";
+import { getPerintis, perintisCalendarItems } from "@/lib/perintis";
 
 const relId = (v: number | { id: number } | null | undefined) => (typeof v === "object" && v ? v.id : (v ?? null));
 
@@ -42,6 +43,9 @@ export async function getCalendarItems(opts: { from: Date; to: Date; user: Sessi
           .filter((it) => layers.has(it.layer)),
       ),
     );
+  }
+  if (layers.has("perintis")) {
+    tasks.push(getPerintis().then((d) => perintisCalendarItems(from, to, d.groupNumber)));
   }
   if (layers.has("proyek") && units.some((u) => u !== "supply")) {
     const base = { unit: { in: units }, stage: { in: [...openProjectStages] } };
@@ -194,7 +198,7 @@ export async function getUserByCalendarToken(token: string): Promise<SessionUser
   if (!u) return null;
   await loadGrants();
   const who = { role: u.role, isAdmin: Boolean(u.isAdmin) };
-  return { id: u.id, name: u.name, email: u.email, role: u.role, isAdmin: who.isAdmin, units: unitsOf(u) as Unit[], caps: capsOf(who) };
+  return { id: u.id, name: u.name, email: u.email, role: u.role, isAdmin: who.isAdmin, units: unitsOf(u) as Unit[], caps: capsOf(who), lastSeenAt: u.lastSeenAt ?? null, photoUrl: null };
 }
 
 /** Content posts from a week ago to three weeks ahead, for the designer and marketing card. */
@@ -206,6 +210,20 @@ export async function getKontenEvents(): Promise<HubEvent[]> {
     where: { and: [{ kind: { equals: "konten" } }, { startAt: { greater_than_equal: new Date(from.getTime() - 7 * 86400000).toISOString() } }, { startAt: { less_than: new Date(from.getTime() + 21 * 86400000).toISOString() } }] },
     limit: 40,
     depth: 1,
+    sort: "startAt",
+  });
+  return docs;
+}
+
+/** Events the person takes part in during the next seven days. */
+export async function getMyWeekEvents(userId: number): Promise<HubEvent[]> {
+  const payload = await getPayloadClient();
+  const from = new Date(`${todayWib()}T00:00:00+07:00`);
+  const { docs } = await payload.find({
+    collection: "events",
+    where: { and: [{ participants: { contains: userId } }, { startAt: { greater_than_equal: from.toISOString() } }, { startAt: { less_than: new Date(from.getTime() + 7 * 86400000).toISOString() } }] },
+    limit: 20,
+    depth: 0,
     sort: "startAt",
   });
   return docs;

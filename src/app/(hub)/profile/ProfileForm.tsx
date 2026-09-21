@@ -7,10 +7,10 @@ import { saveProfile, type ProfileState } from "./actions";
 
 const initial: ProfileState = { status: "idle" };
 
-export function ProfileForm({ name, email }: { name: string; email: string }) {
+export function ProfileForm({ name, email, whatsapp, bio }: { name: string; email: string; whatsapp: string; bio: string }) {
   const [state, formAction, pending] = useActionState(saveProfile, initial);
   return (
-    <form action={formAction} className="space-y-5 rounded-2xl border border-line bg-white p-5 shadow-[0_1px_2px_rgba(15,27,51,0.04)] sm:p-6">
+    <form action={formAction} className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <Label htmlFor="pf-name">Nama</Label>
@@ -19,6 +19,14 @@ export function ProfileForm({ name, email }: { name: string; email: string }) {
         <div>
           <Label htmlFor="pf-email">Email</Label>
           <Input id="pf-email" name="email" type="email" required defaultValue={email} />
+        </div>
+        <div>
+          <Label htmlFor="pf-wa">WhatsApp</Label>
+          <Input id="pf-wa" name="whatsapp" inputMode="tel" defaultValue={whatsapp} placeholder="08xxxxxxxxxx" />
+        </div>
+        <div>
+          <Label htmlFor="pf-bio">Tentang saya</Label>
+          <Input id="pf-bio" name="bio" maxLength={120} defaultValue={bio} placeholder="Satu kalimat: apa yang Anda pegang" />
         </div>
         <div>
           <Label htmlFor="pf-password">Password baru</Label>

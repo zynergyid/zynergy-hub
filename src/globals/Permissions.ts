@@ -1,6 +1,7 @@
 import type { GlobalConfig } from "payload";
 import { isAdmin } from "@/lib/access";
 import { capabilities, defaultGrants, roles } from "@/lib/options";
+import { auditGlobalHook } from "@/lib/audit";
 
 /**
  * Which capabilities each role (job) has. Edited by admins on the Hak akses
@@ -11,6 +12,7 @@ export const Permissions: GlobalConfig = {
   slug: "permissions",
   label: "Hak akses",
   access: { read: isAdmin, update: isAdmin },
+  hooks: { afterChange: [auditGlobalHook("Hak akses")] },
   fields: roles.map((r) => ({
     name: r.value,
     type: "group" as const,

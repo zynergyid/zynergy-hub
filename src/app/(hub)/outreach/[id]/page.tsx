@@ -1,3 +1,4 @@
+import { ActivityCard } from "@/components/hub/ActivityCard";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -8,7 +9,7 @@ import { canWriteUnit } from "@/lib/access";
 import { getClientOptions, orderTotal } from "@/lib/orders";
 import { clientOfProspect, followUpDue, nextAction, ownerOf, primaryContact } from "@/lib/outreach";
 import { daysLabel, formatDate, formatIDR, todayLocal } from "@/lib/format";
-import { outreachChannels, outreachLogLabel, prospectSectors, prospectStatuses } from "@/lib/options";
+import { outreachChannels, outreachLogLabel, prospectSectors, prospectStatuses, unitLabel } from "@/lib/options";
 import { cn } from "@/lib/cn";
 import { Card } from "@/components/hub/Card";
 import { ConfirmButton } from "@/components/hub/ConfirmButton";
@@ -20,6 +21,8 @@ import { deadlineText, deadlineTone } from "@/components/hub/deadline";
 import { Label, buttonOutline, buttonPrimary, fieldClass } from "@/components/hub/form";
 import { ProspectForm } from "../ProspectForm";
 import { ResearchCard } from "../ResearchCard";
+import { first, type Search } from "@/lib/search";
+import { ErrorText } from "@/components/hub/form";
 import { addNote, convertToClient, logFollowUp, logReply, markSent, saveDraft, setProspectStatus } from "../actions";
 
 export const metadata: Metadata = { title: "Detail target" };
@@ -28,10 +31,11 @@ export const dynamic = "force-dynamic";
 const sectorLabel = new Map<string, string>(prospectSectors.map((s) => [s.value, s.label]));
 const channelLabel = new Map<string, string>(outreachChannels.map((c) => [c.value, c.label]));
 
-export default async function ProspectDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ProspectDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<Search> }) {
   const user = await getSessionUser();
   if (!user) redirect("/login");
   const { id } = await params;
+  const butuh = first((await searchParams).butuh);
   const prospectId = Number(id);
   if (!prospectId) notFound();
   const payload = await getPayloadClient();
@@ -65,7 +69,7 @@ export default async function ProspectDetailPage({ params }: { params: Promise<{
             <ProspectStatusPill status={p.status} />
           </div>
           <p className="text-sm text-muted">
-            {[p.sector ? sectorLabel.get(p.sector) : null, p.city, owner ? `PJ ${owner.name}` : null].filter(Boolean).join(" · ") || "detail belum lengkap"}
+            {[p.kind === "perorangan" ? "Perorangan" : null, p.sector ? sectorLabel.get(p.sector) : null, p.city, owner ? `PJ ${owner.name}` : null].filter(Boolean).join(" · ") || "detail belum lengkap"}
             {p.website && (
               <>
                 {" "}·{" "}
@@ -194,10 +198,11 @@ export default async function ProspectDetailPage({ params }: { params: Promise<{
                 <p className="text-sm text-muted">
                   {p.repliedAt ? `Dibalas ${formatDate(p.repliedAt)}. ` : ""}Lanjutkan percakapan di kanalnya. Kalau sudah ada kesepakatan, jadikan klien supaya PO dan invoice bisa dicatat.
                 </p>
+                {butuh === "whatsapp" && <ErrorText>Klien Digitalin dan Apps wajib punya WhatsApp. Isi nomor WhatsApp di kontak target ini dulu, lalu ulangi.</ErrorText>}
                 {editable && (
                   <form action={convertToClient}>
                     <input type="hidden" name="id" value={p.id} />
-                    <ConfirmButton message={client ? `Tandai ${p.company} aktif kembali sebagai klien?` : `Jadikan ${p.company} klien Supply? Data perusahaan dan kontak disalin ke Klien.`} className={buttonPrimary}>
+                    <ConfirmButton message={client ? `Tandai ${p.company} aktif kembali sebagai klien?` : `Jadikan ${p.company} klien ${unitLabel.get(p.unit) ?? p.unit}? ${p.kind === "perorangan" ? "Data dan kontaknya" : "Data usaha dan kontaknya"} disalin ke Klien.`} className={buttonPrimary}>
                       {client ? "Tandai jadi klien lagi" : "Jadikan klien"}
                     </ConfirmButton>
                   </form>
@@ -277,6 +282,7 @@ export default async function ProspectDetailPage({ params }: { params: Promise<{
           <ProspectForm prospect={p} units={user.units} clients={clients} canDelete={editable} readOnly={!editable} />
         </div>
       </div>
+      <ActivityCard user={user} collection="prospects" docId={p.id} />
     </div>
   );
 }

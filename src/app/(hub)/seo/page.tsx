@@ -117,7 +117,7 @@ export default async function SeoPage() {
     webAnalyticsConfigured() ? getSearchVisits(30) : null,
   ]);
   const technical = technicalScore(audits, siteChecks);
-  const content = contentScore({ audits, postsPublished: posts?.total ?? null, latestPostAt: posts?.latestAt ?? null, businessProfileUrl: seo?.businessProfileUrl ?? "" });
+  const content = contentScore({ audits, postsPublished: posts?.total ?? null, latestPostAt: posts?.latestAt ?? null, businessProfileUrl: seo?.businessProfileUrl ?? "", socials: Object.values(seo?.socials ?? {}).filter(Boolean) });
   const todos = [...technical.todos, ...content.todos, ...visibilityTodos(search)].sort((a, b) => statusOrder[a.status] - statusOrder[b.status]);
   const byPath = new Map(audits.map((a) => [a.path, a]));
   const lastAudit = audits.map((a) => a.fetchedAt).sort().at(-1);

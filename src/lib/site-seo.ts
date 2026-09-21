@@ -5,7 +5,7 @@
  */
 export const siteSeoPages = [
   { key: "home", label: "Beranda", path: "/" },
-  { key: "digital", label: "Digital", path: "/digital" },
+  { key: "digital", label: "Digitalin", path: "/digital" },
   { key: "design", label: "Design", path: "/design" },
   { key: "supply", label: "Supply", path: "/supply" },
   { key: "racikFitur", label: "Cek & Racik Fitur", path: "/racik-fitur" },
@@ -32,9 +32,29 @@ export interface SeoPair {
   title: string;
   description: string;
 }
+/**
+ * Public social profiles, shown in the site footer and as `sameAs` in the
+ * Organization structured data. Mirrors `src/content/socials.ts` in the site
+ * repo; the keys are the contract.
+ */
+export const socialPlatforms = [
+  { key: "instagram", label: "Instagram", placeholder: "https://instagram.com/zynergyid" },
+  { key: "threads", label: "Threads", placeholder: "https://www.threads.net/@zynergyid" },
+  { key: "linkedin", label: "LinkedIn", placeholder: "https://linkedin.com/company/zynergyid" },
+  { key: "whatsapp", label: "WhatsApp Business", placeholder: "https://wa.me/62..." },
+  { key: "github", label: "GitHub", placeholder: "https://github.com/zynergyid" },
+  { key: "facebook", label: "Facebook", placeholder: "https://facebook.com/zynergyid" },
+  { key: "youtube", label: "YouTube", placeholder: "https://youtube.com/@zynergyid" },
+  { key: "tiktok", label: "TikTok", placeholder: "https://tiktok.com/@zynergyid" },
+  { key: "x", label: "X", placeholder: "https://x.com/zynergyid" },
+] as const;
+export type SocialKey = (typeof socialPlatforms)[number]["key"];
+export type Socials = Record<SocialKey, string>;
+
 export interface SiteSeo {
   /** Google Business Profile link; empty until Danish creates the profile. */
   businessProfileUrl: string;
+  socials: Socials;
   share: SeoPair;
   pages: Record<SiteSeoPageKey, SeoPair>;
 }

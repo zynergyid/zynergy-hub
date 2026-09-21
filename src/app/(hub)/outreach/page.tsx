@@ -66,11 +66,11 @@ export default async function OutreachPage({ searchParams }: { searchParams: Pro
       {canEditClients(user) && <p className="text-xs text-muted">Riset dan draf diisi otomatis dengan menjalankan <span className="font-semibold">/outreach</span> di Claude Code; di sini Anda memeriksa, mengirim sendiri, dan mencatat.</p>}
 
       {rows.length === 0 ? (
-        <EmptyState title={`Belum ada target${q ? ` untuk "${q}"` : ""}.`} hint="Tambahkan perusahaan yang ingin didekati; klien lama cocok untuk mulai." />
+        <EmptyState title={`Belum ada target${q ? ` untuk "${q}"` : ""}.`} hint="Tambahkan usaha atau orang yang ingin didekati; klien lama cocok untuk mulai." />
       ) : (
         <div className="overflow-hidden rounded-2xl border border-line bg-white">
           <div className={cn("hidden gap-3 border-b border-line px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-muted md:grid", rowGrid)}>
-            <span>Perusahaan</span>
+            <span>Target</span>
             <span>Kontak</span>
             <span>Status</span>
             <span>Langkah berikutnya</span>

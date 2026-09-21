@@ -7,7 +7,7 @@ import { getPayloadClient } from "@/lib/payload";
 import { canEditClients, getSessionUser } from "@/lib/session";
 import { canWriteUnit } from "@/lib/access";
 import { dateOrNull, pick, text } from "@/lib/form-data";
-import { FOLLOW_UP_DAYS, outreachChannels, prospectSectors, prospectSources, prospectStatuses, units, type ProspectStatus } from "@/lib/options";
+import { FOLLOW_UP_DAYS, outreachChannels, prospectSectors, prospectSources, prospectStatuses, units, type ProspectStatus, clientKinds } from "@/lib/options";
 
 export interface ProspectFormState {
   status: "idle" | "success" | "error";
@@ -50,8 +50,9 @@ export async function saveProspect(_prev: ProspectFormState, formData: FormData)
   const id = Number(formData.get("id") || 0) || null;
   const unit = pick(units, text(formData, "unit")) ?? "supply";
   if (!canWriteUnit(user, unit, "editClients")) return err("Anda tidak punya akses ke unit ini.");
+  const kind = pick(clientKinds, text(formData, "kind")) ?? "usaha";
   const company = text(formData, "company");
-  if (!company) return err("Nama perusahaan wajib diisi.");
+  if (!company) return err(kind === "perorangan" ? "Nama wajib diisi." : "Nama usaha wajib diisi.");
   const clientId = Number(text(formData, "client")) || null;
 
   let raw: unknown;
@@ -84,6 +85,7 @@ export async function saveProspect(_prev: ProspectFormState, formData: FormData)
     const source = pick(prospectSources, text(formData, "source")) ?? (clientId ? ("klien-lama" as const) : null);
     const data = {
       unit,
+      kind,
       company,
       client: clientId,
       sector: pick(prospectSectors, text(formData, "sector")) ?? null,
@@ -250,21 +252,24 @@ export async function convertToClient(formData: FormData) {
     revalidatePath(`/clients/${existing}`);
     redirect(`/clients/${existing}`);
   }
-  const c = (p.contacts ?? [])[0];
+  const c = (p.contacts ?? []).find((x) => x.phone) ?? (p.contacts ?? [])[0];
+  const supply = p.unit === "supply";
+  // Digitalin and Apps clients must have a WhatsApp number (the collection validates it); say so instead of crashing.
+  if (!supply && !c?.phone) redirect(`/outreach/${id}?butuh=whatsapp`);
   const client = await ctx.payload.create({
     collection: "clients",
     data: {
       unit: p.unit,
-      kind: "usaha",
+      kind: p.kind ?? "usaha",
       name: p.company,
-      owner: c ? `${c.name}${c.role ? ` (${c.role})` : ""}` : null,
+      owner: c && p.kind !== "perorangan" ? `${c.name}${c.role ? ` (${c.role})` : ""}` : null,
       whatsapp: c?.phone ?? null,
       email: c?.email ?? null,
       city: p.city ?? null,
-      businessType: "industri",
+      businessType: supply ? "industri" : "lainnya",
       status: "aktif",
       links: { website: p.website ?? null },
-      supply: { legalName: p.company, paymentTermsDays: 30 },
+      supply: supply ? { legalName: p.company, paymentTermsDays: 30 } : undefined,
       notes: p.research ? `Dari outreach. Riset:\n${p.research}` : "Dari outreach.",
     },
   });
@@ -291,6 +296,7 @@ export async function startOutreachFromClient(formData: FormData) {
     collection: "prospects",
     data: {
       unit: client.unit,
+      kind: client.kind ?? "usaha",
       company: client.name,
       client: client.id,
       city: client.city ?? null,

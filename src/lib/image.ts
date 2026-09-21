@@ -27,3 +27,23 @@ export async function compressImage(file: File, opts: { maxSide?: number; maxByt
   }
   throw new Error("Foto tidak bisa diperkecil sampai 1 MB.");
 }
+
+/** Square profile photo: centre crop, `size` pixels, JPEG under `maxBytes`. */
+export async function compressAvatar(file: File, size = 256, maxBytes = 80_000): Promise<File> {
+  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" }).catch(() => null);
+  if (!bitmap) throw new Error("Berkas bukan gambar yang bisa dibaca.");
+  const side = Math.min(bitmap.width, bitmap.height);
+  const sx = (bitmap.width - side) / 2;
+  const sy = (bitmap.height - side) / 2;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Browser tidak mendukung pengecilan gambar.");
+  ctx.drawImage(bitmap, sx, sy, side, side, 0, 0, size, size);
+  for (const quality of [0.85, 0.75, 0.65]) {
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+    if (blob && blob.size <= maxBytes) return new File([blob], "foto-profil.jpg", { type: "image/jpeg" });
+  }
+  throw new Error("Foto tidak bisa diperkecil.");
+}

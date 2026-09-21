@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { cn } from "@/lib/cn";
-import { DESCRIPTION_IDEAL, DESCRIPTION_MAX, TITLE_IDEAL, TITLE_MAX, siteSeoPages, type SeoPair, type SiteSeo } from "@/lib/site-seo";
+import { DESCRIPTION_IDEAL, DESCRIPTION_MAX, TITLE_IDEAL, TITLE_MAX, siteSeoPages, socialPlatforms, type SeoPair, type SiteSeo } from "@/lib/site-seo";
 import { AutoTextarea } from "@/components/hub/AutoTextarea";
 import { ErrorText, Input, Label, buttonPrimary, fieldClass } from "@/components/hub/form";
 import { updateSiteSeo, type SeoFormState } from "./actions";
@@ -57,6 +57,18 @@ export function SeoForm({ seo, current }: { seo: SiteSeo; current: Partial<Recor
         <Input id="businessProfileUrl" name="businessProfileUrl" type="url" defaultValue={seo.businessProfileUrl} placeholder="https://g.page/... atau https://maps.app.goo.gl/..." />
         <p className="mt-1 text-xs text-muted">Diisi setelah profil dibuat di business.google.com. Situs menautkannya di footer dan structured data.</p>
       </div>
+      <fieldset className="space-y-3 rounded-xl border border-line p-4">
+        <legend className="px-1 text-sm font-semibold">Profil sosial</legend>
+        <p className="-mt-1 text-xs text-muted">Tampil di footer situs dan structured data. Kosongkan yang belum ada; akun kosong lebih buruk daripada tidak ada.</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {socialPlatforms.map((p) => (
+            <div key={p.key}>
+              <Label htmlFor={`socials.${p.key}`}>{p.label}</Label>
+              <Input id={`socials.${p.key}`} name={`socials.${p.key}`} type="url" defaultValue={seo.socials[p.key]} placeholder={p.placeholder} />
+            </div>
+          ))}
+        </div>
+      </fieldset>
       <PairFields prefix="share" label="Saat dibagikan (WhatsApp, LinkedIn)" hint="Pratinjau tautan; berlaku untuk semua halaman yang tidak punya pratinjau sendiri." value={seo.share} />
       {siteSeoPages.map((p) => (
         <PairFields key={p.key} prefix={`pages.${p.key}`} label={`${p.label} (${p.path})`} value={seo.pages[p.key]} current={current[p.path]} />

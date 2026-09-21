@@ -72,7 +72,7 @@ export default async function ClientBriefPage({ params, searchParams }: { params
           <div className="flex items-center gap-2.5">
             <BrandMark className="size-8 text-navy" />
             <div>
-              <p className="text-base font-extrabold tracking-tight">Zynergy <span className="text-muted">Digital</span></p>
+              <p className="text-base font-extrabold tracking-tight">Digitalin <span className="text-muted">by Zynergy</span></p>
               {!short && <p className="text-xs text-muted">PT Sinergi Mitra Abadi Jaya</p>}
             </div>
           </div>
@@ -88,7 +88,7 @@ export default async function ClientBriefPage({ params, searchParams }: { params
           <dt className="text-muted">Untuk</dt>
           <dd className="font-semibold">{contact}</dd>
           <dt className="text-muted">Disusun oleh</dt>
-          <dd className="font-semibold">{owner?.name ?? "Zynergy Digital"}</dd>
+          <dd className="font-semibold">{owner?.name ?? "Digitalin"}</dd>
         </dl>
 
         {short ? (
@@ -144,7 +144,7 @@ export default async function ClientBriefPage({ params, searchParams }: { params
           </dl>
         </section>
 
-        <footer className="mt-8 border-t border-line pt-3 text-xs text-muted">Zynergy Digital{short ? "" : ", PT Sinergi Mitra Abadi Jaya"}. zynergy.co.id/digital</footer>
+        <footer className="mt-8 border-t border-line pt-3 text-xs text-muted">Digitalin{short ? "" : ", PT Sinergi Mitra Abadi Jaya"}. zynergy.co.id/digital</footer>
       </article>
     </div>
   );

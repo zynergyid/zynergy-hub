@@ -41,7 +41,7 @@ export default async function TeamMemberPage({ params }: { params: Promise<{ id:
     <div className="mx-auto max-w-3xl space-y-5">
       <Link href="/team" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-primary"><ArrowLeft className="size-4" /> Tim</Link>
       <div className="flex items-center gap-3">
-        <Avatar name={member.name} className="size-12 text-sm" />
+        <Avatar name={member.name} src={typeof member.photo === "object" && member.photo ? member.photo.url : null} className="size-12 text-sm" />
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight">{member.name}</h1>
           <p className="text-sm text-muted">{member.email}</p>

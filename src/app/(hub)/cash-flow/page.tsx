@@ -278,7 +278,7 @@ export default async function ArusKasPage({ searchParams }: { searchParams: Prom
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-semibold">{tx.reference || categoryLabel.get(tx.category)}</p>
                             <p className="truncate text-xs text-muted">
-                              {categoryLabel.get(tx.category)}{clientName ? ` · ${clientName}` : ""}{unit === "semua" ? ` · ${tx.unit === "supply" ? "Supply" : "Digital"}` : ""}
+                              {categoryLabel.get(tx.category)}{clientName ? ` · ${clientName}` : ""}{unit === "semua" ? ` · ${unitLabel.get(tx.unit) ?? tx.unit}` : ""}
                             </p>
                           </div>
                           <div className="text-right">

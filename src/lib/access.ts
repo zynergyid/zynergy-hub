@@ -1,5 +1,5 @@
 import { APIError } from "payload";
-import type { Access, CollectionBeforeChangeHook, FieldAccess, PayloadRequest } from "payload";
+import type { Access, CollectionBeforeChangeHook, FieldAccess, PayloadRequest, Where } from "payload";
 import { units, type Capability, type Role, type Unit } from "@/lib/options";
 import { can, fromGlobal, grantsStale, setGrants, type Grantee } from "@/lib/grants-cache";
 
@@ -87,6 +87,18 @@ export const vaultRead: Access = async ({ req }) => {
   const u = asUser(req.user);
   if (!u?.role) return false;
   return has(u, "editVault") || { confidential: { not_equals: true } };
+};
+
+/** Audit rows: money changes and exports only for people who see money; everyone sees the rest and their own rows. */
+export const activityRead: Access = async ({ req }) => {
+  await fresh(req);
+  const u = asUser(req.user);
+  if (!u?.role) return false;
+  if (u.isAdmin) return true;
+  // Others: their own rows, plus everyone's changes outside money and outside logins.
+  const sections = has(u, "viewMoney") ? { collection: { exists: true } } : { collection: { not_in: ["transactions", "receipts", "export"] } };
+  const rule: Where = { or: [{ actor: { equals: u.id } }, { and: [sections, { action: { not_equals: "login" } }] }] };
+  return rule;
 };
 
 /** Field-level rule for prices and billing: people without viewMoney still read the rest of the record. */

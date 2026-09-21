@@ -85,7 +85,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
 
       {projects.length === 0 ? (
         <EmptyState
-          title={allowed.length === 0 ? "Proyek hanya ada di unit Digital dan Apps." : `Belum ada proyek${q ? ` untuk "${q}"` : filter === "berjalan" ? " yang berjalan" : ""}.`}
+          title={allowed.length === 0 ? "Proyek hanya ada di unit Digitalin dan Apps." : `Belum ada proyek${q ? ` untuk "${q}"` : filter === "berjalan" ? " yang berjalan" : ""}.`}
           hint={allowed.length === 0 ? "Pesanan Supply dicatat di menu Pesanan." : "Satu proyek per pekerjaan klien, dari discovery sampai serah terima."}
         />
       ) : (

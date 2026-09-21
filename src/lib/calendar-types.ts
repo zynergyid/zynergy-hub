@@ -1,8 +1,9 @@
 /** Browser-safe calendar types and layer palette; `lib/calendar.ts` (server) re-exports them. */
-export type CalendarLayer = "acara" | "konten" | "proyek" | "outreach" | "pesanan" | "klien";
+export type CalendarLayer = "acara" | "konten" | "perintis" | "proyek" | "outreach" | "pesanan" | "klien";
 export const calendarLayers: { value: CalendarLayer; label: string; chip: string; dot: string }[] = [
   { value: "acara", label: "Acara", chip: "bg-primary-soft text-primary-dark", dot: "bg-primary" },
   { value: "konten", label: "Konten", chip: "bg-rose-50 text-rose-700", dot: "bg-rose-500" },
+  { value: "perintis", label: "PERINTIS", chip: "bg-indigo-50 text-indigo-700", dot: "bg-indigo-500" },
   { value: "proyek", label: "Proyek", chip: "bg-secondary-soft text-secondary-dark", dot: "bg-secondary" },
   { value: "outreach", label: "Outreach", chip: "bg-amber-50 text-amber-700", dot: "bg-amber-400" },
   { value: "pesanan", label: "Pesanan", chip: "bg-violet-50 text-violet-700", dot: "bg-violet-500" },

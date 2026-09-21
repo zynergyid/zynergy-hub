@@ -24,6 +24,14 @@ import * as migration_20260920_160217_roles_and_permissions from './20260920_160
 import * as migration_20260920_161619_job_titles_english from './20260920_161619_job_titles_english';
 import * as migration_20260920_163027_roles_are_jobs from './20260920_163027_roles_are_jobs';
 import * as migration_20260920_173034_event_photos from './20260920_173034_event_photos';
+import * as migration_20260921_025352_accounts from './20260921_025352_accounts';
+import * as migration_20260921_030958_content_platforms from './20260921_030958_content_platforms';
+import * as migration_20260921_092905_activity_and_presence from './20260921_092905_activity_and_presence';
+import * as migration_20260921_094559_user_profile from './20260921_094559_user_profile';
+import * as migration_20260921_100235_event_kind_fokus from './20260921_100235_event_kind_fokus';
+import * as migration_20260921_101122_perintis from './20260921_101122_perintis';
+import * as migration_20260921_102953_event_kind_mentoring from './20260921_102953_event_kind_mentoring';
+import * as migration_20260921_111635_prospect_kind from './20260921_111635_prospect_kind';
 
 export const migrations = [
   {
@@ -154,6 +162,46 @@ export const migrations = [
   {
     up: migration_20260920_173034_event_photos.up,
     down: migration_20260920_173034_event_photos.down,
-    name: '20260920_173034_event_photos'
+    name: '20260920_173034_event_photos',
+  },
+  {
+    up: migration_20260921_025352_accounts.up,
+    down: migration_20260921_025352_accounts.down,
+    name: '20260921_025352_accounts',
+  },
+  {
+    up: migration_20260921_030958_content_platforms.up,
+    down: migration_20260921_030958_content_platforms.down,
+    name: '20260921_030958_content_platforms',
+  },
+  {
+    up: migration_20260921_092905_activity_and_presence.up,
+    down: migration_20260921_092905_activity_and_presence.down,
+    name: '20260921_092905_activity_and_presence',
+  },
+  {
+    up: migration_20260921_094559_user_profile.up,
+    down: migration_20260921_094559_user_profile.down,
+    name: '20260921_094559_user_profile',
+  },
+  {
+    up: migration_20260921_100235_event_kind_fokus.up,
+    down: migration_20260921_100235_event_kind_fokus.down,
+    name: '20260921_100235_event_kind_fokus',
+  },
+  {
+    up: migration_20260921_101122_perintis.up,
+    down: migration_20260921_101122_perintis.down,
+    name: '20260921_101122_perintis',
+  },
+  {
+    up: migration_20260921_102953_event_kind_mentoring.up,
+    down: migration_20260921_102953_event_kind_mentoring.down,
+    name: '20260921_102953_event_kind_mentoring',
+  },
+  {
+    up: migration_20260921_111635_prospect_kind.up,
+    down: migration_20260921_111635_prospect_kind.down,
+    name: '20260921_111635_prospect_kind'
   },
 ];

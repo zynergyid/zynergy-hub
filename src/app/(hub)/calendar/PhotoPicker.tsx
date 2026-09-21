@@ -65,7 +65,7 @@ export function PhotoPicker({ onChange, post }: { onChange: (file: File | null) 
             <X className="size-4" />
           </button>
         )}
-        <span className="text-xs text-muted">{error ?? name ?? "Satu foto, maksimal 1 MB, diperkecil otomatis."}</span>
+        <span className="text-xs text-muted">{error ?? name ?? ""}</span>
       </div>
     </div>
   );

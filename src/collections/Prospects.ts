@@ -1,6 +1,7 @@
 import type { CollectionConfig } from "payload";
 import { createWith, enforceUnit, unitRead, writeWith } from "@/lib/access";
-import { outreachChannels, outreachLogTypes, prospectSectors, prospectSources, prospectStatuses, units } from "@/lib/options";
+import { outreachChannels, outreachLogTypes, prospectSectors, prospectSources, prospectStatuses, units, clientKinds } from "@/lib/options";
+import { auditHooks } from "@/lib/audit";
 
 /**
  * Outreach targets (Supply). One row per company: who they are, what the
@@ -19,11 +20,12 @@ export const Prospects: CollectionConfig = {
     update: writeWith("editClients"),
     delete: writeWith("editClients"),
   },
-  hooks: { beforeChange: [enforceUnit] },
+  hooks: { beforeChange: [enforceUnit], ...auditHooks({ title: (d) => String(d.company), unit: (d) => d.unit as string }) },
   defaultSort: "-updatedAt",
   fields: [
     { name: "unit", type: "select", required: true, defaultValue: "supply", label: "Unit bisnis", options: [...units] },
-    { name: "company", type: "text", required: true, label: "Perusahaan" },
+    { name: "kind", type: "select", required: true, defaultValue: "usaha", label: "Jenis", options: [...clientKinds] },
+    { name: "company", type: "text", required: true, label: "Nama usaha atau orang" },
     {
       type: "row",
       fields: [

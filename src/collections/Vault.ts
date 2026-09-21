@@ -1,6 +1,7 @@
 import type { CollectionConfig } from "payload";
 import { createWith, vaultRead } from "@/lib/access";
 import { vaultCategories } from "@/lib/options";
+import { auditHooks } from "@/lib/audit";
 
 /**
  * Company documents (PT-level, not per unit): deeds, licences, tax, certificates,
@@ -8,6 +9,8 @@ import { vaultCategories } from "@/lib/options";
  * The file lives in `vault-files`, which mirrors the confidential flag so the
  * file endpoint enforces the same rule.
  */
+const vaultAudit = auditHooks({ title: (d) => String(d.title) });
+
 export const VaultDocuments: CollectionConfig = {
   slug: "vault-documents",
   labels: { singular: "Dokumen perusahaan", plural: "Dokumen perusahaan" },
@@ -20,6 +23,7 @@ export const VaultDocuments: CollectionConfig = {
   },
   defaultSort: "title",
   hooks: {
+    afterChange: vaultAudit.afterChange,
     afterDelete: [
       async ({ doc, req }) => {
         for (const ref of [doc.file, doc.thumbnail]) {
@@ -27,6 +31,7 @@ export const VaultDocuments: CollectionConfig = {
           if (fileId) await req.payload.delete({ collection: "vault-files", id: fileId, req }).catch(() => undefined);
         }
       },
+      ...(vaultAudit.afterDelete ?? []),
     ],
   },
   fields: [

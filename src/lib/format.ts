@@ -40,3 +40,17 @@ export function todayLocal(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
+
+/** "baru saja", "12 menit lalu", "3 jam lalu", "kemarin", else the date. */
+export function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.round(diff / 60000);
+  if (m < 1) return "baru saja";
+  if (m < 60) return `${m} menit lalu`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h} jam lalu`;
+  const d = Math.round(h / 24);
+  if (d === 1) return "kemarin";
+  if (d < 7) return `${d} hari lalu`;
+  return formatDate(iso);
+}
