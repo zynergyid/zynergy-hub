@@ -51,7 +51,7 @@ export function PhotoCard({ eventId, photoUrl, editable, post }: { eventId: numb
       )}
       {editable && (
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <input ref={input} type="file" accept="image/*" capture="environment" onChange={pick} className="hidden" aria-label="Pilih foto" />
+          <input ref={input} type="file" accept="image/*" onChange={pick} className="hidden" aria-label="Pilih foto" />
           <button type="button" onClick={() => input.current?.click()} disabled={busy} className={cn(buttonOutline)}>
             {busy ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}
             {busy ? "Memperkecil dan mengunggah..." : photoUrl ? "Ganti foto" : "Tambah foto"}

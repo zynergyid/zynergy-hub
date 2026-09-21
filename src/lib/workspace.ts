@@ -22,6 +22,8 @@ export interface Workspace {
 /** General cards, in the order everyone without a jabatan sees them. */
 const GENERAL: CardKey[] = ["agenda", "outreach", "orders", "projects", "web", "vault", "cashflow", "finance"];
 const DEFAULT_TABS = ["/", "/calendar", "/cash-flow", "/clients", "/orders", "/projects", "/outreach"];
+/** The bottom bar opens the same way for everyone: Dasbor, Kalender, PERINTIS, Arus Kas. */
+const FIXED_TABS = ["/", "/calendar", "/perintis", "/cash-flow"];
 
 const byRole: Record<Role, { featured: CardKey[]; tabs: string[]; tools?: ToolKey[] }> = {
   Lead: { featured: [], tabs: ["/", "/calendar", "/cash-flow", "/clients"], tools: ["skills"] },
@@ -39,9 +41,11 @@ export function workspaceOf(role?: string | null): Workspace {
   const w = isRoleValue(role) ? byRole[role] : byRole.Other;
   const featured = w.featured;
   const cards = [...featured, ...GENERAL.filter((c) => !featured.includes(c))];
-  // Dasbor, Kalender, then PERINTIS on every phone (Danish's order), then the job's own tabs.
-  const own = w.tabs.filter((t) => t !== "/perintis");
-  const tabs = [...own.slice(0, 2), "/perintis", ...own.slice(2), ...DEFAULT_TABS.filter((t) => !own.includes(t) && t !== "/perintis")];
+  // Same four tabs on every phone (Danish's order), then the job's own, then the rest.
+  // A tab the person may not see (Arus Kas without "Lihat uang") drops out and the next one moves up.
+  const rest = (list: string[]) => list.filter((t) => !FIXED_TABS.includes(t));
+  const own = rest(w.tabs);
+  const tabs = [...FIXED_TABS, ...own, ...rest(DEFAULT_TABS).filter((t) => !own.includes(t))];
   return { featured, cards, tabs, tools: w.tools ?? [] };
 }
 

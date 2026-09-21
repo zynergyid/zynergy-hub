@@ -1,6 +1,6 @@
 import type { CollectionConfig } from "payload";
 import { createWith, isLoggedIn } from "@/lib/access";
-import { accountPlatforms, accountStatuses, accountVisibilities } from "@/lib/options";
+import { accountLoginMethods, accountPlatforms, accountStatuses, accountVisibilities } from "@/lib/options";
 import { auditHooks } from "@/lib/audit";
 
 /**
@@ -33,7 +33,15 @@ export const Accounts: CollectionConfig = {
     },
     { name: "name", type: "text", required: true, label: "Nama akun", admin: { description: "Contoh: @zynergyid, admin@zynergy.co.id, zynergy.co.id" } },
     { name: "url", type: "text", label: "Tautan" },
-    { name: "holder", type: "relationship", relationTo: "users", label: "Pemegang" },
+    { name: "holders", type: "relationship", relationTo: "users", hasMany: true, label: "Pemegang" },
+    {
+      type: "row",
+      fields: [
+        { name: "loginMethod", type: "select", required: true, defaultValue: "password", label: "Cara masuk", options: [...accountLoginMethods] },
+        /** For "masuk dengan ...": the account that actually opens this one, so losing that one is visibly losing both. */
+        { name: "viaAccount", type: "relationship", relationTo: "accounts", label: "Masuk lewat akun" },
+      ],
+    },
     {
       type: "row",
       fields: [

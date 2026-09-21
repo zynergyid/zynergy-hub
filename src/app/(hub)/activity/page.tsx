@@ -18,10 +18,11 @@ export const dynamic = "force-dynamic";
 const dayFmt = new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", timeZone: "Asia/Jakarta" });
 const dayKey = (iso: string) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
 
-/** The audit trail, filtered by person and section, grouped by day. Money rows only for people who see money. */
+/** The audit trail, filtered by person and section, grouped by day. Admins only; a record's own "Riwayat" card stays open to everyone who may open that record. */
 export default async function ActivityPage({ searchParams }: { searchParams: Promise<Search> }) {
   const user = await getSessionUser();
   if (!user) redirect("/login");
+  if (!user.isAdmin) redirect("/");
   const sp = await searchParams;
   const actorId = Number(first(sp.orang) || 0) || undefined;
   const section = sections.some((s) => s.value === first(sp.bagian)) ? first(sp.bagian) : undefined;
@@ -33,8 +34,8 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Aktivitas" subtitle={user.isAdmin ? "Siapa mengubah apa dan kapan. Login dan unduhan laporan ikut tercatat; membaca halaman tidak." : "Siapa mengubah apa dan kapan. Login orang lain hanya terlihat oleh admin; membaca halaman tidak dicatat."}>
-        {user.isAdmin && <TeamTabs active="activity" />}
+      <PageHeader title="Aktivitas" subtitle="Siapa mengubah apa dan kapan. Login dan unduhan laporan ikut tercatat; membaca halaman tidak.">
+        <TeamTabs active="activity" />
       </PageHeader>
 
       <ActivityFilters people={users.map((u) => ({ label: u.name, value: String(u.id) }))} sections={sections} actorId={actorId ? String(actorId) : undefined} section={section} />

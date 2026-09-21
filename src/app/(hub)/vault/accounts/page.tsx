@@ -5,12 +5,11 @@ import { ExternalLink, KeyRound, Plus } from "lucide-react";
 import { PlatformTile } from "@/components/hub/PlatformIcon";
 import { getPayloadClient } from "@/lib/payload";
 import { canEditVault, getSessionUser } from "@/lib/session";
-import { accountPlatformLabel, accountStatusLabel } from "@/lib/options";
+import { accountLoginMethodLabel, accountPlatformLabel, accountStatusLabel, hasOwnPassword } from "@/lib/options";
 import { cn } from "@/lib/cn";
 import { EmptyState } from "@/components/hub/EmptyState";
 import { PageHeader } from "@/components/hub/PageHeader";
 import { buttonPrimary } from "@/components/hub/form";
-import { VaultTabs } from "../VaultTabs";
 
 export const metadata: Metadata = { title: "Akun digital" };
 export const dynamic = "force-dynamic";
@@ -28,7 +27,6 @@ export default async function AccountsPage() {
   return (
     <div className="space-y-5">
       <PageHeader title="Akun digital" subtitle={`${docs.length} akun tercatat${pending ? `, ${pending} belum dibuat` : ""}. Siapa pemegangnya, cara masuk kembali, dan password-nya bila tim menyimpannya di sini.`}>
-        <VaultTabs active="accounts" />
         {editable && (
           <Link href="/vault/accounts/new" className={buttonPrimary}>
             <Plus className="size-4" />
@@ -41,7 +39,8 @@ export default async function AccountsPage() {
       ) : (
         <ul className="overflow-hidden rounded-2xl border border-line bg-white divide-y divide-line">
           {docs.map((a) => {
-            const holder = typeof a.holder === "object" && a.holder ? a.holder.name : null;
+            const holders = (a.holders ?? []).map((h) => (typeof h === "object" ? h.name : null)).filter(Boolean);
+            const via = typeof a.viaAccount === "object" && a.viaAccount ? a.viaAccount.name : null;
             return (
               <li key={a.id} className="flex items-center gap-3 px-4 py-3">
                 <PlatformTile platform={a.platform} />
@@ -50,10 +49,10 @@ export default async function AccountsPage() {
                     {accountPlatformLabel.get(a.platform)} · {a.name}
                   </Link>
                   <p className="truncate text-xs text-muted">
-                    {[holder ? `pemegang ${holder}` : "belum ada pemegang", a.loginEmail, a.twoFactor ? `2FA: ${a.twoFactor}` : null].filter(Boolean).join(" · ")}
+                    {[holders.length ? `pemegang ${holders.join(", ")}` : "belum ada pemegang", hasOwnPassword(a.loginMethod) ? a.loginEmail : `${accountLoginMethodLabel.get(a.loginMethod)}${via ? ` (${via})` : ""}`, a.twoFactor ? `2FA: ${a.twoFactor}` : null].filter(Boolean).join(" · ")}
                   </p>
                 </div>
-                {a.passwordEnc && (
+                {a.passwordEnc && hasOwnPassword(a.loginMethod) && (
                   <span className="hidden items-center gap-1 text-[11px] font-semibold text-muted sm:inline-flex" title={a.visibility === "rahasia" ? "Password: hanya admin dan pemegang" : "Password: semua anggota tim"}>
                     <KeyRound className="size-3.5" />
                     {a.visibility === "rahasia" ? "rahasia" : "tim"}

@@ -6,7 +6,7 @@ import { Loader2, Plus, Trash2 } from "lucide-react";
 import type { Prospect } from "@/payload-types";
 import type { ClientOption } from "@/lib/orders";
 import { matchClient } from "@/lib/order-draft";
-import { prospectSectors, prospectSources, units, type Unit, clientKinds, type ClientKind } from "@/lib/options";
+import { sectorsFor, prospectSources, units, type Unit, clientKinds, type ClientKind } from "@/lib/options";
 import { ErrorText, Label, buttonPrimary, fieldClass } from "@/components/hub/form";
 import { cn } from "@/lib/cn";
 import { ConfirmButton } from "@/components/hub/ConfirmButton";
@@ -47,6 +47,7 @@ export function ProspectForm({
   const [unit, setUnit] = useState<Unit>(prospect?.unit ?? defaultUnit ?? (allowedUnits.includes("supply") ? "supply" : (allowedUnits[0] ?? "supply")));
   const [kind, setKind] = useState<ClientKind>(prospect?.kind ?? "usaha");
   const person = kind === "perorangan";
+  const isSupply = unit === "supply";
   const [company, setCompany] = useState(prospect?.company ?? "");
   const linkedId = prospect ? (typeof prospect.client === "object" && prospect.client ? prospect.client.id : prospect.client) : null;
   const [clientId, setClientId] = useState(linkedId ? String(linkedId) : "");
@@ -105,8 +106,8 @@ export function ProspectForm({
             <Select id="pr-unit" name="unit" value={unit} onValueChange={(v) => setUnit(v as Unit)} options={units.filter((u) => allowedUnits.includes(u.value) || prospect?.unit === u.value)} />
           </div>
           <div>
-            <Label htmlFor="pr-sector">Sektor</Label>
-            <Select id="pr-sector" name="sector" defaultValue={prospect?.sector ?? undefined} placeholder="Pilih sektor" options={prospectSectors} />
+            <Label htmlFor="pr-sector">{isSupply ? "Sektor" : "Jenis usaha"}</Label>
+            <Select key={unit} id="pr-sector" name="sector" defaultValue={prospect?.sector ?? undefined} placeholder={isSupply ? "Pilih sektor" : "Pilih jenis usaha"} options={sectorsFor(unit)} />
           </div>
           <div>
             <Label htmlFor="pr-city">Kota / lokasi</Label>
@@ -120,6 +121,18 @@ export function ProspectForm({
             <Label htmlFor="pr-web">Website</Label>
             <input id="pr-web" name="website" defaultValue={prospect?.website ?? ""} className={fieldClass} placeholder="https://" />
           </div>
+          {!isSupply && (
+            <>
+              <div>
+                <Label htmlFor="pr-gbp">Profil Google Bisnis</Label>
+                <input id="pr-gbp" name="googleProfile" defaultValue={prospect?.googleProfile ?? ""} className={fieldClass} placeholder="https://maps.app.goo.gl/..." />
+              </div>
+              <div>
+                <Label htmlFor="pr-ig">Instagram</Label>
+                <input id="pr-ig" name="instagram" defaultValue={prospect?.instagram ?? ""} className={fieldClass} placeholder="@" />
+              </div>
+            </>
+          )}
           <div>
             <Label htmlFor="pr-li">{person ? "LinkedIn" : "LinkedIn perusahaan"}</Label>
             <input id="pr-li" name="linkedin" defaultValue={prospect?.linkedin ?? ""} className={fieldClass} placeholder={person ? "https://linkedin.com/in/..." : "https://linkedin.com/company/..."} />

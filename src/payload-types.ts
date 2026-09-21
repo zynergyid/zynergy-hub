@@ -465,11 +465,29 @@ export interface Prospect {
   unit: 'digital' | 'apps' | 'supply';
   kind: 'usaha' | 'perorangan';
   company: string;
-  sector?: ('tambang' | 'migas' | 'epc' | 'manufaktur' | 'distributor' | 'lainnya') | null;
+  sector?:
+    | (
+        | 'tambang'
+        | 'migas'
+        | 'epc'
+        | 'manufaktur'
+        | 'distributor'
+        | 'lainnya'
+        | 'kuliner'
+        | 'kesehatan'
+        | 'jasa-lokal'
+        | 'sekolah'
+        | 'toko'
+        | 'b2b'
+        | 'industri'
+      )
+    | null;
   city?: string | null;
-  source?: ('klien-lama' | 'referensi' | 'riset' | 'asosiasi' | 'linkedin' | 'lainnya') | null;
+  source?: ('klien-lama' | 'kenalan' | 'referensi' | 'riset' | 'asosiasi' | 'linkedin' | 'lainnya') | null;
   website?: string | null;
   linkedin?: string | null;
+  googleProfile?: string | null;
+  instagram?: string | null;
   contacts?:
     | {
         name: string;
@@ -692,7 +710,9 @@ export interface Account {
    */
   name: string;
   url?: string | null;
-  holder?: (number | null) | User;
+  holders?: (number | User)[] | null;
+  loginMethod: 'password' | 'google' | 'github' | 'apple' | 'facebook' | 'otp' | 'lainnya';
+  viaAccount?: (number | null) | Account;
   loginEmail?: string | null;
   phone?: string | null;
   /**
@@ -1089,6 +1109,8 @@ export interface ProspectsSelect<T extends boolean = true> {
   source?: T;
   website?: T;
   linkedin?: T;
+  googleProfile?: T;
+  instagram?: T;
   contacts?:
     | T
     | {
@@ -1262,7 +1284,9 @@ export interface AccountsSelect<T extends boolean = true> {
   status?: T;
   name?: T;
   url?: T;
-  holder?: T;
+  holders?: T;
+  loginMethod?: T;
+  viaAccount?: T;
   loginEmail?: T;
   phone?: T;
   twoFactor?: T;

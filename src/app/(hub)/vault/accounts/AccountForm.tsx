@@ -4,22 +4,26 @@ import { useActionState, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2, Trash2 } from "lucide-react";
 import type { Account } from "@/payload-types";
-import { accountPlatforms, accountStatuses, accountVisibilities } from "@/lib/options";
+import { accountLoginMethods, accountPlatforms, accountStatuses, accountVisibilities, hasOwnPassword } from "@/lib/options";
 import type { UserOption } from "@/lib/projects";
 import { ConfirmButton } from "@/components/hub/ConfirmButton";
 import { ErrorText, Input, Label, buttonPrimary, fieldClass } from "@/components/hub/form";
 import { Select } from "@/components/hub/Select";
+import { MultiSelect } from "@/components/hub/MultiSelect";
 import { deleteAccount, saveAccount, type AccountFormState } from "./actions";
 
 const initial: AccountFormState = { status: "idle" };
 const relId = (v: number | { id: number } | null | undefined) => (typeof v === "object" && v ? v.id : (v ?? null));
+const relIds = (v: SafeAccount["holders"]) => (v ?? []).map((h) => String(typeof h === "object" ? h.id : h));
 
 /** The account without its ciphertext; the page strips it before handing the record to the browser. */
 export type SafeAccount = Omit<Account, "passwordEnc">;
 
 /** One company account: where it is, who holds it, how to get back in, and the password if the team keeps it here. */
-export function AccountForm({ account, users, hasPassword = false, readOnly = false }: { account?: SafeAccount; users: UserOption[]; hasPassword?: boolean; readOnly?: boolean }) {
+export function AccountForm({ account, users, accounts = [], hasPassword = false, readOnly = false }: { account?: SafeAccount; users: UserOption[]; accounts?: { id: number; name: string }[]; hasPassword?: boolean; readOnly?: boolean }) {
   const [show, setShow] = useState(false);
+  const [method, setMethod] = useState<string>(account?.loginMethod ?? "password");
+  const ownPassword = hasOwnPassword(method);
   const router = useRouter();
   const [state, action, pending] = useActionState(async (prev: AccountFormState, fd: FormData) => {
     const r = await saveAccount(prev, fd);
@@ -29,7 +33,7 @@ export function AccountForm({ account, users, hasPassword = false, readOnly = fa
     }
     return r;
   }, initial);
-  const holder = relId(account?.holder);
+  const via = relId(account?.viaAccount);
   return (
     <form action={action} className="space-y-5 rounded-2xl border border-line bg-white p-5 shadow-[0_1px_2px_rgba(15,27,51,0.04)] sm:p-6">
       {account && <input type="hidden" name="id" value={account.id} />}
@@ -52,9 +56,20 @@ export function AccountForm({ account, users, hasPassword = false, readOnly = fa
             <Input id="ac-url" name="url" type="url" defaultValue={account?.url ?? ""} placeholder="https://" />
           </div>
           <div>
-            <Label htmlFor="ac-holder">Pemegang</Label>
-            <Select id="ac-holder" name="holder" defaultValue={holder ? String(holder) : undefined} placeholder="Pilih anggota" options={users.map((u) => ({ label: u.name, value: String(u.id) }))} />
+            <Label htmlFor="ac-holders">Pemegang</Label>
+            <MultiSelect name="holders" placeholder="Pilih anggota" defaultValue={relIds(account?.holders)} options={users.map((u) => ({ label: u.name, value: String(u.id) }))} />
           </div>
+          <div>
+            <Label htmlFor="ac-method">Cara masuk</Label>
+            <Select id="ac-method" name="loginMethod" value={method} onValueChange={setMethod} options={accountLoginMethods} />
+          </div>
+          {!ownPassword && (
+            <div className="sm:col-span-2">
+              <Label htmlFor="ac-via">Masuk lewat akun</Label>
+              <Select id="ac-via" name="viaAccount" defaultValue={via ? String(via) : undefined} placeholder="Pilih akun yang dipakai untuk masuk" options={accounts.filter((a) => a.id !== account?.id).map((a) => ({ label: a.name, value: String(a.id) }))} />
+              <p className="mt-1 text-xs text-muted">Akun ini tidak punya password sendiri. Yang memegang akun di atas otomatis bisa masuk ke sini.</p>
+            </div>
+          )}
           <div>
             <Label htmlFor="ac-email">Email login</Label>
             <Input id="ac-email" name="loginEmail" defaultValue={account?.loginEmail ?? ""} placeholder="admin@zynergy.co.id" />
@@ -67,6 +82,7 @@ export function AccountForm({ account, users, hasPassword = false, readOnly = fa
             <Label htmlFor="ac-2fa">Verifikasi dua langkah</Label>
             <Input id="ac-2fa" name="twoFactor" defaultValue={account?.twoFactor ?? ""} placeholder="SMS ke HP kantor, Authenticator di HP siapa" />
           </div>
+          {ownPassword && (
           <div className="space-y-3 rounded-xl border border-line bg-surface-soft/60 p-3 sm:col-span-2">
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
@@ -91,6 +107,7 @@ export function AccountForm({ account, users, hasPassword = false, readOnly = fa
             </div>
             <p className="text-xs text-muted">Disimpan terenkripsi di Hub. Setiap kali ditampilkan, tercatat di Aktivitas.</p>
           </div>
+          )}
           <div className="sm:col-span-2">
             <Label htmlFor="ac-pw">Password juga disimpan di</Label>
             <Input id="ac-pw" name="passwordWhere" defaultValue={account?.passwordWhere ?? ""} placeholder="Bitwarden tim, brankas fisik" />

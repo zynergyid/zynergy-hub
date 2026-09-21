@@ -45,7 +45,7 @@ export function MultiSelect({
           className,
         )}
       >
-        <span className={cn("truncate", labels.length === 0 && "font-normal text-muted")}>
+        <span className={cn("min-w-0 flex-1 truncate", labels.length === 0 && "font-normal text-muted")}>
           {labels.length === 0 ? placeholder : labels.join(", ")}
         </span>
         <ChevronDown className={cn("shrink-0 text-muted", size === "field" ? "size-4" : "size-3.5")} />

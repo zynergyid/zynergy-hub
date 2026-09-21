@@ -12,7 +12,6 @@ import { ExpiryPill } from "@/components/hub/ExpiryPill";
 import { PageHeader } from "@/components/hub/PageHeader";
 import { SearchForm } from "@/components/hub/SearchForm";
 import { buttonOutline, buttonPrimary } from "@/components/hub/form";
-import { VaultTabs } from "./VaultTabs";
 
 export const metadata: Metadata = { title: "Brankas Dokumen" };
 export const dynamic = "force-dynamic";
@@ -31,7 +30,6 @@ export default async function VaultPage({ searchParams }: { searchParams: Promis
   return (
     <div className="space-y-5">
       <PageHeader title="Brankas Dokumen" subtitle={`${docs.length} dokumen perusahaan${category ? " di kategori ini" : ""}. Untuk registrasi vendor, tender, dan bank.`}>
-        <VaultTabs active="documents" />
         {editable && (
           <Link href="/vault/new" className={buttonPrimary}>
             <Plus className="size-4" />

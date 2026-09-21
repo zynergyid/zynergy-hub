@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { getPayloadClient } from "@/lib/payload";
 import { canEditVault, getSessionUser } from "@/lib/session";
 import { pick, text } from "@/lib/form-data";
-import { accountPlatforms, accountStatuses, accountVisibilities } from "@/lib/options";
+import { accountLoginMethods, accountPlatforms, accountStatuses, accountVisibilities, hasOwnPassword } from "@/lib/options";
 import { canRevealPassword } from "@/lib/accounts";
 import { logActivity } from "@/lib/audit";
 import { open, seal } from "@/lib/secret-box";
@@ -30,14 +30,20 @@ export async function saveAccount(_prev: AccountFormState, formData: FormData): 
   // The password is never trimmed or logged; empty means "leave as is", the checkbox clears it.
   const password = String(formData.get("password") ?? "");
   const clearPassword = text(formData, "clearPassword") === "1";
+  const method = pick(accountLoginMethods, text(formData, "loginMethod")) ?? "password";
+  const own = hasOwnPassword(method);
+  const holders = formData.getAll("holders").map((v) => Number(v)).filter((n) => n > 0);
   const data = {
     platform: pick(accountPlatforms, text(formData, "platform")) ?? "lainnya",
+    loginMethod: method,
+    viaAccount: own ? null : idOrNull(text(formData, "viaAccount")),
+    holders,
     visibility: pick(accountVisibilities, text(formData, "visibility")) ?? "tim",
-    ...(password.trim() ? { passwordEnc: seal(password) } : clearPassword ? { passwordEnc: null } : {}),
+    // An account you open with Google or GitHub has no password of its own, so nothing is kept for it.
+    ...(!own ? { passwordEnc: null } : password.trim() ? { passwordEnc: seal(password) } : clearPassword ? { passwordEnc: null } : {}),
     status: pick(accountStatuses, text(formData, "status")) ?? "belum",
     name,
     url: url || null,
-    holder: idOrNull(text(formData, "holder")),
     loginEmail: text(formData, "loginEmail") || null,
     phone: text(formData, "phone") || null,
     twoFactor: text(formData, "twoFactor") || null,

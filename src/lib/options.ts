@@ -125,9 +125,15 @@ export const prospectSectors = [
   { label: "Lainnya", value: "lainnya" },
 ] as const;
 
+/** Supply targets use the industrial list above; Digitalin and Apps reuse the client business types, so the answer carries over when the target becomes a client. */
+export const sectorsFor = (unit: string) => (unit === "supply" ? prospectSectors : businessTypes);
+export const sectorOptions = [...prospectSectors, ...businessTypes.filter((b) => !prospectSectors.some((s) => s.value === b.value))];
+export const sectorLabel = new Map<string, string>(sectorOptions.map((s) => [s.value, s.label]));
+
 export const prospectSources = [
   { label: "Klien lama", value: "klien-lama" },
-  { label: "Referensi", value: "referensi" },
+  { label: "Kenalan sendiri", value: "kenalan" },
+  { label: "Referensi (dikenalkan orang lain)", value: "referensi" },
   { label: "Riset sendiri", value: "riset" },
   { label: "Asosiasi (IMA, Kadin)", value: "asosiasi" },
   { label: "LinkedIn", value: "linkedin" },
@@ -156,6 +162,15 @@ export const outreachLogLabel = new Map<string, string>(outreachLogTypes.map((t)
 
 /** Days after a message (and after each follow-up) before the next nudge is due. */
 export const FOLLOW_UP_DAYS = 7;
+/** A person answers in days, a company in weeks, so the reminder is set closer for one than the other. */
+export const followUpDays = (kind?: string | null) => (kind === "perorangan" ? 3 : FOLLOW_UP_DAYS);
+
+/** Section headings that give the research a shape; the team fills them in, or /outreach does. */
+export const researchTemplates: Record<string, string> = {
+  usaha: "Profil: apa yang mereka kerjakan, seberapa besar\nKebutuhan: barang atau jasa yang mungkin mereka beli\nYang memutuskan: nama dan jabatan\nSyarat vendor: registrasi, dokumen, termin\nPeluang tercepat: \nSumber: ",
+  perorangan: "Profil Google: sudah ada atau belum, jam buka benar, foto layak\nUlasan: berapa banyak, dibalas atau tidak\nInstagram: aktif atau tidak, unggahan terakhir kapan\nWebsite: ada atau belum\nPeluang tercepat: satu hal yang paling cepat menaikkan penjualan\nSumber: ",
+};
+
 
 /** Company documents kept in the vault. Order = how they appear on the page. */
 export const vaultCategories = [
@@ -195,6 +210,19 @@ export const accountVisibilities = [
   { label: "Hanya admin dan pemegang", value: "rahasia" },
 ] as const;
 export const accountVisibilityLabel = new Map<string, string>(accountVisibilities.map((v) => [v.value, v.label]));
+/** How you actually get into an account. "Masuk dengan ..." means there is no password of its own; the linked account is the real key. */
+export const accountLoginMethods = [
+  { label: "Email dan password", value: "password" },
+  { label: "Masuk dengan Google", value: "google" },
+  { label: "Masuk dengan GitHub", value: "github" },
+  { label: "Masuk dengan Apple", value: "apple" },
+  { label: "Masuk dengan Facebook", value: "facebook" },
+  { label: "Kode OTP ke nomor HP", value: "otp" },
+  { label: "Lainnya", value: "lainnya" },
+] as const;
+export const accountLoginMethodLabel = new Map<string, string>(accountLoginMethods.map((m) => [m.value, m.label]));
+export const hasOwnPassword = (method?: string | null) => (method ?? "password") === "password";
+
 export const accountStatuses = [
   { label: "Belum dibuat", value: "belum" },
   { label: "Aktif", value: "aktif" },

@@ -7,7 +7,7 @@ import { getPayloadClient } from "@/lib/payload";
 import { canEditClients, getSessionUser } from "@/lib/session";
 import { canWriteUnit } from "@/lib/access";
 import { dateOrNull, pick, text } from "@/lib/form-data";
-import { FOLLOW_UP_DAYS, outreachChannels, prospectSectors, prospectSources, prospectStatuses, units, type ProspectStatus, clientKinds } from "@/lib/options";
+import { followUpDays, outreachChannels, sectorOptions, businessTypes, prospectSources, prospectStatuses, units, type ProspectStatus, clientKinds } from "@/lib/options";
 
 export interface ProspectFormState {
   status: "idle" | "success" | "error";
@@ -88,11 +88,13 @@ export async function saveProspect(_prev: ProspectFormState, formData: FormData)
       kind,
       company,
       client: clientId,
-      sector: pick(prospectSectors, text(formData, "sector")) ?? null,
+      sector: pick(sectorOptions, text(formData, "sector")) ?? null,
       city: text(formData, "city") || null,
       source,
       website: text(formData, "website") || null,
       linkedin: text(formData, "linkedin") || null,
+      googleProfile: unit === "supply" ? null : text(formData, "googleProfile") || null,
+      instagram: unit === "supply" ? null : text(formData, "instagram") || null,
       contacts,
       history: text(formData, "history") || null,
       notes: text(formData, "notes") || null,
@@ -169,7 +171,7 @@ export async function markSent(formData: FormData) {
       status: "terkirim",
       lastSentAt: sentAt,
       sentChannel: channel,
-      nextFollowUpAt: plusDays(new Date(sentAt), FOLLOW_UP_DAYS),
+      nextFollowUpAt: plusDays(new Date(sentAt), followUpDays(ctx.prospect.kind)),
       followUpCount: 0,
       log: withLog(ctx.prospect, "kirim", `Dikirim via ${channel}${text(formData, "note") ? `: ${text(formData, "note")}` : ""}`),
     },
@@ -187,7 +189,7 @@ export async function logFollowUp(formData: FormData) {
     id,
     data: {
       followUpCount: (ctx.prospect.followUpCount ?? 0) + 1,
-      nextFollowUpAt: plusDays(new Date(), FOLLOW_UP_DAYS),
+      nextFollowUpAt: plusDays(new Date(), followUpDays(ctx.prospect.kind)),
       log: withLog(ctx.prospect, "tindak-lanjut", text(formData, "note")),
     },
   });
@@ -266,7 +268,8 @@ export async function convertToClient(formData: FormData) {
       whatsapp: c?.phone ?? null,
       email: c?.email ?? null,
       city: p.city ?? null,
-      businessType: supply ? "industri" : "lainnya",
+      // The sector answer is already a client business type for Digitalin and Apps.
+      businessType: supply ? "industri" : (businessTypes.find((b) => b.value === p.sector)?.value ?? "lainnya"),
       status: "aktif",
       links: { website: p.website ?? null },
       supply: supply ? { legalName: p.company, paymentTermsDays: 30 } : undefined,
@@ -301,6 +304,9 @@ export async function startOutreachFromClient(formData: FormData) {
       client: client.id,
       city: client.city ?? null,
       website: client.links?.website ?? null,
+      googleProfile: client.links?.googleProfile ?? null,
+      instagram: client.links?.instagram ?? null,
+      sector: businessTypes.find((b) => b.value === client.businessType)?.value ?? null,
       source: "klien-lama",
       contacts: client.owner ? [{ name: client.owner, role: null, email: client.email ?? null, phone: client.whatsapp ?? null, linkedin: null }] : [],
       status: "baru",

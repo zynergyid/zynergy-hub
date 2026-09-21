@@ -28,10 +28,13 @@ export type IconName =
   | "inbox"
   | "team"
   | "calendar"
+  | "key"
   | "trophy"
   | "more";
 
 export interface NavItem {
+  /** Shorter label for the phone bar, where a wrapped label pushes its icon out of line. */
+  short?: string;
   href: string;
   label: string;
   icon: IconName;
@@ -69,7 +72,7 @@ export const navSections: NavSection[] = [
   },
   {
     title: "Program",
-    items: [{ href: "/perintis", label: "PERINTIS 2026", icon: "trophy" }],
+    items: [{ href: "/perintis", label: "PERINTIS 2026", short: "PERINTIS", icon: "trophy" }],
   },
   {
     title: "Klien",
@@ -98,7 +101,10 @@ export const navSections: NavSection[] = [
   },
   {
     title: "Arsip",
-    items: [{ href: "/vault", label: "Brankas Dokumen", icon: "vault" }],
+    items: [
+      { href: "/vault", label: "Brankas Dokumen", icon: "vault" },
+      { href: "/vault/accounts", label: "Akun digital", icon: "key" },
+    ],
   },
   {
     // Disappears once these are built and move into Pekerjaan.
@@ -134,4 +140,14 @@ export function mobileNav(v: NavViewer): { tabs: NavItem[]; more: NavSection[] }
     .map((s) => ({ title: s.title, items: s.items.filter((i) => canSeeNav(i, v) && !shown.has(i.href)) }))
     .filter((s) => s.items.length > 0);
   return { tabs, more };
+}
+
+const navHrefs = navSections.flatMap((s) => s.items.map((i) => i.href.split("#")[0]));
+const matches = (pathname: string, href: string) => (href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`));
+
+/** Highlight the deepest item that matches, so "Akun digital" does not also light up "Brankas Dokumen". */
+export function isNavActive(pathname: string, href: string): boolean {
+  const base = href.split("#")[0];
+  if (!matches(pathname, base)) return false;
+  return !navHrefs.some((h) => h.length > base.length && matches(pathname, h));
 }

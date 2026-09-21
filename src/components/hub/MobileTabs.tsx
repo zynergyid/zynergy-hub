@@ -5,16 +5,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserRound, X } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { mobileNav, type NavItem, type NavViewer } from "./nav";
+import { isNavActive, mobileNav, type NavItem, type NavViewer } from "./nav";
 import { NavIcon } from "./NavIcon";
 import { LogoutButton } from "./LogoutButton";
 
-const isActive = (pathname: string, item: NavItem) => {
-  const base = item.href.split("#")[0];
-  return base === "/" ? pathname === "/" : pathname === base || pathname.startsWith(base + "/");
-};
+const isActive = (pathname: string, item: NavItem) => isNavActive(pathname, item.href);
 
-const tabClass = (active: boolean) => cn("flex w-full flex-col items-center gap-0.5 py-2 text-[11px] font-semibold", active ? "text-primary" : "text-muted");
+const tabClass = (active: boolean) => cn("flex h-14 w-full flex-col items-center justify-center gap-0.5 px-0.5 text-[11px] font-semibold", active ? "text-primary" : "text-muted");
 
 /** Bottom bar with the main tabs and a "Lainnya" sheet holding the rest of the sidebar. */
 export function MobileTabs({ viewer }: { viewer: NavViewer }) {
@@ -85,15 +82,15 @@ export function MobileTabs({ viewer }: { viewer: NavViewer }) {
           {tabs.map((t) => (
             <li key={t.href} className="flex-1">
               <Link href={t.href} className={tabClass(isActive(pathname, t) && !open)}>
-                <NavIcon name={t.icon} className="size-5" />
-                {t.label}
+                <NavIcon name={t.icon} className="size-5 shrink-0" />
+                <span className="w-full truncate text-center">{t.short ?? t.label}</span>
               </Link>
             </li>
           ))}
           <li className="flex-1">
             <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className={tabClass(open || moreActive)}>
-              <NavIcon name="more" className="size-5" />
-              Lainnya
+              <NavIcon name="more" className="size-5 shrink-0" />
+              <span className="w-full truncate text-center">Lainnya</span>
             </button>
           </li>
         </ul>

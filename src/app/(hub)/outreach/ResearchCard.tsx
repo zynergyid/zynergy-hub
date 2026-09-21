@@ -1,26 +1,40 @@
 "use client";
 
-import { useState } from "react";
-import { ExternalLink, Pencil } from "lucide-react";
+import { useRef, useState } from "react";
+import { ExternalLink, Pencil, ListChecks } from "lucide-react";
 import { parseResearch, shortUrl } from "@/lib/research";
+import { researchTemplates } from "@/lib/options";
 import { Card } from "@/components/hub/Card";
 import { Linkify } from "@/components/hub/Linkify";
 import { buttonOutline, buttonPrimary, fieldClass } from "@/components/hub/form";
 import { saveResearch } from "./actions";
 
 /** Research as tidy sections and source links; the raw text is only shown while editing. */
-export function ResearchCard({ id, research, researchedAt, editable }: { id: number; research: string; researchedAt: string | null; editable: boolean }) {
+export function ResearchCard({ id, kind, research, researchedAt, editable }: { id: number; kind?: string | null; research: string; researchedAt: string | null; editable: boolean }) {
   const [editing, setEditing] = useState(false);
+  const box = useRef<HTMLTextAreaElement>(null);
   const parsed = parseResearch(research);
+  // A person and a company need different questions answered, so the blank page starts with the right headings.
+  const template = researchTemplates[kind === "perorangan" ? "perorangan" : "usaha"];
+  const useTemplate = () => {
+    const el = box.current;
+    if (!el) return;
+    el.value = el.value.trim() ? `${el.value.trimEnd()}\n${template}` : template;
+    el.focus();
+  };
 
   if (editable && (editing || !research)) {
     return (
       <Card title="Hasil riset">
         <form action={saveResearch} className="space-y-3">
           <input type="hidden" name="id" value={id} />
-          <textarea name="research" rows={12} defaultValue={research} className={`${fieldClass} font-mono text-xs`} placeholder={"Kosong. Jalankan /outreach di Claude Code untuk mengisi otomatis, atau tulis sendiri dengan judul bagian, misalnya:\nProfil: ...\nSinyal kebutuhan pengadaan: ...\nSumber: https://..."} />
+          <textarea ref={box} name="research" rows={12} defaultValue={research} className={`${fieldClass} font-mono text-xs`} placeholder={"Kosong. Tekan Pakai kerangka untuk judul bagiannya, jalankan /outreach di Claude Code untuk mengisi otomatis, atau tulis sendiri."} />
           <div className="flex flex-wrap items-center gap-2">
             <button type="submit" className={buttonPrimary}>Simpan riset</button>
+            <button type="button" onClick={useTemplate} className={buttonOutline}>
+              <ListChecks className="size-4" />
+              Pakai kerangka
+            </button>
             {research && (
               <button type="button" onClick={() => setEditing(false)} className={buttonOutline}>Batal</button>
             )}

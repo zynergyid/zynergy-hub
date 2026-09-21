@@ -7,14 +7,8 @@ import { Avatar } from "./Avatar";
 import { LogoutButton } from "./LogoutButton";
 import { cn } from "@/lib/cn";
 import { roleLabel } from "@/lib/options";
-import { canSeeNav, navSections, type NavViewer } from "./nav";
+import { canSeeNav, isNavActive, navSections, type NavViewer } from "./nav";
 import { NavIcon } from "./NavIcon";
-
-function isActive(pathname: string, href: string) {
-  const base = href.split("#")[0];
-  if (base === "/") return pathname === "/";
-  return pathname === base || pathname.startsWith(base + "/");
-}
 
 export function Sidebar({ viewer, userName, photoUrl }: { viewer: NavViewer; userName: string; photoUrl?: string | null }) {
   const pathname = usePathname();
@@ -42,7 +36,7 @@ export function Sidebar({ viewer, userName, photoUrl }: { viewer: NavViewer; use
               )}
               <ul className="space-y-0.5">
                 {items.map((item) => {
-                  const active = isActive(pathname, item.href);
+                  const active = isNavActive(pathname, item.href);
                   return (
                     <li key={item.href}>
                       <Link

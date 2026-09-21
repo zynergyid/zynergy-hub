@@ -52,6 +52,9 @@ Jangan pernah mengarang riwayat yang tidak tertulis.
 Setiap target punya `kind`: `usaha` (perusahaan, toko, klinik, warung) atau `perorangan` (satu orang yang dihubungi sebagai pribadi, misalnya dokter praktik atau pemilik usaha kecil). Untuk `perorangan` dan usaha kecil unit Digitalin:
 
 - Riset: cari jejak publiknya (Profil Google Bisnis, Instagram, marketplace, ulasan), bukan profil perusahaan atau struktur pengadaan. Tulis apa yang sudah bagus dan satu hal konkret yang bisa dibantu (belum ada website, Instagram jarang diperbarui, ulasan belum dibalas).
+- Sumber `kenalan` berarti Danish atau tim sudah kenal orangnya: buka dengan sapaan wajar tanpa memperkenalkan Zynergy dari nol, dan jangan memakai kalimat penjualan formal. Sumber `referensi` berarti ada penghubung: sebut nama penghubungnya di kalimat pertama.
+- Sektor: untuk unit Supply pilih dari daftar industri (tambang, migas, EPC, manufaktur, distributor). Untuk Digitalin dan Apps pilih dari daftar jenis usaha yang sama dengan halaman Klien (kuliner, kesehatan, jasa-lokal, sekolah, toko, b2b, industri), supaya nilainya ikut terbawa saat target jadi klien.
+- Kerangka riset perorangan (dipakai tombol "Pakai kerangka" di Hub): Profil Google, Ulasan, Instagram, Website, Peluang tercepat, Sumber. Isi tiap baris dengan temuan nyata, bukan tebakan.
 - Draf: satu pesan WhatsApp pendek (3 sampai 5 kalimat), sapaan dengan nama, sebutkan hal konkret dari riset, tawarkan satu langkah kecil (obrolan 15 menit), tanpa jargon dan tanpa lampiran. Untuk `usaha` besar tetap pakai format email perkenalan di bagian 3.
 
 ## 2. Riset (status `baru`)

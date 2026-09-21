@@ -1,10 +1,10 @@
 import type { Account } from "@/payload-types";
 import type { SessionUser } from "@/lib/session";
 
-export const holderIdOf = (a: Pick<Account, "holder">): number | null => (typeof a.holder === "object" && a.holder ? a.holder.id : (a.holder ?? null));
+export const holderIdsOf = (a: Pick<Account, "holders">): number[] => (a.holders ?? []).map((h) => (typeof h === "object" ? h.id : h));
 
-/** "tim": anyone who can open Brankas. "rahasia": only an Admin or the account's holder. */
-export function canRevealPassword(user: SessionUser, account: Pick<Account, "visibility" | "holder">): boolean {
+/** "tim": anyone who can open Brankas. "rahasia": only an Admin or one of the account's holders. */
+export function canRevealPassword(user: SessionUser, account: Pick<Account, "visibility" | "holders">): boolean {
   if (account.visibility !== "rahasia") return true;
-  return user.isAdmin || holderIdOf(account) === user.id;
+  return user.isAdmin || holderIdsOf(account).includes(user.id);
 }

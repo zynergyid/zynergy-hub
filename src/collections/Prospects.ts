@@ -1,6 +1,6 @@
 import type { CollectionConfig } from "payload";
 import { createWith, enforceUnit, unitRead, writeWith } from "@/lib/access";
-import { outreachChannels, outreachLogTypes, prospectSectors, prospectSources, prospectStatuses, units, clientKinds } from "@/lib/options";
+import { outreachChannels, outreachLogTypes, sectorOptions, prospectSources, prospectStatuses, units, clientKinds } from "@/lib/options";
 import { auditHooks } from "@/lib/audit";
 
 /**
@@ -29,7 +29,7 @@ export const Prospects: CollectionConfig = {
     {
       type: "row",
       fields: [
-        { name: "sector", type: "select", label: "Sektor", options: [...prospectSectors] },
+        { name: "sector", type: "select", label: "Sektor atau jenis usaha", options: [...sectorOptions] },
         { name: "city", type: "text", label: "Kota / lokasi" },
         { name: "source", type: "select", label: "Sumber", options: [...prospectSources] },
       ],
@@ -38,7 +38,14 @@ export const Prospects: CollectionConfig = {
       type: "row",
       fields: [
         { name: "website", type: "text", label: "Website" },
-        { name: "linkedin", type: "text", label: "LinkedIn perusahaan" },
+        { name: "linkedin", type: "text", label: "LinkedIn" },
+      ],
+    },
+    {
+      type: "row",
+      fields: [
+        { name: "googleProfile", type: "text", label: "Profil Google Bisnis" },
+        { name: "instagram", type: "text", label: "Instagram" },
       ],
     },
     {

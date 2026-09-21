@@ -9,7 +9,7 @@ import { canWriteUnit } from "@/lib/access";
 import { getClientOptions, orderTotal } from "@/lib/orders";
 import { clientOfProspect, followUpDue, nextAction, ownerOf, primaryContact } from "@/lib/outreach";
 import { daysLabel, formatDate, formatIDR, todayLocal } from "@/lib/format";
-import { outreachChannels, outreachLogLabel, prospectSectors, prospectStatuses, unitLabel } from "@/lib/options";
+import { outreachChannels, outreachLogLabel, sectorLabel, prospectStatuses, unitLabel } from "@/lib/options";
 import { cn } from "@/lib/cn";
 import { Card } from "@/components/hub/Card";
 import { ConfirmButton } from "@/components/hub/ConfirmButton";
@@ -28,7 +28,6 @@ import { addNote, convertToClient, logFollowUp, logReply, markSent, saveDraft, s
 export const metadata: Metadata = { title: "Detail target" };
 export const dynamic = "force-dynamic";
 
-const sectorLabel = new Map<string, string>(prospectSectors.map((s) => [s.value, s.label]));
 const channelLabel = new Map<string, string>(outreachChannels.map((c) => [c.value, c.label]));
 
 export default async function ProspectDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<Search> }) {
@@ -51,8 +50,17 @@ export default async function ProspectDetailPage({ params, searchParams }: { par
     client ? payload.find({ collection: "orders", where: { client: { equals: client.id } }, sort: "-orderDate", limit: 5, depth: 0 }) : null,
   ]);
   const draft = p.draft ?? "";
-  const waHref = contact?.phone ? `https://wa.me/${contact.phone.replace(/\D/g, "")}?text=${encodeURIComponent(draft)}` : null;
-  const mailHref = contact?.email ? `mailto:${contact.email}?subject=${encodeURIComponent(p.draftSubject ?? "")}&body=${encodeURIComponent(draft)}` : null;
+  const url = (v: string) => (/^https?:\/\//i.test(v) ? v : `https://${v}`);
+  const handle = (v: string) => (/^https?:\/\//i.test(v) ? v : `https://instagram.com/${v.replace(/^@/, "")}`);
+  const links = [
+    p.website ? { label: "website", href: url(p.website) } : null,
+    p.googleProfile ? { label: "Profil Google", href: url(p.googleProfile) } : null,
+    p.instagram ? { label: "Instagram", href: handle(p.instagram) } : null,
+    p.linkedin ? { label: "LinkedIn", href: url(p.linkedin) } : null,
+  ].filter((l): l is { label: string; href: string } => Boolean(l));
+  // Open the chat or the mail client for the first contact, carrying the saved draft when there is one.
+  const waHref = contact?.phone ? `https://wa.me/${contact.phone.replace(/\D/g, "")}${draft ? `?text=${encodeURIComponent(draft)}` : ""}` : null;
+  const mailHref = contact?.email ? `mailto:${contact.email}?subject=${encodeURIComponent(p.draftSubject ?? "")}${draft ? `&body=${encodeURIComponent(draft)}` : ""}` : null;
   const beforeSend = p.status === "baru" || p.status === "riset" || p.status === "draf";
   const log = [...(p.log ?? [])].reverse();
 
@@ -70,22 +78,36 @@ export default async function ProspectDetailPage({ params, searchParams }: { par
           </div>
           <p className="text-sm text-muted">
             {[p.kind === "perorangan" ? "Perorangan" : null, p.sector ? sectorLabel.get(p.sector) : null, p.city, owner ? `PJ ${owner.name}` : null].filter(Boolean).join(" · ") || "detail belum lengkap"}
-            {p.website && (
-              <>
+            {links.map((l) => (
+              <span key={l.label}>
                 {" "}·{" "}
-                <a href={p.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:text-primary">
-                  website <ExternalLink className="size-3" />
+                <a href={l.href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:text-primary">
+                  {l.label} <ExternalLink className="size-3" />
                 </a>
-              </>
-            )}
+              </span>
+            ))}
           </p>
           <p className="mt-1 text-sm font-semibold text-ink">Langkah berikutnya: {nextAction(p)}</p>
         </div>
-        {client && (
-          <Link href={`/clients/${client.id}`} className={buttonOutline}>
-            Buka klien
-          </Link>
-        )}
+        <div className="flex flex-wrap gap-2">
+          {waHref && (
+            <a href={waHref} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-xl bg-secondary px-4 py-2.5 text-sm font-bold text-white hover:bg-secondary-dark">
+              <MessageCircle className="size-4" />
+              WhatsApp
+            </a>
+          )}
+          {mailHref && (
+            <a href={mailHref} className={buttonOutline}>
+              <Mail className="size-4" />
+              Email
+            </a>
+          )}
+          {client && (
+            <Link href={`/clients/${client.id}`} className={buttonOutline}>
+              Buka klien
+            </Link>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-5">
@@ -101,7 +123,7 @@ export default async function ProspectDetailPage({ params, searchParams }: { par
                   </div>
                   <div>
                     <Label htmlFor="dr-channel">Kanal</Label>
-                    <Select id="dr-channel" name="draftChannel" defaultValue={p.draftChannel ?? (contact?.email ? "email" : "whatsapp")} options={outreachChannels} />
+                    <Select id="dr-channel" name="draftChannel" defaultValue={p.draftChannel ?? (p.kind === "perorangan" || !contact?.email ? "whatsapp" : "email")} options={outreachChannels} />
                   </div>
                 </div>
                 <div>
@@ -111,18 +133,8 @@ export default async function ProspectDetailPage({ params, searchParams }: { par
                 <div className="flex flex-wrap items-center gap-2">
                   <button type="submit" className={buttonPrimary}>Simpan draf</button>
                   {draft && <CopyButton text={draft} label="Salin isi" />}
-                  {draft && waHref && (
-                    <a href={waHref} target="_blank" rel="noopener noreferrer" className={buttonOutline}>
-                      <MessageCircle className="size-4" /> Buka WhatsApp
-                    </a>
-                  )}
-                  {draft && mailHref && (
-                    <a href={mailHref} className={buttonOutline}>
-                      <Mail className="size-4" /> Buka email
-                    </a>
-                  )}
                 </div>
-                <p className="text-xs text-muted">Tombol WhatsApp dan email memakai draf yang tersimpan. Setelah mengirim, tandai di kartu Progres.</p>
+                <p className="text-xs text-muted">Simpan dulu, lalu pakai tombol WhatsApp atau Email di atas; isinya terbawa sebagai pesan. Setelah mengirim, tandai di kartu Progres.</p>
               </form>
             ) : draft ? (
               <pre className="whitespace-pre-wrap font-sans text-sm">{draft}</pre>
@@ -139,7 +151,7 @@ export default async function ProspectDetailPage({ params, searchParams }: { par
                 <div className="grid gap-3 sm:grid-cols-3">
                   <div>
                     <Label htmlFor="ms-channel">Kanal</Label>
-                    <Select id="ms-channel" name="channel" defaultValue={p.draftChannel ?? (contact?.email ? "email" : "whatsapp")} options={outreachChannels} />
+                    <Select id="ms-channel" name="channel" defaultValue={p.draftChannel ?? (p.kind === "perorangan" || !contact?.email ? "whatsapp" : "email")} options={outreachChannels} />
                   </div>
                   <div>
                     <Label htmlFor="ms-date">Tanggal kirim</Label>
@@ -227,7 +239,7 @@ export default async function ProspectDetailPage({ params, searchParams }: { par
             )}
           </Card>
 
-          <ResearchCard id={p.id} research={p.research ?? ""} researchedAt={p.researchedAt ? formatDate(p.researchedAt) : null} editable={editable} />
+          <ResearchCard id={p.id} kind={p.kind} research={p.research ?? ""} researchedAt={p.researchedAt ? formatDate(p.researchedAt) : null} editable={editable} />
 
           <Card title="Riwayat">
             {log.length === 0 ? (

@@ -7,7 +7,7 @@ import { resolveUnit } from "@/lib/finance";
 import { followUpDue, getProspects, nextAction, ownerOf, primaryContact } from "@/lib/outreach";
 import { daysLabel } from "@/lib/format";
 import { buildHref, first, type Search } from "@/lib/search";
-import { prospectSectors, prospectStatuses, unitLabel, type ProspectStatus } from "@/lib/options";
+import { sectorLabel, prospectStatuses, unitLabel, type ProspectStatus } from "@/lib/options";
 import { cn } from "@/lib/cn";
 import { Avatar } from "@/components/hub/Avatar";
 import { EmptyState } from "@/components/hub/EmptyState";
@@ -44,7 +44,6 @@ export default async function OutreachPage({ searchParams }: { searchParams: Pro
   const base: Search = { unit: unit === "semua" ? undefined : unit, status: filter === "aktif" ? undefined : filter, q: q || undefined };
   const rows = await getProspects({ unit, allowed, status: filter, q });
   const due = rows.filter(followUpDue).length;
-  const sectorLabel = new Map<string, string>(prospectSectors.map((s) => [s.value, s.label]));
 
   return (
     <div className="space-y-5">

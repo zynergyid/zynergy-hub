@@ -50,7 +50,8 @@ export function PhotoPicker({ onChange, post }: { onChange: (file: File | null) 
   return (
     <div>
       <Label htmlFor="pp-file">{post ? "Foto unggahan" : "Foto dokumentasi"}</Label>
-      <input ref={input} id="pp-file" type="file" accept="image/*" capture="environment" onChange={pick} className="hidden" />
+      {/* No capture attribute: the phone then offers the gallery as well as the camera. */}
+      <input ref={input} id="pp-file" type="file" accept="image/*" onChange={pick} className="hidden" />
       <div className="flex items-center gap-3">
         {preview && (
           // eslint-disable-next-line @next/next/no-img-element

@@ -53,7 +53,9 @@ export function Select({
           className,
         )}
       >
-        <RadixSelect.Value placeholder={placeholder} />
+        <span className="min-w-0 flex-1 truncate">
+          <RadixSelect.Value placeholder={placeholder} />
+        </span>
         <RadixSelect.Icon>
           <ChevronDown className={cn("shrink-0 text-muted", size === "field" ? "size-4" : "size-3.5")} />
         </RadixSelect.Icon>

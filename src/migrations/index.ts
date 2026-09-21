@@ -33,6 +33,9 @@ import * as migration_20260921_101122_perintis from './20260921_101122_perintis'
 import * as migration_20260921_102953_event_kind_mentoring from './20260921_102953_event_kind_mentoring';
 import * as migration_20260921_111635_prospect_kind from './20260921_111635_prospect_kind';
 import * as migration_20260921_113339_accounts_password from './20260921_113339_accounts_password';
+import * as migration_20260921_134118_prospect_sector_and_links from './20260921_134118_prospect_sector_and_links';
+import * as migration_20260921_140250_prospect_source_kenalan from './20260921_140250_prospect_source_kenalan';
+import * as migration_20260921_141031_account_holders_and_login from './20260921_141031_account_holders_and_login';
 
 export const migrations = [
   {
@@ -208,6 +211,21 @@ export const migrations = [
   {
     up: migration_20260921_113339_accounts_password.up,
     down: migration_20260921_113339_accounts_password.down,
-    name: '20260921_113339_accounts_password'
+    name: '20260921_113339_accounts_password',
+  },
+  {
+    up: migration_20260921_134118_prospect_sector_and_links.up,
+    down: migration_20260921_134118_prospect_sector_and_links.down,
+    name: '20260921_134118_prospect_sector_and_links',
+  },
+  {
+    up: migration_20260921_140250_prospect_source_kenalan.up,
+    down: migration_20260921_140250_prospect_source_kenalan.down,
+    name: '20260921_140250_prospect_source_kenalan',
+  },
+  {
+    up: migration_20260921_141031_account_holders_and_login.up,
+    down: migration_20260921_141031_account_holders_and_login.down,
+    name: '20260921_141031_account_holders_and_login'
   },
 ];

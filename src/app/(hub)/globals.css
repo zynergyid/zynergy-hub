@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/*
+ * A grid without an explicit column template falls back to an implicit column sized by its
+ * content, so one native time or date input (whose intrinsic width is ~450px) drags the whole
+ * form wider than the phone. Zero specificity, so any auto-cols utility still wins.
+ */
+:where(.grid) {
+  grid-auto-columns: minmax(0, 1fr);
+}
+
 @theme inline {
   --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
 }

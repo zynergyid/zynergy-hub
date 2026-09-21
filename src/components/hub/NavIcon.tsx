@@ -18,8 +18,7 @@ import {
   SearchCheck,
   UserRound,
   Users,
-  type LucideIcon,
-} from "lucide-react";
+  type LucideIcon, KeyRound } from "lucide-react";
 import type { IconName } from "./nav";
 
 const icons: Record<IconName, LucideIcon> = {
@@ -38,6 +37,7 @@ const icons: Record<IconName, LucideIcon> = {
   followup: BellRing,
   vendor: BadgeCheck,
   vault: FolderLock,
+  key: KeyRound,
   inbox: Inbox,
   team: Users,
   more: Menu,

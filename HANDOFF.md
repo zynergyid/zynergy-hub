@@ -27,6 +27,16 @@ Danish bertanya apakah target Outreach harus PT. Jawab: tidak pernah harus, kolo
 
 Jebakan migrasi: snapshot JSON migrasi menyimpan kolom; kalau sebuah kolom dihapus dengan menyunting SQL migrasi lama (seperti `perintis.mentor`), hapus juga dari snapshot JSON migrasi yang belum di-commit, kalau tidak `migrate:create` berikutnya membuat DROP COLUMN liar.
 
+**Tombol WhatsApp dan Email (2026-09-21):** dulu keduanya hanya muncul di dalam kartu "Draf pesan" dan hanya kalau draf sudah terisi, jadi Danish tidak menemukannya. Sekarang keduanya ada di kepala halaman target (WhatsApp hijau seperti di halaman klien, Email bergaris), muncul begitu kontak pertama punya nomor atau email, tanpa menunggu draf. Kalau draf tersimpan, isinya tetap terbawa sebagai teks pesan atau badan email. Tombol lama di kartu draf dihapus supaya tidak ada dua tombol yang sama; kartu draf kini hanya punya "Simpan draf" dan "Salin isi" plus satu kalimat penunjuk ke atas.
+
+**Dua mode di satu jalur (2026-09-21):** Danish memutuskan Outreach melayani perusahaan dan perorangan, tetapi tetap satu daftar, satu papan status, satu kartu Progres. Yang berbeda hanya formulir dan cara kerjanya.
+- Sektor mengikuti unit lewat `sectorsFor(unit)` di options.ts: Supply memakai daftar industri, Digitalin dan Apps memakai `businessTypes` yang sama dengan halaman Klien. Nilai keduanya disimpan di kolom `sector` yang sama (enum diperluas lewat migrasi `prospect_sector_and_links`), dan saat "Jadikan klien" nilainya langsung menjadi `client.businessType` alih-alih selalu "Lainnya".
+- Target non-Supply punya kolom Profil Google Bisnis dan Instagram (`prospects.googleProfile`, `prospects.instagram`); keduanya tampil sebagai tautan di kepala halaman target bersama website dan LinkedIn.
+- Tombol "Pakai kerangka" di kartu Hasil riset mengisi judul bagian sesuai jenis target (`researchTemplates` di options.ts): perusahaan diarahkan ke kebutuhan pengadaan dan siapa yang memutuskan, perorangan ke Profil Google, ulasan, Instagram, website, dan peluang tercepat.
+- Tenggat tindak lanjut bawaan mengikuti jenis: perorangan 3 hari, perusahaan 7 hari (`followUpDays`). Kanal draf bawaan untuk perorangan adalah WhatsApp.
+- Sumber target dipisah: "Kenalan sendiri" (Danish atau tim sudah kenal orangnya) berdiri sendiri di samping "Referensi (dikenalkan orang lain)", migrasi `prospect_source_kenalan`. Bedanya dipakai skill /outreach untuk menentukan nada pembuka, dan nanti berguna untuk melihat sumber mana yang benar-benar berbuah jadi klien.
+Diverifikasi lokal: unit Digitalin menampilkan label "Jenis usaha" dengan delapan pilihan usaha kecil, unit Supply menampilkan "Sektor" dengan enam pilihan industri dan menyembunyikan kolom Profil Google serta Instagram.
+
 ## Unit Digital berganti nama menjadi Digitalin (2026-09-21, belum di-deploy)
 
 Mengikuti situs: nama tampilan lini digital adalah **Digitalin**. Di hub yang berubah hanya label: `units` di options.ts (nilai enum `digital` tetap, jadi tanpa migrasi), pilihan unit di global `perintis` dan TeamForm, label halaman `/digital` di site-seo.ts, teks di Proyek, Alat, skill /brief (SKILL.md dan skills.ts), kop dan catatan kaki cetak Brief ("Digitalin by Zynergy"), dan baris Arus Kas tampilan semua unit kini memakai `unitLabel` alih-alih kata yang ditulis tetap. Jangan mengganti nilai `digital` di database atau rute.
@@ -791,6 +801,8 @@ dibangun:
 - `getSessionUser` sekarang memakai `authFromHeaders` (React `cache`) supaya
   satu request hanya satu `payload.auth`. Migrasi `activity_and_presence`.
 
+**2026-09-21, khusus admin:** halaman `/activity` sekarang hanya untuk admin; non-admin yang mengetik alamatnya dilempar ke Dasbor. Sebelumnya siapa pun yang login bisa membukanya, hanya isinya yang tersaring. Kartu "Riwayat" di tiap catatan tidak berubah dan tetap terlihat oleh siapa pun yang boleh membuka catatan itu, dengan saringan lama (baris sendiri, plus perubahan orang lain di luar login dan di luar keuangan bagi yang tidak punya hak "Lihat uang"). Teks di halaman Profil menyesuaikan: non-admin tidak lagi diberi tautan ke Aktivitas.
+
 ## Profil sosial dan Akun digital (2026-09-21)
 
 Danish bertanya di mana menaruh kumpulan akun sosial media. Jawabannya dua
@@ -828,6 +840,12 @@ GitHub org yang sudah ada); Facebook, YouTube, TikTok, X ditunda sampai
 kanal yang ada rutin terisi tiga bulan. Pemegang: Marketing untuk
 LinkedIn dan Instagram, Danish untuk WhatsApp dan Google Business,
 Developer untuk GitHub.
+
+**2026-09-21, menu sendiri:** atas permintaan Danish, Akun digital keluar dari tab di dalam Brankas Dokumen dan menjadi item sidebar sendiri, tetap di grup Arsip (`nav.ts`, ikon `key`). Komponen `VaultTabs` dihapus. Karena `/vault/accounts` berawalan sama dengan `/vault`, penyorotan menu dipindah ke `isNavActive` di nav.ts yang memilih item dengan awalan terpanjang; Sidebar dan MobileTabs memakainya bersama, jadi halaman dokumen tetap menyorot Brankas dan halaman akun menyorot Akun digital.
+
+**Pemegang banyak orang dan cara masuk (2026-09-21):** `accounts.holder` diganti `holders` (hasMany, migrasi `account_holders_and_login` yang menyalin pemegang lama ke `accounts_rels` sebelum kolom lamanya dihapus). Hak melihat password rahasia kini berlaku untuk semua pemegang, lihat `holderIdsOf` di lib/accounts.ts.
+Ditambah `loginMethod` (email dan password, masuk dengan Google, GitHub, Apple, Facebook, kode OTP, lainnya) dan `viaAccount`, relasi ke akun lain. Kalau caranya bukan password sendiri, kotak password disembunyikan, password tersimpan ikut dikosongkan, dan halaman menampilkan kartu "Cara masuk" yang menunjuk akun kuncinya. Daftar akun menampilkan semua pemegang dan cara masuknya.
+Jebakan: jangan memuat relasi akun dengan `depth: 1` di halaman detail, karena `viaAccount` menunjuk koleksi yang sama; halaman memakai `depth: 0` lalu mencocokkan sendiri dari daftar akun. Server dev juga pernah macet total setelah tab browser membeku; kalau satu halaman tidak menjawab sama sekali sedangkan lint dan tipe bersih, hentikan dan jalankan ulang server dev dulu sebelum mencari bug.
 
 ## Peran = jabatan, plus tanda Admin per orang (2026-09-20 larut malam)
 
@@ -1062,6 +1080,8 @@ modul, mengikuti praktik umum: Kalender adalah TAMPILAN, bukan gudang.
   dihitung di server (`EventInfoCard` menerima `when`) supaya hidrasi tidak
   beda ICU antara Node dan browser.
 
+**Foto acara: jangan paksa kamera (2026-09-21):** `capture="environment"` di input berkas membuat HP langsung membuka kamera, sehingga foto yang sudah ada di galeri tidak bisa dipilih. Atribut itu dihapus di PhotoPicker.tsx dan PhotoCard.tsx; tanpa `capture`, HP menawarkan kamera dan galeri sekaligus.
+
 ## Sidebar: daftar menu harus muat tanpa scroll internal (2026-09-20)
 
 Danish melihat ikon sidebar "naik sedikit" saat halaman di-scroll sampai
@@ -1104,6 +1124,8 @@ ditambah Profil dan Keluar. Menu baru di sidebar otomatis muncul di
 ditutup saat pindah halaman (state menyimpan path saat dibuka, tanpa
 setState di effect) dan dengan Escape. Untuk mengubah empat tab utama,
 ubah urutan `mobileTabCandidates` atau `MOBILE_TAB_COUNT`.
+
+**2026-09-21:** empat tab pertama kini sama untuk semua jabatan: Dasbor, Kalender, PERINTIS 2026, Arus Kas (`FIXED_TABS` di lib/workspace.ts), baru disusul tab khas jabatan lalu sisanya. Tab yang tidak boleh dilihat orang itu (Arus Kas tanpa hak "Lihat uang") gugur dan tab berikutnya naik; di produksi hanya jabatan Other yang tidak punya hak itu. Diverifikasi lokal per jabatan: Lead, Commissioner, dan Staff mendapat Arus Kas di posisi empat, Marketing lokal (tanpa hak lihat uang) mendapat Outreach. Label tab boleh punya versi pendek (`short` di NavItem): "PERINTIS 2026" tampil "PERINTIS" di bilah HP, karena label yang pecah dua baris membuat ikonnya naik dan barisnya tidak sejajar. Tiap tab kini tinggi tetap 56px dengan label satu baris.
 
 ## Layar HP: tabel tidak boleh melebarkan halaman (2026-09-17)
 
@@ -1157,6 +1179,14 @@ ubah urutan `mobileTabCandidates` atau `MOBILE_TAB_COUNT`.
   console; jangan andalkan `scrollWidth == innerWidth`, karena emulasi HP
   Chrome ikut memperlebar `innerWidth` saat konten meluap (di sana 470 saat
   layar 440), sehingga perbandingan itu selalu tampak "sama".
+
+**Kolom grid implisit (2026-09-21, ditemukan Danish di dialog Kalender):** dialog acara baru bisa digeser ke samping di HP saat pesertanya banyak. Penyebabnya bukan daftar peserta, melainkan input `type="time"`: lebar bawaannya sekitar 450 piksel, dan grid tanpa `grid-cols-*` di layar kecil memakai kolom implisit yang diukur dari isi, jadi kolomnya ikut melebar. Perbaikan global di globals.css:
+
+```css
+:where(.grid) { grid-auto-columns: minmax(0, 1fr); }
+```
+
+Spesifisitasnya nol, jadi utilitas `auto-cols-*` tetap menang. Sekalian: `fieldClass` diberi `min-w-0`, dan label di pemicu Select serta MultiSelect dibungkus `min-w-0 flex-1 truncate` supaya daftar peserta yang panjang dipotong, bukan melebarkan formulir. Diverifikasi: dialog 277px tanpa geser samping, halaman klien dan PERINTIS juga tidak melebar.
 
 ## Sesi login dan "Ingat saya" (2026-09-17)
 

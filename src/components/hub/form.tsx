@@ -3,7 +3,9 @@ import { cn } from "@/lib/cn";
 /** Shared form primitives so every custom screen looks and behaves the same. */
 
 export const fieldClass =
-  "w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm text-ink focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
+  // min-w-0: native time, date and number inputs carry a wide intrinsic width that otherwise
+  // stretches its grid column past the screen on phones.
+  "w-full min-w-0 rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm text-ink focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
 
 export const buttonPrimary =
   "inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary/25 hover:bg-primary-dark disabled:opacity-60";

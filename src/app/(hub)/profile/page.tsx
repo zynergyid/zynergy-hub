@@ -109,7 +109,14 @@ export default async function ProfilePage() {
           })}
           <li className={user.isAdmin ? "" : "text-muted line-through"}>Kelola tim dan hak akses</li>
         </ul>
-        <p className="mt-2 text-xs text-muted">Perubahan yang Anda buat, login, dan unduhan laporan tercatat di <Link href="/activity" className="font-semibold text-primary hover:underline">Aktivitas</Link> sebagai jejak audit, sama untuk semua anggota. Membaca halaman tidak dicatat.</p>
+        <p className="mt-2 text-xs text-muted">
+          Perubahan yang Anda buat, login, dan unduhan laporan tercatat sebagai jejak audit, sama untuk semua anggota. Membaca halaman tidak dicatat.{" "}
+          {user.isAdmin ? (
+            <>Daftar lengkapnya ada di <Link href="/activity" className="font-semibold text-primary hover:underline">Aktivitas</Link>.</>
+          ) : (
+            "Daftar lengkapnya hanya bisa dibuka admin; riwayat tiap catatan tetap tampil di kartu Riwayat catatan itu."
+          )}
+        </p>
         <p className="mt-2 text-xs text-muted">Lingkup: {scope}. Peran {roleLabel.get(user.role)} juga mengatur <Link href="/workspace" className="font-semibold text-primary hover:underline">ruang kerja</Link> Anda.</p>
       </Card>
 
