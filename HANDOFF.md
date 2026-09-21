@@ -5,6 +5,12 @@
 > "deploy", commit dan push biasa). Repo ini PUBLIK sejak 2026-09-19: jangan
 > tulis ekonomi klien, nomor legal, nama orang, atau kunci di sini.
 
+## Deploy 16 (2026-09-21 malam): Outreach dua mode, akun digital, rapikan HP
+
+Hub `5296227`. Tiga migrasi jalan di Neon dalam satu build 55 detik: `prospect_sector_and_links`, `prospect_source_kenalan`, `account_holders_and_login`. Diperiksa di database produksi: sepuluh baris pemegang lama terbawa ke `accounts_rels`, semua akun lama otomatis bercara-masuk `password`, kolom `google_profile` dan `instagram` ada di prospects. Halaman Outreach, Akun digital, Kalender, dan Aktivitas menjawab normal.
+
+Isi: Outreach melayani perusahaan dan perorangan dengan sektor mengikuti unit, kerangka riset, sumber "Kenalan sendiri", tombol WhatsApp dan Email di kepala halaman; Akun digital jadi menu sendiri dengan banyak pemegang dan cara masuk (Google, GitHub, Apple, Facebook, OTP); Aktivitas khusus admin; bilah HP seragam empat tab; perbaikan geser samping di formulir HP; foto acara bisa dari galeri.
+
 ## Deploy 15 (2026-09-21): Digitalin dan profil sosial
 
 Situs `3904309` (kode "Digitalin" ada di `3f66a91`), hub `3220447`. Migrasi `site_socials` tercatat batch 3 dan sembilan kolom socials ada di produksi; hub menjalankan delapan migrasi sekaligus di batch 11 (accounts, content_platforms, activity_and_presence, user_profile, event_kind_fokus, perintis, event_kind_mentoring, prospect_kind, accounts_password).
